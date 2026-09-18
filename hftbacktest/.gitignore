@@ -1,0 +1,11 @@
+dist
+build
+*.egg-info
+*.npz
+__pycache__
+venv
+docs/_build
+**/Cargo.lock
+**/target
+**/tmp_*
+**/*.so
