@@ -1,5 +1,0 @@
-[tool.clippy]
-warn_style
-warn(clippy::pedantic)
-allow(clippy::nursery)
-allow(clippy::pedantic)

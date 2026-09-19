@@ -1,3 +1,7 @@
 /data/
 /target/
 /*.pid
+
+# Rust build artifacts and locks
+engine/abstraction/target/
+engine/abstraction/Cargo.lock

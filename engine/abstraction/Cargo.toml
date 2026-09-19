@@ -5,8 +5,16 @@ edition = "2021"
 
 [dependencies]
 # Vendored hftbacktest crate — the core engine types and simulation logic
-# (docs/04). Initialized in Block 1.1; see STATE.md [2.2.B] for status.
-hftbacktest = { path = "../vendor/hftbacktest" }
+# (docs/04). The vendor dir holds the full upstream workspace at pinned commit
+# 5f3ec40 (Block 1.1 layout per docs/04 §4.2); the crate itself is the
+# workspace member `hftbacktest/`.
+#
+# NOTE (Block 2.2 decision, logged in STATE.md): only the `backtest` feature is
+# enabled. The upstream `live` feature pulls iceoryx2 (IPC), tokio "full", and
+# a rand/toml/serde stack that Phase 2's backtest-only engine does not use;
+# live connectors belong to later phases (docs/12). Disabling it keeps the
+# dependency tree honest and the build small.
+hftbacktest = { path = "../vendor/hftbacktest/hftbacktest", default-features = false, features = ["backtest"] }
 
 # Error handling
 thiserror = { version = "1.0" }
@@ -16,8 +24,15 @@ thiserror = { version = "1.0" }
 # server; tokio-stream provides the server-streaming response types.
 tonic = { version = "0.11" }
 prost = "0.12"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tokio-stream = { version = "0.1", features = ["sync"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tokio-stream = { version = "0.1", features = ["sync", "net"] }
 
 [build-dependencies]
 tonic-build = { version = "0.11" }
+
+# Lint policy (AGENTS.md §2 quality bar): pedantic advises-by-default so
+# deviations are visible on every `cargo clippy`; nursery is deliberately
+# allowed so unfinished-opinion lints never gate work.
+[lints.clippy]
+pedantic = "warn"
+nursery = "allow"
