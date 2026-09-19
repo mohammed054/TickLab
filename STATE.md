@@ -60,3 +60,37 @@ Decisions," answers them (even briefly), then an Executor begins Phase 1, Block 
 Task A ("Repo scaffold") as defined in docs/16-implementation-roadmap.md.
 
 ---
+
+### [2.6] DONE — Strategy Parameter Schema and Templates (session closure)
+Timestamp: 2026-09-19T14:38:06Z
+Agent: opencode/big-pickle (executor-4)
+Status: DONE
+Files touched:
+  - backend/experiments/app/tests/test_template_acceptance.py (new)
+Spec files read:
+  - docs/16-implementation-roadmap.md §Block 2.6
+  - docs/08-secondary-monitor-components.md §8.4–§8.6
+  - docs/03-tech-stack-and-repo-structure.md (service layout)
+  - AGENTS.md §9 (multi-instance coordination)
+Summary: Assigned Block 2.6. Prior executor-4 sessions had already implemented and
+merged Task A (parameter schema, backend/experiments/app/parameter_schema.py) and
+Task B (all 8 templates in backend/experiments/app/templates/) into main; the
+coordination DB still showed 2.6 as claimed, so this session verified the merged
+work against the Block acceptance criteria and closed it out. Re-ran VALIDATE +
+fixture BACKTEST for all 8 templates (market_making, mean_reversion, momentum,
+order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom): every
+template imports cleanly, exports STRATEGY_NAME/STRATEGY_DESCRIPTION/PARAMETER_SCHEMA,
+every parameter carries all 9 minimum fields per §8.6 with unique keys and
+JSON-serializable defaults matching the class defaults, and each strategy completed a
+5000-bar deterministic random-walk fixture backtest without modification or error
+(8/8). Added a durable pytest acceptance test at
+backend/experiments/app/tests/test_template_acceptance.py (16 checks, 16 passed),
+following executor-3's colocated-test convention (backend/data/app/tests).
+Deviations from spec: none.
+Open questions for Planner: pre-existing bug outside this Block's owned directories —
+root() and health() in backend/experiments/app/main.py:61,65 build dict literals
+without `return`, so GET / and /health respond with a null body.
+Next step: human merges branch exec/executor-4 (this session only adds the acceptance
+test plus this STATE.md folding); no remaining 2.6 work.
+
+---
