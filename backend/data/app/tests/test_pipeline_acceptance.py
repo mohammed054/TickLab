@@ -128,3 +128,54 @@ def test_timestamp_validation_catches_corruption():
     body = ts_check.json()
     assert body["violations"] > 0
     assert body["quality_hint"]["timestampMonotonicity"]["status"] == "red"
+
+
+def _prepared_dataset_id(csv_path, csv_name):
+    """Run the pipeline far enough to produce a stored dataset, return its id."""
+    norm = _post_csv(csv_path, csv_name, url="/normalize").json()
+    events = norm["normalized_events"]
+    fmt = _post_json({"events": events, "source": csv_name}, "/hftbacktest-format")
+    assert fmt.status_code == 200
+    return fmt.json()["dataset_id"]
+
+
+def test_quality_report_good_is_real_and_green():
+    dataset_id = _prepared_dataset_id(GOOD_CSV, "good.csv")
+    response = client.post(
+        "/quality-report",
+        json={"dataset_id": dataset_id, "source": "good.csv"},
+    )
+    assert response.status_code == 200
+    report = response.json()
+    assert report["datasetId"] == dataset_id
+    assert report["totalEvents"] == 20
+    assert report["trades"] == 7
+    assert report["missingIntervals"]["status"] == "green"
+    assert report["duplicateEvents"]["status"] == "green"
+    assert report["sequenceGaps"]["status"] == "green"
+    assert report["timestampRange"][0] == 1737400000000000000
+
+
+def test_quality_report_corrupted_is_not_green_and_blocks():
+    dataset_id = _prepared_dataset_id(CORRUPTED_CSV, "corrupted.csv")
+    report = client.post(
+        "/quality-report",
+        json={"dataset_id": dataset_id, "source": "corrupted.csv"},
+    ).json()
+    assert report["totalEvents"] == 10
+    assert report["duplicateEvents"]["count"] == 2
+    assert report["missingIntervals"]["status"] == "red"
+
+    gate = client.post(
+        "/validate-for-backtest", json={"report": report, "overrides": []}
+    ).json()
+    assert gate["blocksBacktest"] is True
+    assert "missingIntervals" in gate["failingChecks"]
+
+
+def test_quality_report_unknown_dataset_is_404():
+    response = client.post(
+        "/quality-report",
+        json={"dataset_id": "f" * 32, "source": "nope.csv"},
+    )
+    assert response.status_code == 404
