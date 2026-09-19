@@ -6,7 +6,12 @@ and exit conditions.
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "mean_reversion"
+STRATEGY_DESCRIPTION = "Trades against extreme moves, expecting reversal to mean"
 
 
 class MeanReversionStrategy(StrategyBase):
@@ -17,8 +22,8 @@ class MeanReversionStrategy(StrategyBase):
     or stop-loss levels.
     """
 
-    name: str = "mean_reversion"
-    description: str = "Trades against extreme moves, expecting reversal to mean"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Parameters
     entry_threshold: float = 2.0  # standard deviations
@@ -78,3 +83,62 @@ class MeanReversionStrategy(StrategyBase):
         """Simple mean calculation - in production would use rolling window."""
         # Placeholder: use last few prices from event stream
         return price  # simplified for template
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="entry_threshold",
+        label="Entry Threshold (std devs)",
+        type="number",
+        min=0.0,
+        max=10.0,
+        step=0.1,
+        default=MeanReversionStrategy.entry_threshold,
+        description="Standard-deviation distance from mean required to enter",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="exit_threshold",
+        label="Exit Threshold (std devs)",
+        type="number",
+        min=0.0,
+        max=10.0,
+        step=0.1,
+        default=MeanReversionStrategy.exit_threshold,
+        description="Standard-deviation distance from mean at which to exit",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=MeanReversionStrategy.order_size,
+        description="Base order size in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="max_position",
+        label="Max Position (BTC)",
+        type="number",
+        min=0.0,
+        max=500.0,
+        step=0.1,
+        default=MeanReversionStrategy.max_position,
+        description="Maximum absolute position in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="stop_loss_pct",
+        label="Stop Loss (%)",
+        type="number",
+        min=0.0,
+        max=100.0,
+        step=0.1,
+        default=MeanReversionStrategy.stop_loss_pct,
+        description="Stop-loss distance as percent of entry price",
+        group="FILTERS",
+    ).to_dict(),
+]

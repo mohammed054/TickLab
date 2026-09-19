@@ -1,23 +1,28 @@
-"""Statistical Arbitstrategy template.
+"""Statistical Arbitrage strategy template.
 
-A pairs/trading strategy that identifies statistically significant
+A pairs-trading strategy that identifies statistically significant
 price divergences between correlated instruments, expecting
 reversion to the mean relationship.
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "statistical_arbitrage"
+STRATEGY_DESCRIPTION = "Pairs trading: trade mean-reverting spread between correlated instruments"
 
 
 class StatisticalArbitrageStrategy(StrategyBase):
-    """Statistical arbitration strategy (pairs trading).
+    """Statistical arbitrage strategy (pairs trading).
 
     Identifies cointegrated instrument pairs and trades when the
     spread deviates from its historical mean, expecting reversion.
     """
 
-    name: str = "statistical_arbitrage"
-    description: str = "Pairs trading: trade mean-reverting spread between correlated instruments"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Parameters
     spread_threshold: float = 2.0  # z-score threshold
@@ -46,7 +51,7 @@ class StatisticalArbitrageStrategy(StrategyBase):
         # Extract price from event for both instruments
         # In a real implementation, we'd have separate price streams
         price_a = event.last_price
-        price_b = getattr(event, "price_b", price_a)  # fallback
+        price_b = event.price_b if event.price_b is not None else price_a
 
         # Calculate spread (normalized)
         if price_b == 0:
@@ -125,3 +130,73 @@ class StatisticalArbitrageStrategy(StrategyBase):
             return "submit"
 
         return "hold"
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="spread_threshold",
+        label="Spread Threshold (z-score)",
+        type="number",
+        min=0.0,
+        max=10.0,
+        step=0.1,
+        default=StatisticalArbitrageStrategy.spread_threshold,
+        description="Z-score distance from mean spread required to consider entry",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="entry_zscore",
+        label="Entry Z-Score",
+        type="number",
+        min=0.0,
+        max=10.0,
+        step=0.1,
+        default=StatisticalArbitrageStrategy.entry_zscore,
+        description="Z-score beyond which the pair position is entered",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="exit_zscore",
+        label="Exit Z-Score",
+        type="number",
+        min=0.0,
+        max=10.0,
+        step=0.1,
+        default=StatisticalArbitrageStrategy.exit_zscore,
+        description="Z-score inside which the pair position is closed",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC per leg)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=StatisticalArbitrageStrategy.order_size,
+        description="Order size in BTC for each pair leg",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="lookback_window",
+        label="Lookback Window (bars)",
+        type="integer",
+        min=10,
+        max=1000,
+        step=1,
+        default=StatisticalArbitrageStrategy.lookback_window,
+        description="Bars of spread history used for mean/std estimation",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="cointegration_pvalue",
+        label="Cointegration P-Value",
+        type="number",
+        min=0.0,
+        max=1.0,
+        step=0.01,
+        default=StatisticalArbitrageStrategy.cointegration_pvalue,
+        description="Significance threshold for the cointegration check",
+        group="FILTERS",
+    ).to_dict(),
+]

@@ -11,7 +11,7 @@ This module provides the experiment management features:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .parameter_schema import get_parameters_by_group, QUOTE_PARAMETERS, FILTERS_PARAMETERS
+from .parameter_schema import get_parameters_by_group
 from .templates import (
     market_making,
     mean_reversion,
@@ -38,17 +38,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Strategy template registry - maps template name to template class
-TEMPLATE_REGISTRY = {
-    "market_making": market_making.MarketMakingStrategy,
-    "mean_reversion": mean_reversion.MeanReversionStrategy,
-    "momentum": momentum.MomentumStrategy,
-    "order_book_imbalance": order_book_imbalance.OrderBookImbalanceStrategy,
-    "statistical_arbitrage": statistical_arbitrage.StatisticalArbitrageStrategy,
-    "execution": execution.ExecutionStrategy,
-    "arbitrage": arbitrage.ArbitrageStrategy,
-    "custom": custom.CustomStrategy,
-}
+# Strategy template registry - maps template name to (module, class).
+# Each template module exports STRATEGY_NAME, STRATEGY_DESCRIPTION, and
+# PARAMETER_SCHEMA (Task 2.6, docs/08 §8.5-§8.6); the class exposes the
+# matching `name`/`description` attributes and on_market_event entry point.
+TEMPLATE_MODULES = (
+    market_making,
+    mean_reversion,
+    momentum,
+    order_book_imbalance,
+    statistical_arbitrage,
+    execution,
+    arbitrage,
+    custom,
+)
+
+TEMPLATE_REGISTRY = {mod.STRATEGY_NAME: mod for mod in TEMPLATE_MODULES}
 
 
 @app.get("/")
@@ -65,25 +70,16 @@ async def list_templates() -> dict:
     return {
         "templates": [
             {
-                "name": name,
-                "description": cls.description,
-                "parameters": [p.to_dict() for p in get_parameters_by_group(
-                    {"market_making": "QUOTE", "mean_reversion": "FILTERS",
-                     "momentum": "FILTERS", "order_book_imbalance": "QUOTE",
-                     "statistical_arbitrage": "FILTERS", "execution": "QUOTE",
-                     "arbitrage": "QUOTE", "custom": "UNGROUPED"}[name]]
-                ),
+                "name": mod.STRATEGY_NAME,
+                "description": mod.STRATEGY_DESCRIPTION,
+                "parameters": mod.PARAMETER_SCHEMA,
             }
-            for name, cls in TEMPLATE_REGISTRY.items()
+            for mod in TEMPLATE_MODULES
         ]
     }
 
 @app.get("/parameters/{group}")
 async def get_parameters(group: str) -> dict:
     """Return all parameters for a given group."""
-    group_map = {
-        "QUOTE": QUOTE_PARAMETERS,
-        "FILTERS": FILTERS_PARAMETERS,
-    }
-    params = group_map.get(group, [])
+    params = get_parameters_by_group(group)
     return {"parameters": [p.to_dict() for p in params]}

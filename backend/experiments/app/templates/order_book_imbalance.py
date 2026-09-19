@@ -6,7 +6,12 @@ balance.
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "order_book_imbalance"
+STRATEGY_DESCRIPTION = "Trades based on order book bid/ask imbalance"
 
 
 class OrderBookImbalanceStrategy(StrategyBase):
@@ -16,16 +21,16 @@ class OrderBookImbalanceStrategy(StrategyBase):
     expecting price to move toward equilibrium.
     """
 
-    name: str = "order_book_imbalance"
-    description: str = "Trades based on order book bid/ask imbalance"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Parameters
     imbalance_threshold: float = 0.6  # ratio 0-1, threshold for imbalance
     order_size: float = 0.1  # BTC
     max_position: float = 5.0  # BTC
     imbalance_lookback: int = 10  # number of levels to check
-    take_profit_pct: float = 0.5  % take profit percentage
-    adverse_selection_pct: float = 0.2  % adverse selection filter
+    take_profit_pct: float = 0.5  # take profit percentage
+    adverse_selection_pct: float = 0.2  # adverse selection filter
 
     def on_market_event(self, event: MarketEvent) -> Literal["submit", "cancel", "hold"]:
         """React to market depth events and decide on order actions.
@@ -71,3 +76,73 @@ class OrderBookImbalanceStrategy(StrategyBase):
         )
 
         return "submit"
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="imbalance_threshold",
+        label="Imbalance Threshold (0-1)",
+        type="number",
+        min=0.0,
+        max=1.0,
+        step=0.01,
+        default=OrderBookImbalanceStrategy.imbalance_threshold,
+        description="Minimum bid/ask volume imbalance ratio required to trade",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=OrderBookImbalanceStrategy.order_size,
+        description="Base order size in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="max_position",
+        label="Max Position (BTC)",
+        type="number",
+        min=0.0,
+        max=500.0,
+        step=0.1,
+        default=OrderBookImbalanceStrategy.max_position,
+        description="Maximum absolute position in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="imbalance_lookback",
+        label="Imbalance Lookback (levels)",
+        type="integer",
+        min=1,
+        max=50,
+        step=1,
+        default=OrderBookImbalanceStrategy.imbalance_lookback,
+        description="Number of order-book levels included in the imbalance",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="take_profit_pct",
+        label="Take Profit (%)",
+        type="number",
+        min=0.0,
+        max=100.0,
+        step=0.1,
+        default=OrderBookImbalanceStrategy.take_profit_pct,
+        description="Favorable percent move at which to take profit",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="adverse_selection_pct",
+        label="Adverse Selection (%)",
+        type="number",
+        min=0.0,
+        max=100.0,
+        step=0.1,
+        default=OrderBookImbalanceStrategy.adverse_selection_pct,
+        description="Adverse-selection filter threshold in percent",
+        group="FILTERS",
+    ).to_dict(),
+]

@@ -5,7 +5,12 @@ and logic. This is the default template when no specific template is selected.
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "custom"
+STRATEGY_DESCRIPTION = "Custom strategy - starting point for user-defined strategies"
 
 
 class CustomStrategy(StrategyBase):
@@ -15,8 +20,8 @@ class CustomStrategy(StrategyBase):
     method to implement their own strategy logic.
     """
 
-    name: str = "custom"
-    description: str = "Custom strategy - starting point for user-defined strategies"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Default parameters - users should override these
     custom_param_1: float = 1.0
@@ -53,3 +58,51 @@ class CustomStrategy(StrategyBase):
         """
         # Update custom state based on fills
         super().on_fill(fill_event)
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="custom_param_1",
+        label="Custom Param 1",
+        type="number",
+        min=0.0,
+        max=1000.0,
+        step=0.1,
+        default=CustomStrategy.custom_param_1,
+        description="User-defined parameter 1 (override me)",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="custom_param_2",
+        label="Custom Param 2",
+        type="number",
+        min=0.0,
+        max=1000.0,
+        step=0.1,
+        default=CustomStrategy.custom_param_2,
+        description="User-defined parameter 2 (override me)",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=CustomStrategy.order_size,
+        description="Base order size in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="max_position",
+        label="Max Position (BTC)",
+        type="number",
+        min=0.0,
+        max=500.0,
+        step=0.1,
+        default=CustomStrategy.max_position,
+        description="Maximum absolute position in BTC",
+        group="QUOTE",
+    ).to_dict(),
+]

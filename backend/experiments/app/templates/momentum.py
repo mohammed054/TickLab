@@ -5,7 +5,12 @@ and exiting when momentum flags or reverses.
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "momentum"
+STRATEGY_DESCRIPTION = "Rides trending moves, entering on breakout"
 
 
 class MomentumStrategy(StrategyBase):
@@ -15,8 +20,8 @@ class MomentumStrategy(StrategyBase):
     holds while momentum is positive, exits on reversal.
     """
 
-    name: str = "momentum"
-    description: str = "Rides trending moves, entering on breakout"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Parameters
     lookback_period: int = 20
@@ -109,11 +114,11 @@ class MomentumStrategy(StrategyBase):
                 return "submit"
 
         self.bars_since_entry += 1
-        if self.bars_since_entry >= self.max_hold_bars:
+        if self.bars_since_entry >= self.max_hold_bars and self.position != 0:
             # Force close after max hold time
             self.submit_order(
                 price=price,
-                size=self.position,
+                size=abs(self.position),
                 side="sell" if self.position > 0 else "buy",
                 order_type="market",
             )
@@ -121,3 +126,73 @@ class MomentumStrategy(StrategyBase):
             return "submit"
 
         return "hold"
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="lookback_period",
+        label="Lookback Period (bars)",
+        type="integer",
+        min=1,
+        max=500,
+        step=1,
+        default=MomentumStrategy.lookback_period,
+        description="Number of bars used to establish the breakout range",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="entry_threshold",
+        label="Entry Threshold (% move)",
+        type="number",
+        min=0.0,
+        max=100.0,
+        step=0.1,
+        default=MomentumStrategy.entry_threshold,
+        description="Percent change from range edge required to enter",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="exit_threshold",
+        label="Exit Threshold (% move)",
+        type="number",
+        min=0.0,
+        max=100.0,
+        step=0.1,
+        default=MomentumStrategy.exit_threshold,
+        description="Percent change from entry at which to take profit",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=MomentumStrategy.order_size,
+        description="Base order size in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="max_hold_bars",
+        label="Max Hold (bars)",
+        type="integer",
+        min=1,
+        max=1000,
+        step=1,
+        default=MomentumStrategy.max_hold_bars,
+        description="Maximum bars to hold before force-closing",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="trailing_stop_pct",
+        label="Trailing Stop (%)",
+        type="number",
+        min=0.0,
+        max=100.0,
+        step=0.1,
+        default=MomentumStrategy.trailing_stop_pct,
+        description="Adverse percent move from entry that triggers exit",
+        group="FILTERS",
+    ).to_dict(),
+]

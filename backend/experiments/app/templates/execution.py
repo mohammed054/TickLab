@@ -6,7 +6,22 @@ as enumerated in docs/08 §8.7 Execution Model.
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "execution"
+STRATEGY_DESCRIPTION = "Execution strategy demonstrating order type usage"
+
+ORDER_TYPE_OPTIONS: list[str] = [
+    "limit",
+    "market",
+    "ioc",
+    "fok",
+    "gtc",
+    "post-only",
+    "reduce-only",
+]
 
 
 class ExecutionStrategy(StrategyBase):
@@ -16,11 +31,11 @@ class ExecutionStrategy(StrategyBase):
     Limit, Market, IOC, FOK, GTC, Post-only, Reduce-only
     """
 
-    name: str = "execution"
-    description: str = "Execution strategy demonstrating order type usage"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Parameters
-    order_type: Literal["limit", "market", "ioc", "fok", "gtc", "post-only", "reduce-only"] = "limit"
+    order_type: str = "limit"
     order_size: float = 0.1  # BTC
     ticker: str = "BTCUSDT"
     max_execution_time_bars: int = 10
@@ -103,3 +118,52 @@ class ExecutionStrategy(StrategyBase):
 
         self.bars_waiting = (self.bars_waiting + 1) % self.max_execution_time_bars
         return "submit" if self.bars_waiting == 0 else "hold"
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="order_type",
+        label="Order Type",
+        type="dropdown",
+        min=None,
+        max=None,
+        step=None,
+        default=ExecutionStrategy.order_type,
+        description="Order type submitted by the execution template (docs/08 §8.7)",
+        group="QUOTE",
+    ).to_dict()
+    | {"options": ORDER_TYPE_OPTIONS},
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=ExecutionStrategy.order_size,
+        description="Base order size in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="ticker",
+        label="Ticker",
+        type="string",
+        min=None,
+        max=None,
+        step=None,
+        default=ExecutionStrategy.ticker,
+        description="Instrument ticker to execute on",
+        group="FILTERS",
+    ).to_dict(),
+    ParameterSchema(
+        key="max_execution_time_bars",
+        label="Max Execution Time (bars)",
+        type="integer",
+        min=1,
+        max=1000,
+        step=1,
+        default=ExecutionStrategy.max_execution_time_bars,
+        description="Bars between execution attempts",
+        group="FILTERS",
+    ).to_dict(),
+]

@@ -1,11 +1,16 @@
 """Market Making strategy template.
 
 A basic market-making strategy that provides liquidity via spread-based orders.
-Uses parameters from the QUOTE group (§8.6).
+Uses parameters from the QUOTE group (docs/08 §8.6).
 """
 
 from typing import Literal
-from ....engine.abstraction.hftbacktest_impl import StrategyBase, MarketEvent
+
+from ..parameter_schema import ParameterSchema
+from .base import MarketEvent, StrategyBase
+
+STRATEGY_NAME = "market_making"
+STRATEGY_DESCRIPTION = "Provides liquidity via spread-based orders"
 
 
 class MarketMakingStrategy(StrategyBase):
@@ -15,8 +20,8 @@ class MarketMakingStrategy(StrategyBase):
     Manages inventory exposure using the inventory_limit and inventory_skew parameters.
     """
 
-    name: str = "market_making"
-    description: str = "Provides liquidity via spread-based orders"
+    name: str = STRATEGY_NAME
+    description: str = STRATEGY_DESCRIPTION
 
     # Parameters from the QUOTE group (see parameter_schema.py)
     spread: float = 1.0  # ticks
@@ -38,11 +43,11 @@ class MarketMakingStrategy(StrategyBase):
         # Inventory-aware: widen spread on one side based on skew
         mid_price = event.mid_price
 
-        if inventory_skew > 0 and event.side == "buy":
+        if self.inventory_skew > 0 and event.side == "buy":
             # We've been selling too much, widen ask
             ask_price = mid_price + self.spread / 2 * (1 + self.inventory_skew)
             bid_price = mid_price - self.spread / 2
-        elif inventory_skew > 0 and event.side == "sell":
+        elif self.inventory_skew > 0 and event.side == "sell":
             # We've been buying too much, widen bid
             bid_price = mid_price - self.spread / 2 * (1 - self.inventory_skew)
             ask_price = mid_price + self.spread / 2
@@ -70,3 +75,62 @@ class MarketMakingStrategy(StrategyBase):
         """Handle order fills to update inventory tracking."""
         # Track inventory changes from fills
         super().on_fill(fill_event)
+
+
+PARAMETER_SCHEMA: list[dict] = [
+    ParameterSchema(
+        key="spread",
+        label="Spread (ticks)",
+        type="number",
+        min=0.0,
+        max=1000.0,
+        step=0.5,
+        default=MarketMakingStrategy.spread,
+        description="Minimum spread in ticks for order placement",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="order_size",
+        label="Order Size (BTC)",
+        type="number",
+        min=0.001,
+        max=100.0,
+        step=0.001,
+        default=MarketMakingStrategy.order_size,
+        description="Base order size in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="requote_ms",
+        label="Requote (ms)",
+        type="integer",
+        min=0,
+        max=5000,
+        step=10,
+        default=MarketMakingStrategy.requote_ms,
+        description="Maximum time in ms before requoting",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="inventory_limit",
+        label="Inventory Limit (BTC)",
+        type="number",
+        min=0.0,
+        max=500.0,
+        step=0.1,
+        default=MarketMakingStrategy.inventory_limit,
+        description="Maximum inventory exposure in BTC",
+        group="QUOTE",
+    ).to_dict(),
+    ParameterSchema(
+        key="inventory_skew",
+        label="Inventory Skew (0-1)",
+        type="number",
+        min=0.0,
+        max=1.0,
+        step=0.01,
+        default=MarketMakingStrategy.inventory_skew,
+        description="Inventory skew factor for asymmetric sizing",
+        group="QUOTE",
+    ).to_dict(),
+]
