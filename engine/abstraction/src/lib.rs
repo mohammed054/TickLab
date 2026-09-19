@@ -1,55 +1,21 @@
-[package]
-name = "ticklab-engine"
-version = "0.1.0"
-edition = "2021"
+//! TickLab engine abstraction layer.
+//!
+//! The simulator-agnostic contract (`docs/05-engine-abstraction-and-data-pipeline.md`
+//! §5.1) over the vendored `hftbacktest` engine (`docs/04`), exposed to the
+//! backend via gRPC (`docs/15-api-and-data-model-spec.md` §15.4).
+//!
+//! Module map (per `docs/03-tech-stack-and-repo-structure.md` §3.5):
+//! - [`contract`]: the `SimulatorContract` trait — the only interface downstream
+//!   services program against.
+//! - [`types`]: normalized types mirroring `docs/15` §15.5.
+//! - [`error`]: typed errors; no panics on fallible paths (`AGENTS.md` §5.1).
+//! - [`hftbacktest_impl`]: the sole translator between normalized types and
+//!   `hftbacktest` native types.
+//! - [`grpc_service`]: the `EngineService` gRPC host; `backend/jobs` is the
+//!   primary client.
 
-[dependencies]
-hatformence
-
-## ขั้นตอน
-
-### 1. ตรู้จักกับ Ollama
-Ollamaence
-```
-
-Wait, I need to think about what dependencies are actually needed. Let me reconsider.
-
-The engine abstraction layer should wrap the vendored hftbacktest crate. Looking at the hftbacktest structure, it has its own Cargo.toml. The engine abstraction layer should depend on the vendored hftbacktest crate and provide a contract trait.
-
-Let me create a simple Cargo.toml for the engine abstraction layer.
-<tool_call>
-<function=write>
-<parameter=content>
-[package]
-name = "ticklab-engine"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-```
-
-### 2. Create engine abstraction layer src files
-Let me create the engine source files. First, the lib.rs:
-<tool_call>
-<function=write>
-<parameter=content>
-/// Simulator contract trait — the engine abstraction layer contract.
-/// This trait defines the interface that the backend can use to interact
-/// with the underlying backtest engine. Implementations must be deterministic
-/// and side-effect free for a given input state.
 pub mod contract;
-
-/// Engine-specific implementation over the vendored hftbacktest crate.
-pub mod hftbacktest_impl;
-
-### Engine abstraction layer gRPC service
+pub mod error;
 pub mod grpc_service;
-
-### Engine core types and types re-exports
+pub mod hftbacktest_impl;
 pub mod types;
-
-### Engine core types
-pub mod types;
-
-### Engine contract trait
-pub mod contract;

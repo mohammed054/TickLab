@@ -2,125 +2,257 @@ syntax = "proto3";
 
 package ticklab.engine;
 
-option go_package = "ticklab/engine"; option js_package = "ticklab.engine";
-
-// -- Engine API Services --
-
-// Run a single backtest step with the given order flow.
-service Engine {
-    // Process one step of order flow and return the new state + result.
-    rpc RunStep (RunStepRequest) returns (RunStepResponse);
+// Engine gRPC contract.
+//
+// Mirrors the `SimulatorContract` trait
+// (`docs/05-engine-abstraction-and-data-pipeline.md` §5.1) as a gRPC service,
+// exactly per `docs/15-api-and-data-model-spec.md` §15.4. Message fields mirror
+// the TypeScript interfaces in `docs/15` §15.5; this file is the canonical
+// schema those TS types are generated from. All timestamps are
+// nanosecond-precision epoch integers (`docs/15` §15.1).
+service EngineService {
+  rpc ValidateDataset(DatasetRef) returns (DataQualityReport);
+  rpc PrepareDataset(DatasetRef) returns (stream PipelineProgress);
+  rpc StartBacktest(BacktestRequest) returns (BacktestHandle);
+  rpc StreamBacktestProgress(BacktestHandle) returns (stream BacktestProgress);
+  rpc StreamEvents(BacktestHandle) returns (stream MarketEvent);
+  rpc CollectResults(BacktestHandle) returns (BacktestResult);
+  rpc Cancel(BacktestHandle) returns (Empty);
 }
 
-// Validate that a dataset is suitable for backtesting.
-service Validator {
-    // Returns whether the dataset is valid and any reasons if not.
-    rpc ValidateDataset (ValidateDatasetRequest) returns (ValidateDatasetResponse);
+// -- Handle / reference types --
+
+message DatasetRef {
+  // Content-addressed dataset id (`docs/05` §5.3).
+  string dataset_id = 1;
 }
 
-// Get engine metadata (capabilities, version, etc.).
-service Metadata {
-    rpc GetMetadata (MetadataRequest) returns (MetadataResponse);
+message PreparedDataset {
+  string dataset_id = 1;
+  string pipeline_version = 2;
+  uint64 event_count = 3;
 }
 
-// -- Message Types --
-
-message RunStepRequest {
-    // Current market state (order book, positions, timestamps)
-    MarketState state = 1;
-    // Incoming order flow to process
-    OrderFlow flow = 2;
+message BacktestHandle {
+  // Server-assigned handle id (surfaced as `jobId` on the API boundary).
+  string handle_id = 1;
 }
 
-message RunStepResponse {
-    // Updated market state after processing the flow
-    MarketState new_state = 1;
-    // Backtest result containing fills, metrics, etc.
-    BacktestResult result = 2;
+message Empty {}
+
+// -- Market data --
+
+message MarketEvent {
+  int64 timestamp_ns = 1;
+  string symbol = 2;
+  string exchange = 3;
+  // Maps to the TS `type` field (`docs/15` §15.5); renamed because `type` is a
+  // reserved word in most codegen targets.
+  EventType event_type = 4;
+  // Optional scalar fields use wrapper presence via `optional`.
+  optional Side side = 5;
+  optional double price = 6;
+  optional double size = 7;
+  optional int64 sequence = 8;
+  // Derivatives-only fields (`docs/14` §14.12, `docs/15` §15.5).
+  optional double funding_rate = 9;
+  optional int64 next_funding_time = 10;
+  optional double open_interest = 11;
+  optional double mark_price = 12;
+  optional double index_price = 13;
+  optional double basis = 14;
 }
 
-message ValidateDatasetRequest {
-    // The dataset to validate
-    Dataset dataset = 1;
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  BOOK_UPDATE = 1;
+  TRADE = 2;
+  SNAPSHOT = 3;
+  TICKER = 4;
+  FUNDING = 5;
+  LIQUIDATION = 6;
 }
 
-message ValidateDatasetResponse {
-    // Whether the dataset is valid
-    bool valid = 1;
-    // Reasons if the dataset is invalid (repeated string = 2)
-    repeated string reasons = 2;
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  BID = 1;
+  ASK = 2;
 }
 
-message MetadataRequest {}
+// -- Data quality (`docs/05` §5.2, `docs/15` §15.5) --
 
-message MetadataResponse {
-    // Engine name
-    string name = 1;
-    // Engine version
-    string version = 2;
-    // Whether the engine supports Level-2 market data
-    bool supports_l2 = 3;
-    // Maximum number of concurrent backtests supported
-    uint32 max_concurrent_backtests = 4;
+message DataQualityReport {
+  string dataset_id = 1;
+  uint64 total_events = 2;
+  uint64 trades = 3;
+  uint64 order_book_updates = 4;
+  uint64 snapshots = 5;
+  MissingIntervals missing_intervals = 6;
+  QualityCount duplicate_events = 7;
+  QualityCount sequence_gaps = 8;
+  TimestampRange timestamp_range = 9;
+  uint64 file_size_bytes = 10;
+  string source = 11;
+  string normalization_version = 12;
+  double tick_size = 13;
+  double lot_size = 14;
 }
 
-// -- Nested message types --
-
-message MarketState {
-    // Bid price levels (repeated PriceLevel = 1)
-    repeated PriceLevel bids = 1;
-    repeated PriceLevel asks = 2;
-    // Timestamp of the state (nanoseconds since epoch)
-    int64 timestamp = 3;
+enum QualityStatus {
+  QUALITY_STATUS_UNSPECIFIED = 0;
+  GREEN = 1;
+  YELLOW = 2;
+  RED = 3;
 }
 
-message PriceLevel {
-    // Price at this level
-    double price = 1;
-    // Size available at this price level
-    double size = 2;
-    // Number of orders at this level
-    uint32 order_count = 3;
+message TimestampRange {
+  int64 start_ns = 1;
+  int64 end_ns = 2;
 }
 
-message OrderFlow {
-    // Order side: 0 = Bid, 1 = Ask
-    int32 side = 1;
-    // Order price
-    double price = 2;
-    // Order size (quantity)
-    double size = 3;
-    // Unique order identifier
-    string order_id = 4;
+message QualityCount {
+  uint64 count = 1;
+  QualityStatus status = 2;
 }
 
-message Dataset {
-    // List of trade events
-    repeated Trade trade = 1;
-    // Price precision used (decimal places)
-    int32 price_precision = 2;
-    // Timestamp precision (nanoseconds)
-    int64 timestamp_precision = 3;
+message MissingIntervals {
+  uint64 count = 1;
+  QualityStatus status = 2;
+  repeated TimestampRange ranges = 3;
 }
 
-message Trade {
-    // Trade price
-    double price = 1;
-    // Trade size (quantity)
-    double size = 2;
-    // Trade timestamp
-    int64 timestamp = 3;
-    // Unique trade identifier
-    string trade_id = 4;
+message PipelineProgress {
+  string dataset_id = 1;
+  // One of `docs/05` §5.2's stages (validation, normalization, ...).
+  string stage = 2;
+  uint32 stage_index = 3;
+  uint32 stage_count = 4;
+  bool complete = 5;
 }
 
-message EngineMetadata {
-    // Engine name
-    string name = 1;
-    // Engine version
-    string version = 2;
-    // Whether the engine supports Level-2 market data
-    bool supports_l2 = 3;
-    // Maximum number of concurrent backtests supported
-    uint32 max_concurrent_backtests = 4;
+// -- Backtest lifecycle --
+
+message StrategyRef {
+  string id = 1;
+  string version = 2;
+  string code_hash = 3;
+}
+
+message ParameterValue {
+  oneof value {
+    // `Record<string, number | string | boolean>` (`docs/15` §15.5).
+    double number = 1;
+    string text = 2;
+    bool flag = 3;
+  }
+}
+
+message NamedParameter {
+  string name = 1;
+  ParameterValue value = 2;
+}
+
+message BacktestRequest {
+  StrategyRef strategy_ref = 1;
+  map<string, ParameterValue> parameters = 2;
+  string dataset_id = 3;
+  TimestampRange date_range = 4;
+  double initial_capital = 5;
+  ExecutionModelConfig execution_model = 6;
+  RiskLimitsConfig risk_limits = 7;
+  // Null means "no fixed seed" (`docs/15` §15.5).
+  optional int64 random_seed = 8;
+  uint32 iterations = 9;
+}
+
+message ExecutionModelConfig {
+  double maker_fee_pct = 1;
+  double taker_fee_pct = 2;
+  // Read-only, from instrument metadata (`docs/08` §8.7).
+  double tick_size = 3;
+  double lot_size = 4;
+  LatencyModelKind latency_model = 5;
+  // Preset list finalized in Task 2.3.B (`docs/04` §4.4).
+  string queue_model_preset = 6;
+  // Maps to ExchangeKind: NoPartialFillExchange / PartialFillExchange.
+  bool allow_partial_fills = 7;
+  repeated OrderType order_types_allowed = 8;
+  // Set when latency_model == EMPIRICAL.
+  string latency_data_file = 9;
+}
+
+enum LatencyModelKind {
+  LATENCY_MODEL_KIND_UNSPECIFIED = 0;
+  FIXED = 1;
+  EMPIRICAL = 2;
+  CUSTOM = 3;
+}
+
+enum OrderType {
+  ORDER_TYPE_UNSPECIFIED = 0;
+  LIMIT = 1;
+  MARKET = 2;
+  IOC = 3;
+  FOK = 4;
+  GTC = 5;
+  POST_ONLY = 6;
+  REDUCE_ONLY = 7;
+}
+
+message RiskLimitsConfig {
+  double max_position = 1;
+  double max_order_size = 2;
+  double max_daily_loss = 3;
+  double max_drawdown_pct = 4;
+  uint32 max_open_orders = 5;
+  double max_order_rate_per_sec = 6;
+  double max_notional_exposure = 7;
+  bool emergency_stop_enabled = 8;
+}
+
+message BacktestProgress {
+  string job_id = 1;
+  uint64 events_processed = 2;
+  uint64 total_events = 3;
+  double events_per_sec = 4;
+  uint64 orders_submitted = 5;
+  uint64 fills = 6;
+  int64 simulated_time_ns = 7;
+  uint64 wall_clock_elapsed_ms = 8;
+  BacktestStatus status = 9;
+}
+
+enum BacktestStatus {
+  BACKTEST_STATUS_UNSPECIFIED = 0;
+  QUEUED = 1;
+  RUNNING = 2;
+  COMPLETE = 3;
+  FAILED = 4;
+  CANCELLED = 5;
+}
+
+message HeadlineMetrics {
+  double initial_capital = 1;
+  double final_capital = 2;
+  double net_pnl = 3;
+  double return_pct = 4;
+  double max_drawdown_pct = 5;
+  double sharpe = 6;
+  double sortino = 7;
+  uint64 trades = 8;
+  double fill_rate_pct = 9;
+  double fees = 10;
+  double slippage = 11;
+}
+
+message BacktestResult {
+  string job_id = 1;
+  string experiment_id = 2;
+  // Engine version for reproducibility (`docs/10` §10.3).
+  string engine_version = 3;
+  HeadlineMetrics headline = 4;
+  // Pointer to the Recorder npz/parquet blob (`docs/04` §4.6).
+  string recorder_series_ref = 5;
+  // Pointer to the extended event/fill stream (`docs/05` §5.5).
+  string fine_grained_events_ref = 6;
 }

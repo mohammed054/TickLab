@@ -4,15 +4,20 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# Vendored hftbacktest crate — provides the core engine types and simulation logic
+# Vendored hftbacktest crate — the core engine types and simulation logic
+# (docs/04). Initialized in Block 1.1; see STATE.md [2.2.B] for status.
 hftbacktest = { path = "../vendor/hftbacktest" }
 
-# Shared types used across the stack
-ticklab-types = { path = "../../types" }
-
 # Error handling
-thiserror = { version = "1.0", features = ["std"] }
+thiserror = { version = "1.0" }
 
-# gRPC runtime
-tonic = { version = "0.11", features = ["tls"] }
+# gRPC runtime for the EngineService (docs/03 §3.4, docs/15 §15.4).
+# prost is tonic-build's codegen runtime; tokio (+ macros for tests) drives the
+# server; tokio-stream provides the server-streaming response types.
+tonic = { version = "0.11" }
+prost = "0.12"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+
+[build-dependencies]
 tonic-build = { version = "0.11" }
