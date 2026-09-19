@@ -100,3 +100,36 @@ Next step: none — this work is complete; commit on exec/executor-3 and mark Bl
 2.7 done in coordination.py.
 
 ---
+
+### [2.7] DONE — Data Pipeline
+Timestamp: 2026-09-19T19:20:00Z
+Agent: executor-3
+Status: DONE
+Files touched:
+  - backend/data/app/main.py
+  - backend/data/app/tests/test_pipeline_acceptance.py
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.7 (Tasks A–G + acceptance)
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2, §5.3
+  - docs/08-secondary-monitor-components.md §8.10
+Summary: Block 2.7 closed out. All six stages (Validation → Normalization → Order
+Book Reconstruction → Trade Alignment → Timestamp Validation → HftBacktest-format
+conversion) plus Task G's DataQualityReport generator and 🔴-blocks-backtest gate
+were already implemented and merged (commit 635a1b2) but never marked done in
+coordination.db. This session re-ran the full acceptance suite (6/6 pre-existing
+tests pass) and closed the one remaining Task G gap: POST /quality-report was a
+stub returning a hardcoded all-green report for any dataset_id (and 500'd via
+request.datasetId). Rewrote it to compute a real report from the prepared
+dataset's stored canonical events.json (content-addressed ticklab_{dataset_id}),
+404 on unknown datasets, sharing _events_quality()'s check thresholds with
+/validate. Added three acceptance tests; suite is now 9/9. Committed as 3b293df on
+exec/executor-3 and pushed (1ce6f28..3b293df) for the human merge.
+Deviations from spec: none. Carried-over assumptions from the earlier session
+stand: built-in tick/lot table pending Block 2.1's instrument_metadata; interim
+binary layout pending vendor submodule checkout.
+Open questions for Planner: none.
+Next step: human merges exec/executor-3 into main per AGENTS.md §9.6; then Block
+2.7 is fully closed.
+
+---
