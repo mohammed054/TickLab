@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  gateway:
+    image: ghcr.io/ticklab/gateway:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/ticklab
+      - REDIS_URL=redis://redis:6379
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - postgres
+      - redis
+      - nats
+
+  jobs:
+    image: ghcr.io/ticklab/jobs:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/ticklab
+      - REDIS_URL=redis://redis:6379
+      - NATS_URL=nats://nats:4222
+      - ENGINE_GRPC_ADDR=engine:50051
+    depends_on:
+      - postgres
+      - redis
+      - nats
+      - engine
+
+  experiments:
+    image: ghcr.io/ticklab/experiments:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/ticklab
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+
+  data:
+    image: ghcr.io/ticklab/data:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/ticklab
+    depends_on:
+      - postgres
+
+  market:
+    image: ghcr.io/ticklab/market:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/ticklab
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - postgres
+      - nats
+
+  ai:
+    image: ghcr.io/ticklab/ai:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/ticklab
+      - REDIS_URL=redis://redis:6379
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=ticklab
+      - POSTGRES_USER=ticklab
+      - POSTGRES_PASSWORD=ticklab
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+
+  nats:
+    image: nats:2
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+
+  engine:
+    image: ghcr.io/ticklab/engine:latest
+    restart: unless-stopped
+    depends_on:
+      - nats
+    environment:
+      - NATS_URL=nats://nats:4222
+      - DATA_DIR=/data
+
+volumes:
+  postgres_data:

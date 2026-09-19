@@ -1,0 +1,17 @@
+[package]
+name = "ticklab-gateway"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tower-cors = { version = "0.5", features = ["tower-service"] }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+# Engine abstraction layer gRPC client
+ticklab-engine-abstraction = { path = "../../engine/abstraction" }
+# For JSON serialization
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"

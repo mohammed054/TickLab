@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package ticklab.engine;
+
+option go_package = "ticklab/engine"; option js_package = "ticklab.engine";
+
+// -- Engine API Services --
+
+// Run a single backtest step with the given order flow.
+service Engine {
+    // Process one step of order flow and return the new state + result.
+    rpc RunStep (RunStepRequest) returns (RunStepResponse);
+}
+
+// Validate that a dataset is suitable for backtesting.
+service Validator {
+    // Returns whether the dataset is valid and any reasons if not.
+    rpc ValidateDataset (ValidateDatasetRequest) returns (ValidateDatasetResponse);
+}
+
+// Get engine metadata (capabilities, version, etc.).
+service Metadata {
+    rpc GetMetadata (MetadataRequest) returns (MetadataResponse);
+}
+
+// -- Message Types --
+
+message RunStepRequest {
+    // Current market state (order book, positions, timestamps)
+    MarketState state = 1;
+    // Incoming order flow to process
+    OrderFlow flow = 2;
+}
+
+message RunStepResponse {
+    // Updated market state after processing the flow
+    MarketState new_state = 1;
+    // Backtest result containing fills, metrics, etc.
+    BacktestResult result = 2;
+}
+
+message ValidateDatasetRequest {
+    // The dataset to validate
+    Dataset dataset = 1;
+}
+
+message ValidateDatasetResponse {
+    // Whether the dataset is valid
+    bool valid = 1;
+    // Reasons if the dataset is invalid (repeated string = 2)
+    repeated string reasons = 2;
+}
+
+message MetadataRequest {}
+
+message MetadataResponse {
+    // Engine name
+    string name = 1;
+    // Engine version
+    string version = 2;
+    // Whether the engine supports Level-2 market data
+    bool supports_l2 = 3;
+    // Maximum number of concurrent backtests supported
+    uint32 max_concurrent_backtests = 4;
+}
+
+// -- Nested message types --
+
+message MarketState {
+    // Bid price levels (repeated PriceLevel = 1)
+    repeated PriceLevel bids = 1;
+    repeated PriceLevel asks = 2;
+    // Timestamp of the state (nanoseconds since epoch)
+    int64 timestamp = 3;
+}
+
+message PriceLevel {
+    // Price at this level
+    double price = 1;
+    // Size available at this price level
+    double size = 2;
+    // Number of orders at this level
+    uint32 order_count = 3;
+}
+
+message OrderFlow {
+    // Order side: 0 = Bid, 1 = Ask
+    int32 side = 1;
+    // Order price
+    double price = 2;
+    // Order size (quantity)
+    double size = 3;
+    // Unique order identifier
+    string order_id = 4;
+}
+
+message Dataset {
+    // List of trade events
+    repeated Trade trade = 1;
+    // Price precision used (decimal places)
+    int32 price_precision = 2;
+    // Timestamp precision (nanoseconds)
+    int64 timestamp_precision = 3;
+}
+
+message Trade {
+    // Trade price
+    double price = 1;
+    // Trade size (quantity)
+    double size = 2;
+    // Trade timestamp
+    int64 timestamp = 3;
+    // Unique trade identifier
+    string trade_id = 4;
+}
+
+message EngineMetadata {
+    // Engine name
+    string name = 1;
+    // Engine version
+    string version = 2;
+    // Whether the engine supports Level-2 market data
+    bool supports_l2 = 3;
+    // Maximum number of concurrent backtests supported
+    uint32 max_concurrent_backtests = 4;
+}

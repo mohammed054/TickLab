@@ -89,20 +89,20 @@ interface WorkspaceContext {
 
 1. **User clicks a losing section of the equity curve (Secondary → both).**
    - Secondary sets `timestamp`, `experiment`, opens the "Trade Investigation" view
-     (`docs/08-secondary-monitor-components.md` §8.19).
+     (`docs/08-secondary-monitor-components.md` §8.20).
    - Main receives the `timestamp` change, jumps its chart/order-book/replay view to
      that instant (`docs/07-main-monitor-components.md` §7.2.6 "Jump to timestamp").
 
 2. **User changes a strategy parameter and clicks Run Backtest (Secondary → Main).**
    - Secondary updates `strategy` and queues a job.
    - Once the job streams simulated market replay frames, Main enters Replay mode
-     automatically and renders the replay (`docs/07-main-monitor-components.md` §7.11).
+     automatically and renders the replay (`docs/07-main-monitor-components.md` §7.19).
 
 3. **User selects a timestamp on Main (via chart click, crosshair-lock, or "jump to
    trade") (Main → Secondary).**
    - Main sets `timestamp` and, if applicable, `selectedTradeId`/`selectedOrderId`.
    - Secondary opens the Event Inspector at that exact timestamp
-     (`docs/08-secondary-monitor-components.md` §8.20).
+     (`docs/08-secondary-monitor-components.md` §8.21).
 
 4. **Crosshair hover on Main's chart (Main → Secondary, throttled).**
    - While hovering (not just clicking), Main publishes a throttled (max 20Hz)

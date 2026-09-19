@@ -1,0 +1,18 @@
+[package]
+name = "ticklab-engine-abstraction"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Vendored hftbacktest crate — provides the core engine types and simulation logic
+hftbacktest = { path = "../vendor/hftbacktest" }
+
+# Shared types used across the stack
+ticklab-types = { path = "../../types" }
+
+# Error handling
+thiserror = { version = "1.0", features = ["std"] }
+
+# gRPC runtime
+tonic = { version = "0.11", features = ["tls"] }
+tonic-build = { version = "0.11" }

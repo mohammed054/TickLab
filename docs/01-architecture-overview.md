@@ -58,7 +58,7 @@ Single entry point for the frontend. Responsibilities:
   `docs/06-realtime-live-data-architecture.md`).
 - In **replay** mode, sources data from a prepared dataset via the Data Pipeline,
   played back at the user-selected speed (0.01x–1000x, per
-  `docs/08-secondary-monitor-components.md` §8.16).
+  `docs/08-secondary-monitor-components.md` §8.17).
 - Publishes a single normalized event stream regardless of source, so the frontend
   never needs to know whether it's looking at live or replayed data structurally
   (only a visually unmistakable environment badge differs — see

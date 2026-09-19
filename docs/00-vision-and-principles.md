@@ -75,7 +75,7 @@ order, and fill. See `docs/02-two-monitor-workspace-spec.md` for the full contra
 4. **Honesty about uncertainty.** Market "regime" classifications, AI research
    assistant conclusions, and order-book-imbalance signals are always shown as
    statistical associations with confidence, never as guarantees. See
-   `docs/09-analytics-and-investigation-suite.md` §9.9 and
+   `docs/09-analytics-and-investigation-suite.md` §9.10 and §9.15, and
    `docs/10-experiment-management-and-ai-research.md` §10.5.
 5. **Performance as a feature.** A workstation that freezes while replaying 40
    million events has failed regardless of how correct its math is. See
