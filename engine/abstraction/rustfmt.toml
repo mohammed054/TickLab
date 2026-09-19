@@ -1,0 +1,3 @@
+fmt = { write = "diff" }
+<toolchain>stable</toolchain>
+<edition>2021</edition>

@@ -1,888 +1,110 @@
 # AGENTS.md — Read This Before You Touch Anything
 
-> **THIS FILE IS MANDATORY.**
->
-> Every AI model, agent, or automated process working on this repository — human-supervised or autonomous — **must read this entire file before doing anything else in the repository.**
->
-> Do not skim it.
->
-> Do not rely on memory from a previous session.
->
-> Do not read another project document before reading this file.
->
-> If you have not read this file during the current session, **STOP. Read it now.**
+This file is the constitution of this repository. Every AI model, agent, or automated
+process that works on this codebase — human-supervised or fully autonomous — **must
+read this file in full before writing a single line of code, before reading any other
+doc, and before resuming any previous session.**
 
-This file is the constitution of this repository.
-
-The project uses AI agents to implement a serious financial/research workstation. Lower-cost agents are expected to perform implementation work, but **no agent is trusted to be correct merely because its code compiles or its first test passes.**
-
-The repository therefore uses:
-
-**Specification → Controlled Implementation → Aggressive Verification → Evidence → Review**
-
-The objective is not to finish quickly.
-
-The objective is to produce **correct, reproducible, reviewable software.**
+If you are an AI agent and you have not read this file in this session, stop and read
+it now. Do not skim. Do not assume you already know the rules from a previous run —
+this file can change between sessions.
 
 ---
 
-# 1. The Two Roles
+## 1. The Two Roles
 
-This repository has two primary agent roles.
+This project is built by two classes of agent working together. You are one of them.
+Know which one before you do anything else.
 
-## 1.1 Planner
+### 1.1 The Planner
 
-The Planner is the high-capability reasoning model operated directly by the project owner.
+The Planner is a high-capability reasoning model (currently: Claude, operated directly
+by the project owner). The Planner:
 
-The Planner:
+- Is the **only** role allowed to create or modify files under `docs/`.
+- Writes every specification down to the level of: exact component names, exact props/
+  fields, exact file paths, exact function signatures, exact API contracts, exact
+  visual/interaction behavior, exact acceptance criteria.
+- Breaks all work into **Phases → Blocks → Tasks** (see `docs/16-implementation-roadmap.md`).
+- Reviews Executor output against the spec and either approves it, or writes a
+  correction note back into `STATE.md` under the relevant task and re-opens the task.
+- Does **not** assume the Executor can infer intent. If it isn't written down, the
+  Executor is not allowed to invent it — the Executor must stop and flag it instead
+  (see §4).
 
-* Owns `docs/`.
-* Is the **only role allowed to create or modify files under `docs/`**.
-* Defines implementation requirements before the Executor builds them.
-* Writes specifications at implementation-level precision.
-* Defines:
+### 1.2 The Executor
 
-  * exact file paths
-  * exact component/function names
-  * exact props/fields
-  * exact function signatures
-  * exact API contracts
-  * exact behavior
-  * exact states
-  * exact error handling
-  * exact acceptance criteria
-* Breaks work into:
+The Executor is any other model working on this repo (Nemotron 3.5 Lightning, or any
+other lower-reasoning-effort/lower-cost model, including future ones). The Executor:
 
-  * Phases
-  * Blocks
-  * Tasks
-* Reviews Executor output.
-* Approves completed work or rejects it with exact correction requirements.
+- Is the **only** role allowed to write code under `frontend/`, `backend/`, `engine/`,
+  `data/`, `scripts/`, and `tests/`.
+- Must **never** write to `docs/`. If a doc seems wrong, incomplete, or contradictory,
+  the Executor logs the conflict in `STATE.md` (see §4) and either skips the ambiguous
+  part or makes the smallest safe assumption necessary to keep moving, explicitly
+  flagged as an assumption in the log entry.
+- Must implement **exactly** what the current task in `STATE.md` says — no more, no
+  less. Do not "improve" scope. Do not refactor unrelated code. Do not upgrade
+  dependencies unless the task says to.
+- Must run the task's acceptance checks (defined in the relevant `docs/` file and
+  echoed into the task entry in `STATE.md`) before marking a task complete.
 
-The Planner must not expect the Executor to infer unspecified intent.
-
-If something important is not specified, the Executor must flag it rather than inventing behavior.
-
----
-
-## 1.2 Executor
-
-The Executor is any lower-cost or lower-reasoning-effort implementation agent.
-
-Examples include:
-
-* Nemotron
-* other local models
-* future coding agents
-* autonomous coding systems
-
-The Executor:
-
-* Is the only role allowed to write implementation code under:
-
-  * `frontend/`
-  * `backend/`
-  * `engine/`
-  * `data/`
-  * `scripts/`
-  * `tests/`
-* Must never modify `docs/`.
-* Must implement exactly the currently assigned task.
-* Must not expand scope.
-* Must not perform unrelated refactors.
-* Must not upgrade dependencies unless explicitly required.
-* Must run all required verification.
-* Must maintain `STATE.md`.
-* Must never mark work `DONE` without completing the verification protocol in §9.
-
-### Critical rule
-
-**The Executor is not judged by how confident it sounds.**
-
-It is judged by:
-
-1. conformity to the specification,
-2. actual test results,
-3. adversarial testing,
-4. integration correctness,
-5. safety,
-6. evidence recorded in `STATE.md`.
+Any agent can be asked to act as either role in a given session — the role is
+determined by what you were asked to do, not by which model you are. If you are asked
+to "plan" or "write docs," you are the Planner for that session, and the Planner rules
+in §1.1 govern you regardless of your model identity.
 
 ---
 
-# 2. The Golden Rule
+## 2. The Golden Rule
 
-> **`docs/` is the single source of truth.**
+> **`docs/` is the single source of truth. Code must match docs. If code and docs
+> disagree, docs win — and the disagreement gets logged, not silently resolved.**
 
-Code must match the specification.
-
-If code and documentation disagree:
-
-**Documentation wins.**
-
-The disagreement must be logged.
-
-The Executor must not silently reinterpret the specification.
-
-If the specification is ambiguous:
-
-* harmless implementation details may use the smallest conservative assumption;
-* anything involving money, financial calculations, risk, order execution, data correctness, API contracts, security, or architecture must be blocked or escalated.
-
-Never allow important behavior to exist only in:
-
-* chat messages
-* memory
-* code comments
-* undocumented implementation decisions
-
-If it matters, it belongs in the Planner-owned specification.
+Never let an implementation detail exist only in someone's head, only in a chat
+message, or only in code comments. If it matters, it goes in `docs/`, written by the
+Planner, before an Executor builds it.
 
 ---
 
-# 3. Mandatory Session Startup
+## 3. Resuming Work — Read `STATE.md` First, Every Time
 
-Every Executor starting a task must perform this sequence.
+`STATE.md` (repo root) is the single append-only log of project progress. It is not a
+doc — it is a diary. Before writing any code in a new session, every Executor **must**:
 
-## Step 1 — Read `AGENTS.md`
-
-Read this file in full.
-
-## Step 2 — Read `STATE.md`
-
-`STATE.md` is the append-only project diary.
-
-Read from the bottom upward until you find:
-
-1. the newest `IN_PROGRESS` entry;
-2. otherwise the newest `BLOCKED` entry;
-3. otherwise the newest `NEEDS_PLANNER_REVIEW` entry;
-4. otherwise the newest `DONE` task.
-
-Identify the exact:
-
-**Phase.Block.Task**
-
-ID.
-
-Example:
-
-`2.1.A`
-
-## Step 3 — Read the roadmap task
-
-Open:
-
-`docs/16-implementation-roadmap.md`
-
-Find the exact task and read its **entire definition**.
-
-Do not rely on the summary in `STATE.md`.
-
-## Step 4 — Read every referenced specification
-
-Open every document listed under the task's:
-
-`Spec files`
-
-Read the relevant sections completely.
-
-## Step 5 — Inspect the existing implementation
-
-Before modifying anything:
-
-* inspect the files involved;
-* inspect their callers;
-* inspect their consumers;
-* inspect relevant tests;
-* inspect relevant types/interfaces;
-* inspect relevant API contracts.
-
-Do not assume the repository looks the way you expect.
-
-## Step 6 — Begin work
-
-Only now may implementation begin.
-
----
-
-# 4. Resuming Work
-
-Never restart a task from scratch unless `STATE.md` explicitly says the previous attempt was abandoned.
+1. Open `STATE.md`.
+2. Read from the bottom up until you find the most recent entry with status
+   `IN_PROGRESS` or `BLOCKED`, or, if none exists, the most recent `DONE` entry.
+3. Identify the exact **Phase.Block.Task** ID of that entry (e.g. `2.1.A`).
+4. Open the corresponding section of `docs/16-implementation-roadmap.md` and re-read
+   the full task definition, not just the `STATE.md` summary.
+5. Open every doc file referenced by that task (each task lists its "Spec files" —
+   see the roadmap template).
+6. Resume from exactly where the log says work stopped. Do not restart the task from
+   scratch unless the log explicitly says the prior attempt was abandoned.
 
 If `STATE.md` says:
 
-```text
+```
 [2.1.A] IN_PROGRESS — Order Book Ladder component
-
-Files touched:
-  - frontend/src/features/orderbook/OrderBookLadder.tsx
-
-Notes:
-  Row rendering + price/size columns done.
-  Liquidity bars NOT started.
-
-Next step:
-  Implement horizontal liquidity bar width = size / maxVisibleSize.
+Last updated: <timestamp> by <agent-id>
+Files touched: frontend/src/features/orderbook/OrderBookLadder.tsx
+Notes: Row rendering + price/size columns done. Liquidity bars (see
+docs/07-main-monitor-components.md §8.3) NOT started. Next step: implement
+horizontal liquidity bar width = size / maxVisibleSize, per spec.
 ```
 
-The Executor must:
+...then the correct next action is: open `OrderBookLadder.tsx`, open
+`docs/07-main-monitor-components.md` §8.3, and implement the liquidity bars. Nothing
+else. Do not jump to a different task because it looks more interesting or more
+finished.
 
-1. open the existing component;
-2. open the specified documentation;
-3. implement the missing liquidity bars;
-4. continue from the recorded state.
+### 3.1 Logging Format (mandatory)
 
-Do not restart unrelated work.
+Every time an agent starts, pauses, blocks on, or finishes a task, it appends — never
+edits or deletes — an entry to `STATE.md` in this exact format:
 
----
-
-# 5. Scope Discipline
-
-The Executor must implement:
-
-> **exactly what the task requires — no more, no less.**
-
-Do not:
-
-* redesign unrelated components;
-* refactor unrelated files;
-* rename existing APIs because a new name seems better;
-* replace libraries;
-* introduce new architecture;
-* upgrade dependencies;
-* clean up unrelated code;
-* "improve" unspecified behavior;
-* add features that were not requested.
-
-If an improvement is desirable but outside the task:
-
-**Do not implement it.**
-
-Log it for the Planner.
-
----
-
-# 6. Ambiguity and Missing Specifications
-
-When something is unclear:
-
-## Safe to assume
-
-Small non-critical details such as:
-
-* harmless spacing;
-* an unspecified placeholder;
-* an implementation detail that cannot affect behavior.
-
-Use the smallest conservative assumption and document it.
-
-## Must stop and escalate
-
-Never guess about:
-
-* money
-* P&L
-* fees
-* slippage
-* order behavior
-* position sizing
-* risk limits
-* execution
-* market data correctness
-* API contracts
-* data schemas
-* environment isolation
-* security
-* authentication/authorization
-* persistence semantics
-* architecture
-* dependencies
-
-Log:
-
-`BLOCKED`
-
-or:
-
-`NEEDS_PLANNER_REVIEW`
-
-with the exact question.
-
----
-
-# 7. Non-Negotiable Engineering Rules
-
-These rules apply to every Executor and every task.
-
-## 7.1 Rust error handling
-
-No panic/`unwrap` without context in Rust engine code.
-
-Fallible operations must return appropriate `Result` values with typed errors according to the engine specifications.
-
----
-
-## 7.2 No UI blocking
-
-Operations expected to take approximately more than 50ms must not block the UI thread.
-
-Use the async job system specified by the repository architecture.
-
-Examples include:
-
-* backtests
-* dataset loading
-* large table rendering
-* expensive calculations
-* large imports
-
----
-
-## 7.3 No silent financial mathematics
-
-Every implementation of:
-
-* P&L
-* fees
-* slippage
-* markout
-* returns
-* position calculations
-* financial metrics
-
-must identify the authoritative formula in the relevant specification.
-
-Use a code comment referencing the exact documentation section.
-
----
-
-## 7.4 Environment isolation
-
-The three environments are hard-isolated:
-
-* `RESEARCH`
-* `PAPER`
-* `LIVE`
-
-No live-trading execution path may be reachable from `RESEARCH`.
-
-No live-trading execution path may be reachable from `PAPER`.
-
-This is a safety requirement.
-
-It is not optional architecture/style.
-
----
-
-## 7.5 Dependencies
-
-No new top-level dependency may be introduced unless it already appears in:
-
-`docs/03-tech-stack-and-repo-structure.md`
-
-If a dependency is required but missing:
-
-**NEEDS_PLANNER_REVIEW**
-
-Do not install it and continue.
-
----
-
-## 7.6 Exact API/component contracts
-
-Every component and API must match its specification exactly.
-
-Do not change:
-
-* prop names
-* field names
-* parameter names
-* return types
-* API paths
-* request shapes
-* response shapes
-
-because another name "reads better."
-
-That is a specification deviation.
-
----
-
-## 7.7 Tests are part of implementation
-
-A task without its required tests is incomplete.
-
-Tests are not a later cleanup step.
-
----
-
-## 7.8 Task-specific commits
-
-Commit messages must reference the task ID.
-
-Example:
-
-```text
-[2.1.A] Implement order book liquidity bars
 ```
-
----
-
-# 8. Implementation Protocol
-
-The Executor must follow this sequence.
-
-```text
-READ
-  ↓
-UNDERSTAND TASK
-  ↓
-INSPECT EXISTING CODE
-  ↓
-PLAN LOCALLY
-  ↓
-IMPLEMENT
-  ↓
-VERIFY
-  ↓
-ATTACK IMPLEMENTATION
-  ↓
-FIX
-  ↓
-RE-VERIFY
-  ↓
-FINAL REVIEW
-  ↓
-DONE
-```
-
-Do not skip directly from implementation to `DONE`.
-
----
-
-# 9. BRUTAL VERIFICATION PROTOCOL
-
-## This section is mandatory.
-
-Passing one test does not prove correctness.
-
-A lower-cost Executor must actively attempt to discover its own mistakes.
-
-The Executor must complete **10 independent verification passes** before marking a task `DONE`.
-
-Running the same test ten times does not count.
-
-Each pass must answer a different correctness question.
-
----
-
-## Pass 1 — Specification Audit
-
-Re-read:
-
-* the complete roadmap task;
-* every relevant specification section.
-
-Then compare the final implementation against the specification.
-
-Check:
-
-* exact files;
-* exact names;
-* exact props;
-* exact fields;
-* exact signatures;
-* exact API contracts;
-* exact behavior;
-* exact states;
-* exact edge cases;
-* exact acceptance criteria.
-
-Anything inconsistent with the specification is a failure.
-
----
-
-## Pass 2 — Code/Repository Audit
-
-Inspect the final implementation together with the code that interacts with it.
-
-Search the repository for:
-
-* modified symbols;
-* callers;
-* consumers;
-* imports;
-* exports;
-* types;
-* interfaces;
-* API endpoints;
-* serialization;
-* deserialization.
-
-Look specifically for stale references and mismatched assumptions.
-
----
-
-## Pass 3 — Static Verification
-
-Run every applicable:
-
-* formatter;
-* linter;
-* type checker;
-* compiler;
-* Clippy;
-* frontend build;
-* backend build;
-* static analyzer.
-
-Do not dismiss warnings without determining whether they matter.
-
----
-
-## Pass 4 — Automated Testing
-
-Run:
-
-1. task-specific tests;
-2. affected subsystem tests;
-3. relevant integration tests;
-4. required acceptance checks.
-
-Record exact commands and results.
-
-A build succeeding is not a substitute for behavioral tests.
-
----
-
-## Pass 5 — Adversarial Testing
-
-Try to break the implementation.
-
-Test applicable cases such as:
-
-* empty input;
-* missing input;
-* malformed input;
-* invalid input;
-* zero;
-* negative values;
-* minimum values;
-* maximum values;
-* duplicate values;
-* unexpected ordering;
-* missing data;
-* stale data;
-* partial data;
-* timeout;
-* API failure;
-* network failure;
-* repeated execution;
-* cancellation;
-* initialization failure;
-* restart.
-
-For financial logic additionally test:
-
-* precision;
-* rounding;
-* fees;
-* slippage;
-* invalid orders;
-* insufficient data;
-* boundary conditions;
-* risk limits;
-* impossible states.
-
----
-
-## Pass 6 — Failure/Recovery Testing
-
-For every relevant failure path determine:
-
-1. What fails?
-2. What error is produced?
-3. Is the error propagated correctly?
-4. Is state left valid?
-5. Can the operation be retried?
-6. Can retry create duplicate effects?
-7. Does recovery work?
-8. Does the UI remain usable?
-
-For asynchronous jobs test:
-
-* success;
-* failure;
-* cancellation;
-* timeout;
-* retry;
-* duplicate submission;
-* worker failure;
-* stale state.
-
----
-
-## Pass 7 — Integration Testing
-
-Test the implementation through its real interfaces.
-
-Do not rely only on isolated unit tests.
-
-Where applicable verify:
-
-```text
-Frontend
-   ↓
-API
-   ↓
-Backend
-   ↓
-Engine
-   ↓
-Data
-```
-
-Confirm that every producer and consumer agrees on:
-
-* field names;
-* types;
-* formats;
-* units;
-* nullability;
-* error behavior.
-
----
-
-## Pass 8 — Performance Testing
-
-Verify that the implementation respects the documented performance requirements.
-
-Look for:
-
-* UI blocking;
-* excessive allocations;
-* repeated expensive computation;
-* unnecessary requests;
-* duplicated loading;
-* unbounded loops;
-* memory growth;
-* excessive rendering;
-* missing virtualization;
-* synchronous operations that should be jobs.
-
-If the specification defines large data volumes, test against realistic volumes rather than tiny toy datasets.
-
----
-
-## Pass 9 — Security and Safety Audit
-
-Assume there may be a dangerous mistake.
-
-Inspect:
-
-* input validation;
-* authorization;
-* authentication boundaries;
-* data exposure;
-* filesystem access;
-* command execution;
-* secrets;
-* environment selection;
-* unsafe defaults;
-* API boundaries.
-
-For trading functionality explicitly verify:
-
-```text
-RESEARCH → LIVE
-MUST BE IMPOSSIBLE
-
-PAPER → LIVE
-MUST BE IMPOSSIBLE
-```
-
-Do not merely check that the UI hides a button.
-
-Verify the underlying execution path.
-
----
-
-## Pass 10 — Fresh-Eyes Final Review
-
-Pretend another engineer gave you the implementation and claimed:
-
-> "This is finished."
-
-Do not trust them.
-
-Re-open:
-
-* the specification;
-* every modified file;
-* the final diff;
-* relevant tests.
-
-Ask:
-
-> **"How would I break this?"**
-
-Look for:
-
-* missing requirements;
-* accidental scope expansion;
-* incorrect assumptions;
-* TODOs;
-* debug code;
-* temporary hacks;
-* dead code;
-* duplicated logic;
-* incorrect defaults;
-* incorrect error handling;
-* tests that don't actually exercise the changed behavior;
-* behavior that passes tests for the wrong reason.
-
-Then run the most important tests again.
-
----
-
-# 10. Verification Failure Loop
-
-A verification failure does not mean:
-
-> "Fix it and continue to the next pass."
-
-Instead:
-
-```text
-DISCOVER DEFECT
-      ↓
-UNDERSTAND ROOT CAUSE
-      ↓
-FIX DEFECT
-      ↓
-IDENTIFY WHICH PASSES ARE NOW INVALID
-      ↓
-RE-RUN THOSE PASSES
-      ↓
-CONTINUE VERIFICATION
-```
-
-Example:
-
-If Pass 8 discovers that a data-loading change creates excessive memory usage, and the fix modifies the API/data pipeline, the Executor must repeat the relevant integration and correctness tests.
-
-Do not blindly continue from Pass 8 to Pass 9.
-
----
-
-# 11. Self-Discovered Bugs Must Trigger Broader Inspection
-
-If the Executor discovers one defect, it must consider whether the same defect exists elsewhere.
-
-Example:
-
-If it discovers:
-
-> One API field is not validated.
-
-It must inspect the other fields in that API contract for the same class of validation error.
-
-If it discovers:
-
-> One financial calculation rounds incorrectly.
-
-It must inspect related financial calculations for the same issue.
-
-If it discovers:
-
-> One component blocks the UI thread.
-
-It must inspect nearby components performing similar work.
-
-Finding a bug is not permission to patch only the visible symptom.
-
----
-
-# 12. No Fake Verification
-
-These are not verification:
-
-* "Looks correct."
-* "Should work."
-* "I don't see any issues."
-* "The build passes."
-* "It's a simple change."
-* "The existing code handles it."
-* "I tested it manually" without describing the test.
-* Running the same test repeatedly.
-* Reading code and assuming behavior.
-* Writing tests that merely reproduce the implementation's assumptions.
-* Marking a task `DONE` because no more obvious problems were found.
-
-Verification requires **evidence**.
-
----
-
-# 13. Acceptance Criteria Are Absolute
-
-A task is not `DONE` until every applicable acceptance criterion passes.
-
-If an acceptance criterion cannot be tested because of:
-
-* missing infrastructure;
-* missing data;
-* missing dependency;
-* specification ambiguity;
-
-the task is not automatically `DONE`.
-
-Use:
-
-`BLOCKED`
-
-or:
-
-`NEEDS_PLANNER_REVIEW`
-
-and explain exactly why.
-
-Never silently omit an acceptance criterion.
-
----
-
-# 14. STATE.md — Append Only
-
-`STATE.md` is never rewritten.
-
-Agents append entries.
-
-Never:
-
-* delete history;
-* edit previous entries;
-* rewrite previous conclusions;
-* erase failures;
-* hide rejected work.
-
-Every time an agent:
-
-* starts;
-* pauses;
-* becomes blocked;
-* discovers a major issue;
-* completes;
-* gets rejected;
-
-it appends an entry.
-
----
-
-# 15. Mandatory STATE.md Format
-
-Every entry must use exactly:
-
-```text
 ### [<Phase>.<Block>.<Task>] <STATUS> — <short task name>
 Timestamp: <ISO-8601 UTC>
 Agent: <model name / id>
@@ -892,258 +114,258 @@ Files touched:
   - <path>
 Spec files read:
   - docs/<file>.md §<section>
+Summary: <2-6 sentences of what was actually done, in plain language>
+Deviations from spec: <none, or exact description of any deviation + why>
+Open questions for Planner: <none, or the exact question>
+Next step: <the precise next action, written so a different agent could pick it up
+cold>
+```
 
-Summary: <2-6 sentences describing what actually happened>
+`STATUS` values:
 
-Deviations from spec: <none, or exact description + reason>
+- `CLAIMED` — used only in multi-instance execution (§9); a single-line reservation
+  of a task, committed straight to `main`, before any real work begins.
+- `NOT_STARTED` — task exists in the roadmap, nothing built yet.
+- `IN_PROGRESS` — actively being worked, safe to resume mid-task.
+- `BLOCKED` — cannot proceed without a decision, missing dependency, or missing data.
+  Must include exactly what is blocking it.
+- `NEEDS_PLANNER_REVIEW` — Executor believes the task is complete but a spec ambiguity
+  was resolved by assumption and needs Planner sign-off before downstream tasks build
+  on top of it.
+- `DONE` — implemented, self-tested against the acceptance criteria in the roadmap,
+  and no open deviations.
+- `REJECTED` — Planner reviewed and sent it back. The rejection entry must state
+  exactly what must change, referencing the doc section that was not honored.
 
-Open questions for Planner: <none, or exact question>
+### 3.2 Never Skip Logging
 
-Verification:
-  Pass 1 — Specification audit: PASS | FAIL | NOT APPLICABLE
-  Pass 2 — Repository audit: PASS | FAIL | NOT APPLICABLE
-  Pass 3 — Static verification: PASS | FAIL | NOT APPLICABLE
-  Pass 4 — Automated testing: PASS | FAIL | NOT APPLICABLE
-  Pass 5 — Adversarial testing: PASS | FAIL | NOT APPLICABLE
-  Pass 6 — Failure/recovery testing: PASS | FAIL | NOT APPLICABLE
-  Pass 7 — Integration testing: PASS | FAIL | NOT APPLICABLE
-  Pass 8 — Performance testing: PASS | FAIL | NOT APPLICABLE
-  Pass 9 — Security/safety audit: PASS | FAIL | NOT APPLICABLE
-  Pass 10 — Fresh-eyes review: PASS | FAIL | NOT APPLICABLE
+An agent that finishes a working session without writing a `STATE.md` entry has, for
+the purposes of this project, not done the work — the next agent has no way to know
+what happened and must treat the state as whatever the last logged entry says. **Log
+before you stop, not "later."**
 
-Test commands:
-  - <exact command>
-  - <exact command>
+---
 
-Test results:
-  - <result>
+## 4. When the Spec Is Ambiguous or Missing
 
-Defects discovered during verification:
-  - <none, or exact defect and fix>
+This will happen. When it does, an Executor must never silently guess on anything that
+affects data shape, financial calculation, risk logic, or an API contract. Instead:
 
-Final diff reviewed: YES | NO
-Specification re-read after implementation: YES | NO
+1. Make the smallest, most conservative assumption that lets you keep moving on
+   non-critical details only (e.g., a specific shade of a color not defined in
+   `docs/11-design-system.md`, a spacing value, a placeholder loading message).
+2. For anything involving money, risk, order logic, execution assumptions, or data
+   correctness: **stop that specific sub-task**, log it as `BLOCKED` or
+   `NEEDS_PLANNER_REVIEW` with the exact open question, and move to the next
+   independent task instead of guessing.
+3. Never invent a new library, a new architecture pattern, or a new file-structure
+   convention that isn't in `docs/03-tech-stack-and-repo-structure.md`. Flag the gap
+   instead.
 
-Next step: <precise next action another agent could execute without asking what to do>
+---
+
+## 5. Non-Negotiable Engineering Rules
+
+These apply to every Executor, on every task, with no exceptions:
+
+1. **No panic/`unwrap`-without-context in Rust engine code.** All fallible paths return
+   `Result` with a typed error (see `docs/04-hftbacktest-engine-analysis.md` and
+   `docs/05-engine-abstraction-and-data-pipeline.md`).
+2. **No blocking the UI thread.** Any operation over ~50ms (backtest run, dataset load,
+   large table render) goes through the async job system defined in
+   `docs/03-tech-stack-and-repo-structure.md` and `docs/15-api-and-data-model-spec.md`.
+3. **No silent financial math.** Every P&L, fee, slippage, or markout calculation must
+   cite which formula in `docs/09-analytics-and-investigation-suite.md` it implements,
+   as a code comment referencing the doc section.
+4. **No live-trading code path may be reachable from Research or Paper environments.**
+   The three environments (`RESEARCH`, `PAPER`, `LIVE`) are hard-isolated per
+   `docs/12-execution-modes-and-risk.md` — this is a safety rule, not a style
+   preference.
+5. **No new top-level dependency** without it being listed in
+   `docs/03-tech-stack-and-repo-structure.md`. If you need one that isn't listed, that
+   is a `NEEDS_PLANNER_REVIEW`, not a `pip install` / `cargo add` / `npm install`.
+6. **Every component matches its spec file's props/behavior table exactly**, including
+   naming. Renaming a prop "because it reads better" is a spec deviation and must be
+   logged as one.
+7. **Tests are part of the task, not a follow-up.** A task is not `DONE` until the
+   acceptance criteria listed for it in `docs/16-implementation-roadmap.md` pass.
+8. **Commit messages reference the task ID**: `[2.1.A] Implement order book liquidity
+   bars`.
+
+---
+
+## 6. Directory Map (see `docs/03-tech-stack-and-repo-structure.md` for full detail)
+
+```
+/AGENTS.md                 ← you are here
+/README.md                 ← project overview, quick start
+/STATE.md                  ← append-only session log (read every time)
+/docs/                     ← Planner-owned specs, numbered reading order
+/engine/                   ← vendored + wrapped hftbacktest (Rust)
+/backend/                  ← Rust/Python services: gateway, data pipeline, job runner
+/frontend/                 ← the two-monitor workstation UI
+/data/                     ← local datasets, cache (gitignored, see .gitignore)
+/scripts/                  ← one-off tooling, collectors, migration scripts
+/tests/                    ← cross-cutting integration/e2e tests
 ```
 
 ---
 
-# 16. Status Rules
+## 7. Reading Order for a New Agent on a Fresh Task
 
-### `NOT_STARTED`
+1. `AGENTS.md` (this file)
+2. `STATE.md` (find where to resume)
+3. `docs/16-implementation-roadmap.md` (find the current Phase/Block/Task)
+4. The specific numbered doc(s) that task references
+5. `docs/03-tech-stack-and-repo-structure.md` (if you need to know where a file goes
+   or which library to use)
+6. `docs/11-design-system.md` (if you are touching anything visual)
 
-Task exists but no implementation work has begun.
-
-### `IN_PROGRESS`
-
-Work is actively underway and can safely be resumed.
-
-### `BLOCKED`
-
-The Executor cannot continue because a required decision, dependency, data source, or specification is missing.
-
-The exact blocker is mandatory.
-
-### `NEEDS_PLANNER_REVIEW`
-
-The Executor made a necessary assumption or encountered a specification issue requiring Planner confirmation.
-
-### `DONE`
-
-Only allowed when:
-
-* implementation is complete;
-* acceptance criteria pass;
-* all applicable verification passes pass;
-* final diff is reviewed;
-* specification was re-read;
-* no unresolved deviations remain.
-
-### `REJECTED`
-
-Planner reviewed the task and requires changes.
-
-The rejection must identify the exact requirement that was not satisfied.
+Do not read every doc in the repo before starting a small task — read what the task
+tells you to read. The docs are organized so that each task's "Spec files" list is
+sufficient.
 
 ---
 
-# 17. What Production-Level Means
+## 8. What "Production Level" Means Here
 
-"Production level" does not mean:
+A task is not done when it "looks right." It is done when:
 
-> "It looks good."
-
-It means:
-
-* specification matches implementation;
-* acceptance criteria pass;
-* errors are handled;
-* loading states work;
-* empty states work;
-* edge cases are handled;
-* realistic data volumes are supported;
-* UI remains responsive;
-* tests pass;
-* integration works;
-* security boundaries hold;
-* financial calculations have verified expected values;
-* the final diff has been reviewed;
-* the work is documented in `STATE.md`.
+- It matches its spec file exactly (props, behavior, states, edge cases).
+- It handles the error/loading/empty states defined in
+  `docs/14-cross-cutting-systems.md`.
+- It performs acceptably under the data volumes defined in
+  `docs/03-tech-stack-and-repo-structure.md` (millions of events, virtualized
+  rendering, no UI-thread blocking).
+- It is logged in `STATE.md` with `DONE` and no open deviations.
+- If it's a financial calculation, it's covered by a unit test with a known
+  hand-computed expected value.
 
 ---
 
-# 18. Financial Calculation Requirements
+## 9. Multi-Instance Parallel Execution
 
-Any financial calculation must have:
+Multiple Executor instances may work simultaneously. This requires three things
+beyond everything above: a **claim** step so two instances never take the same
+task, a **directory partition** so simultaneous instances rarely touch the same
+files, and a **git workflow** where independent commits don't collide.
 
-1. an authoritative formula in `docs/`;
-2. a code reference to that formula;
-3. unit tests;
-4. known hand-computed expected values;
-5. boundary tests;
-6. precision/rounding tests where applicable.
+### 9.1 Identity
 
-Never trust a financial result merely because it "looks reasonable."
+Each running instance is given a short-lived label for the session:
+`executor-1`, `executor-2`, `executor-3`, `executor-4` (the project owner assigns
+these when launching each instance — see §9.5 for the exact kickoff prompt). This
+label is what goes in every `STATE.md` entry's `Agent:` field for that session
+(e.g., `Agent: executor-2 (claude-sonnet-4-6)`). It resets between sessions — it is
+not a permanent identity, just a way to tell concurrent work apart in the log.
 
-For example, a test should provide a known input and an independently calculated expected result.
+### 9.2 Git workflow — one worktree per instance, `STATE.md` claims arbitrated by git
 
-The expected result must not simply be generated using the same implementation being tested.
-
----
-
-# 19. Security Boundary Requirements
-
-For any feature touching execution, orders, accounts, risk, or environments:
-
-The Executor must explicitly trace the execution path.
-
-Do not verify only UI behavior.
-
-Verify the actual code path.
-
-The following must remain impossible:
-
-```text
-RESEARCH
-   X
-   ↓
-LIVE EXECUTION
-
-PAPER
-   X
-   ↓
-LIVE EXECUTION
+```
+main                          ← Planner-owned docs/, protected; Executors don't push here directly
+ ├─ exec/executor-1           ← instance 1's branch
+ ├─ exec/executor-2           ← instance 2's branch
+ ├─ exec/executor-3           ← instance 3's branch
+ └─ exec/executor-4           ← instance 4's branch
 ```
 
-If the Executor cannot prove the isolation from the available specification and code:
+Set up once, from the repo root:
 
-`NEEDS_PLANNER_REVIEW`
-
----
-
-# 20. Directory Map
-
-```text
-/AGENTS.md                 ← repository constitution
-/README.md                 ← project overview
-/STATE.md                  ← append-only project state
-/docs/                     ← Planner-owned specifications
-/engine/                   ← vendored + wrapped hftbacktest
-/backend/                  ← Rust/Python services
-/frontend/                 ← workstation UI
-/data/                     ← local datasets/cache
-/scripts/                  ← tooling and collectors
-/tests/                    ← integration/e2e tests
+```bash
+git checkout -b exec/executor-1 main && git worktree add ../ws-executor-1 exec/executor-1
+git checkout -b exec/executor-2 main && git worktree add ../ws-executor-2 exec/executor-2
+git checkout -b exec/executor-3 main && git worktree add ../ws-executor-3 exec/executor-3
+git checkout -b exec/executor-4 main && git worktree add ../ws-executor-4 exec/executor-4
 ```
 
-See:
+Each instance is pointed at its own `../ws-executor-N` directory — a real, separate
+folder on disk, same repo, own branch, so four instances can run `cargo build` /
+`npm run dev` / edit files at the same time with zero filesystem collision.
 
-`docs/03-tech-stack-and-repo-structure.md`
+**The claim itself is a small, fast, separately-committed change to `STATE.md`,
+pushed and merged to `main` immediately, before any real work starts:**
 
-for authoritative repository architecture.
+1. Instance pulls `main`, reads `STATE.md`, picks the next unclaimed task for its
+   lane (§9.3).
+2. Appends a `CLAIMED` entry (new status, used only for this purpose):
+   ```
+   ### [2.1.A] CLAIMED — Postgres DDL
+   Timestamp: <ISO-8601 UTC>
+   Agent: executor-1
+   Status: CLAIMED
+   ```
+3. Commits *only that change* to `STATE.md` on `main` directly (not on its exec
+   branch) and pushes immediately.
+4. If the push is rejected (someone else pushed first): pull, check whether the
+   task it wanted is now claimed by someone else. If yes, pick a different task and
+   retry step 2. If the conflict was on an unrelated task, just re-push.
+5. Once its claim is the one on `main`, the instance switches to its own
+   `exec/executor-N` branch and does the actual work there, logging normal
+   `IN_PROGRESS`/`DONE` entries to `STATE.md` on its own branch as it goes (these
+   merge into `main` at the end of the task, §9.4).
 
----
+This makes `git push`'s built-in conflict rejection the lock — two instances racing
+for the same task can't both land a `CLAIMED` entry on `main` first.
 
-# 21. Reading Order
+### 9.3 Directory partitioning — assign lanes, not just tasks
 
-For a fresh task:
+Picking tasks that touch disjoint parts of the tree is what actually prevents merge
+pain (the claim in §9.2 prevents duplicate *work*, this prevents merge *conflicts*).
+Use `docs/16-implementation-roadmap.md`'s Blocks as lanes and check which top-level
+directories each one owns before assigning two instances to run concurrently:
 
-```text
-1. AGENTS.md
-2. STATE.md
-3. docs/16-implementation-roadmap.md
-4. Task-specific specification files
-5. docs/03-tech-stack-and-repo-structure.md
-   if repository structure/dependencies are relevant
-6. docs/11-design-system.md
-   if visual work is involved
+| Block | Directories it owns | Safe to run alongside |
+|---|---|---|
+| 2.1 Data Models | `backend/*/models.py` (schema files only), migration files | 2.2, 2.6, 2.7 |
+| 2.2 Engine Abstraction | `engine/abstraction/` | 2.1, 2.6, 2.7 |
+| 2.6 Strategy Templates | `backend/experiments/app/templates/` | 2.1, 2.2, 2.7 |
+| 2.7 Data Pipeline | `backend/data/app/` | 2.1, 2.2, 2.6 |
+| 2.3, 2.4, 2.5, 2.8 | `engine/abstraction/`, `backend/jobs/` | **Not parallel with 2.2** — all depend on 2.2 landing on `main` first |
+
+Never assign two instances to Blocks that read "depends on" the same not-yet-merged
+Block. If Phase 2's dependency chain is unclear for a specific task, that's a
+`BLOCKED` entry, not a guess.
+
+### 9.4 Merging back
+
+An instance merges its branch to `main` at natural checkpoints — a `DONE` task, not
+mid-task — via a normal PR/fast-forward merge, small and frequent (finishing one
+Task, not batching an entire Block into one giant merge). Before merging, it rebases
+onto the latest `main` so it picks up any docs or `STATE.md` changes from other
+instances first. Whoever merges resolves `STATE.md` conflicts by **keeping both
+sides** (it's append-only, per `AGENTS.md` §3.2 — a "conflict" in an append-only log
+is almost always just "two people added different lines," not a real conflict).
+
+### 9.5 Kickoff prompt template (paste into each of your 4 instances)
+
+```
+You are executor-<N> in this project. Read AGENTS.md in full, including §9
+(Multi-Instance Parallel Execution). Your working directory is
+../ws-executor-<N>, on branch exec/executor-<N>.
+
+Before doing anything else:
+1. Pull main, read STATE.md bottom-up to see what's claimed/done.
+2. Per docs/16-implementation-roadmap.md and AGENTS.md §9.3, claim Block <X.Y>
+   (or the next unclaimed task in it) by committing a CLAIMED entry to STATE.md
+   on main, per §9.2. If it's already claimed, tell me and stop.
+3. Once your claim lands, switch to your branch and begin the task, logging
+   progress to STATE.md exactly per AGENTS.md §3.1.
+4. Stop and log BLOCKED rather than guessing on anything AGENTS.md §4 says to stop
+   on, or anything that touches a directory outside your assigned Block.
 ```
 
-Do not read every document unnecessarily.
+Fill in `<N>` and `<X.Y>` per instance. For your first real parallel run, once
+Phase 1 (Blocks 1.1–1.2) is done by a single instance, a good 4-way split is:
 
-Read what the task requires.
+- executor-1 → Block 2.1 (Data Models)
+- executor-2 → Block 2.2 (Engine Abstraction Layer Core)
+- executor-3 → Block 2.6 (Strategy Templates)
+- executor-4 → Block 2.7 (Data Pipeline)
 
----
+These four don't depend on each other (per §9.3's table), so all four can start the
+moment Phase 1 merges to `main`. Blocks 2.3/2.4/2.5/2.8 wait for 2.2 to merge, then
+become the next 4-way (or fewer-way) split.
 
-# 22. The Executor's Final Rule
-
-Before writing `DONE`, the Executor must be able to truthfully say:
-
-> I read the specification.
->
-> I implemented the specified behavior.
->
-> I checked the surrounding code.
->
-> I ran the required automated tests.
->
-> I deliberately tried to break the implementation.
->
-> I tested failure conditions.
->
-> I checked integration.
->
-> I checked performance where relevant.
->
-> I checked security and safety boundaries where relevant.
->
-> I reviewed my final diff with fresh eyes.
->
-> I fixed every defect I discovered.
->
-> I re-ran the affected verification after those fixes.
->
-> I have recorded the evidence in `STATE.md`.
-
-If any statement is false:
-
-**DO NOT MARK THE TASK `DONE`.**
-
----
-
-# 23. Core Philosophy
-
-This repository does not optimize for:
-
-**fast code generation.**
-
-It optimizes for:
-
-**correct software produced through controlled, auditable work.**
-
-Therefore:
-
-> **Correctness > speed.**
-
-> **Evidence > confidence.**
-
-> **Specification > intuition.**
-
-> **Testing > assumption.**
-
-> **Finding a bug before `DONE` is a success.**
-
-> **A task is not finished because the agent says it is finished.**
-
-> **A task is finished because the evidence demonstrates that it is finished.**
+This document is itself under Planner ownership. If something here is unclear, that is
+a `BLOCKED` entry addressed to the Planner — do not reinterpret these rules on your
+own.
