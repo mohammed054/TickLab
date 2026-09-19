@@ -69,6 +69,9 @@ Planner, before an Executor builds it.
 
 ## 3. Resuming Work — Read `STATE.md` First, Every Time
 
+*(Running as one of several parallel instances? See §9 for how task assignment
+works there — you still log to `STATE.md` on your own branch exactly as below.)*
+
 `STATE.md` (repo root) is the single append-only log of project progress. It is not a
 doc — it is a diary. Before writing any code in a new session, every Executor **must**:
 
@@ -123,8 +126,6 @@ cold>
 
 `STATUS` values:
 
-- `CLAIMED` — used only in multi-instance execution (§9); a single-line reservation
-  of a task, committed straight to `main`, before any real work begins.
 - `NOT_STARTED` — task exists in the roadmap, nothing built yet.
 - `IN_PROGRESS` — actively being worked, safe to resume mid-task.
 - `BLOCKED` — cannot proceed without a decision, missing dependency, or missing data.
@@ -245,126 +246,122 @@ A task is not done when it "looks right." It is done when:
 
 ## 9. Multi-Instance Parallel Execution
 
-Multiple Executor instances may work simultaneously. This requires three things
-beyond everything above: a **claim** step so two instances never take the same
-task, a **directory partition** so simultaneous instances rarely touch the same
-files, and a **git workflow** where independent commits don't collide.
+Multiple Executor instances can work at the same time. Coordination happens
+through **one shared SQLite database** (`coordination.py` + `coordination.db`),
+kept **outside all repo clones** and **outside git entirely** — git is used only
+for code, never for coordinating who is doing what. This replaced an earlier
+git-push-based "claim" scheme that cost real time fighting over a shared file;
+SQLite gives real atomic transactions instead of push/reject races, so claiming is
+now a non-event.
 
-### 9.1 Identity
+### 9.1 Where it lives and why not on the network drive
 
-Each running instance is given a short-lived label for the session:
-`executor-1`, `executor-2`, `executor-3`, `executor-4` (the project owner assigns
-these when launching each instance — see §9.5 for the exact kickoff prompt). This
-label is what goes in every `STATE.md` entry's `Agent:` field for that session
-(e.g., `Agent: executor-2 (claude-sonnet-4-6)`). It resets between sessions — it is
-not a permanent identity, just a way to tell concurrent work apart in the log.
-
-### 9.2 Git workflow — one worktree per instance, `STATE.md` claims arbitrated by git
-
-```
-main                          ← Planner-owned docs/, protected; Executors don't push here directly
- ├─ exec/executor-1           ← instance 1's branch
- ├─ exec/executor-2           ← instance 2's branch
- ├─ exec/executor-3           ← instance 3's branch
- └─ exec/executor-4           ← instance 4's branch
-```
-
-Set up once, from the repo root:
-
-```bash
-git checkout -b exec/executor-1 main && git worktree add ../ws-executor-1 exec/executor-1
-git checkout -b exec/executor-2 main && git worktree add ../ws-executor-2 exec/executor-2
-git checkout -b exec/executor-3 main && git worktree add ../ws-executor-3 exec/executor-3
-git checkout -b exec/executor-4 main && git worktree add ../ws-executor-4 exec/executor-4
-```
-
-Each instance is pointed at its own `../ws-executor-N` directory — a real, separate
-folder on disk, same repo, own branch, so four instances can run `cargo build` /
-`npm run dev` / edit files at the same time with zero filesystem collision.
-
-**The claim itself is a small, fast, separately-committed change to `STATE.md`,
-pushed and merged to `main` immediately, before any real work starts:**
-
-1. Instance pulls `main`, reads `STATE.md`, picks the next unclaimed task for its
-   lane (§9.3).
-2. Appends a `CLAIMED` entry (new status, used only for this purpose):
-   ```
-   ### [2.1.A] CLAIMED — Postgres DDL
-   Timestamp: <ISO-8601 UTC>
-   Agent: executor-1
-   Status: CLAIMED
-   ```
-3. Commits *only that change* to `STATE.md` on `main` directly (not on its exec
-   branch) and pushes immediately.
-4. If the push is rejected (someone else pushed first): pull, check whether the
-   task it wanted is now claimed by someone else. If yes, pick a different task and
-   retry step 2. If the conflict was on an unrelated task, just re-push.
-5. Once its claim is the one on `main`, the instance switches to its own
-   `exec/executor-N` branch and does the actual work there, logging normal
-   `IN_PROGRESS`/`DONE` entries to `STATE.md` on its own branch as it goes (these
-   merge into `main` at the end of the task, §9.4).
-
-This makes `git push`'s built-in conflict rejection the lock — two instances racing
-for the same task can't both land a `CLAIMED` entry on `main` first.
-
-### 9.3 Directory partitioning — assign lanes, not just tasks
-
-Picking tasks that touch disjoint parts of the tree is what actually prevents merge
-pain (the claim in §9.2 prevents duplicate *work*, this prevents merge *conflicts*).
-Use `docs/16-implementation-roadmap.md`'s Blocks as lanes and check which top-level
-directories each one owns before assigning two instances to run concurrently:
-
-| Block | Directories it owns | Safe to run alongside |
-|---|---|---|
-| 2.1 Data Models | `backend/*/models.py` (schema files only), migration files | 2.2, 2.6, 2.7 |
-| 2.2 Engine Abstraction | `engine/abstraction/` | 2.1, 2.6, 2.7 |
-| 2.6 Strategy Templates | `backend/experiments/app/templates/` | 2.1, 2.2, 2.7 |
-| 2.7 Data Pipeline | `backend/data/app/` | 2.1, 2.2, 2.6 |
-| 2.3, 2.4, 2.5, 2.8 | `engine/abstraction/`, `backend/jobs/` | **Not parallel with 2.2** — all depend on 2.2 landing on `main` first |
-
-Never assign two instances to Blocks that read "depends on" the same not-yet-merged
-Block. If Phase 2's dependency chain is unclear for a specific task, that's a
-`BLOCKED` entry, not a guess.
-
-### 9.4 Merging back
-
-An instance merges its branch to `main` at natural checkpoints — a `DONE` task, not
-mid-task — via a normal PR/fast-forward merge, small and frequent (finishing one
-Task, not batching an entire Block into one giant merge). Before merging, it rebases
-onto the latest `main` so it picks up any docs or `STATE.md` changes from other
-instances first. Whoever merges resolves `STATE.md` conflicts by **keeping both
-sides** (it's append-only, per `AGENTS.md` §3.2 — a "conflict" in an append-only log
-is almost always just "two people added different lines," not a real conflict).
-
-### 9.5 Kickoff prompt template (paste into each of your 4 instances)
+Place `coordination.py` and its `coordination.db` in one folder **outside** the
+`ws-executor-N` clones, and confirm that folder is on a **local disk**, not a
+network share or cloud-sync folder (SQLite's locking depends on real filesystem
+locks, which are unreliable over SMB/network drives and sync clients). If your
+repos live under a mapped drive (e.g. `Z:\...`), put the coordination folder
+somewhere verified local instead, e.g. `C:\ticklab-coord\`.
 
 ```
-You are executor-<N> in this project. Read AGENTS.md in full, including §9
-(Multi-Instance Parallel Execution). Your working directory is
-../ws-executor-<N>, on branch exec/executor-<N>.
-
-Before doing anything else:
-1. Pull main, read STATE.md bottom-up to see what's claimed/done.
-2. Per docs/16-implementation-roadmap.md and AGENTS.md §9.3, claim Block <X.Y>
-   (or the next unclaimed task in it) by committing a CLAIMED entry to STATE.md
-   on main, per §9.2. If it's already claimed, tell me and stop.
-3. Once your claim lands, switch to your branch and begin the task, logging
-   progress to STATE.md exactly per AGENTS.md §3.1.
-4. Stop and log BLOCKED rather than guessing on anything AGENTS.md §4 says to stop
-   on, or anything that touches a directory outside your assigned Block.
+C:\ticklab-coord\
+  coordination.py
+  coordination.db      ← created by `init`; never committed to any repo
 ```
 
-Fill in `<N>` and `<X.Y>` per instance. For your first real parallel run, once
-Phase 1 (Blocks 1.1–1.2) is done by a single instance, a good 4-way split is:
+Every instance runs the same script against the same `coordination.db`, e.g.:
+```powershell
+python C:\ticklab-coord\coordination.py claim executor-1
+```
+(or set `$env:TICKLAB_COORD_DB = "C:\ticklab-coord\coordination.db"` once per
+session so the plain filename form works from any working directory.)
 
-- executor-1 → Block 2.1 (Data Models)
-- executor-2 → Block 2.2 (Engine Abstraction Layer Core)
-- executor-3 → Block 2.6 (Strategy Templates)
-- executor-4 → Block 2.7 (Data Pipeline)
+### 9.2 The commands
 
-These four don't depend on each other (per §9.3's table), so all four can start the
-moment Phase 1 merges to `main`. Blocks 2.3/2.4/2.5/2.8 wait for 2.2 to merge, then
-become the next 4-way (or fewer-way) split.
+- `init` — creates and seeds the task table from the Blocks in
+  `docs/16-implementation-roadmap.md`. Idempotent; run it once, or every time,
+  it doesn't matter.
+- `claim <agent_id>` — atomically claims the next available task whose
+  dependency (if any) is already `done`. This is a single SQL transaction
+  (`BEGIN IMMEDIATE` + conditional `UPDATE`), so two instances calling this at the
+  same instant can never both get the same task — verified under a 20-way
+  concurrent stress test before this was adopted.
+- `done <agent_id> <block_id> "<note>"` / `blocked <agent_id> <block_id> "<reason>"`
+  / `heartbeat <agent_id> <block_id> "<note>"` — status updates. Only the owning
+  agent can update its own task (enforced by the script, not by convention).
+- `release <agent_id> <block_id>` — hands a claimed-but-not-yet-started task back
+  to `available` (use this if an instance crashes or restarts mid-claim).
+- `status` — prints the whole table. Safe to run from any instance or from your
+  own terminal at any time, including mid-run, to see who's doing what.
+
+### 9.3 What SQLite replaces vs. what stays the same
+
+- **Replaces**: the git-push `CLAIMED`-entry scheme, and the per-instance
+  `STATE.executor-N.md` files as the coordination signal.
+- **Stays the same**: each instance still works in its own clone
+  (`ws-executor-N`) on its own branch (`exec/executor-N`); still owns a specific
+  set of directories per the table below (SQLite prevents two instances grabbing
+  the same *task*, but disjoint directories are still what prevents two instances
+  producing *merge conflicts* on the same files); a human still merges finished
+  branches into `main` periodically (§9.5) — `coordination.db` tracks task
+  ownership, not code, and is never itself part of a merge.
+- Detailed narrative progress (what was actually built, decisions made, spec
+  sections read) still belongs in `STATE.md` — an instance writes that on its own
+  branch as normal per §3.1, since there's no contention on a file only that
+  branch touches; `coordination.db`'s `notes` column is just a short live-status
+  breadcrumb, not a replacement for the real log.
+
+### 9.4 Directory ownership by Block
+
+| Block | Directories it owns |
+|---|---|
+| 2.1 Data Models | `backend/*/models.py`, migration files |
+| 2.2 Engine Abstraction Layer | `engine/abstraction/` |
+| 2.6 Strategy Templates | `backend/experiments/app/templates/` |
+| 2.7 Data Pipeline | `backend/data/app/` |
+| 2.3 Execution Model Wiring | `engine/abstraction/` (depends on 2.2 being `done`) |
+| 2.4 Metrics & Stats Integration | `engine/abstraction/metrics/`, `backend/experiments/app/metrics/` (depends on 2.2) |
+| 2.5 Extended Event/Fill Recording | `engine/abstraction/` (depends on 2.2) |
+| 2.8 Gateway & Job Runner | `backend/gateway/`, `backend/jobs/` (depends on 2.2) |
+
+`claim` already enforces the dependency ordering (a dependent Block can't be
+claimed until its dependency is `done`); this table is what tells an instance
+which directories it's allowed to touch once it has its Block.
+
+### 9.5 Kickoff prompt template
+
+```
+You are executor-<N>. Your working directory is this one; you are on branch
+exec/executor-<N>. Read AGENTS.md in full, including section 9.
+
+1. Run: python C:\ticklab-coord\coordination.py claim executor-<N>
+   This prints your assigned Block ID. If it prints NONE, tell me and stop —
+   there is nothing unblocked left to claim right now.
+2. Look up that Block in docs/16-implementation-roadmap.md and its owned
+   directories in AGENTS.md section 9.4. Work only inside them.
+3. Log real progress to STATE.md on your OWN branch, per section 3.1, as normal.
+4. Send short heartbeats as you go:
+   python C:\ticklab-coord\coordination.py heartbeat executor-<N> <block_id> "<note>"
+5. If genuinely stuck on something outside your Block or spec, run:
+   python C:\ticklab-coord\coordination.py blocked executor-<N> <block_id> "<reason>"
+   and stop — don't guess, don't message another instance directly.
+6. When actually done, run:
+   python C:\ticklab-coord\coordination.py done executor-<N> <block_id> "<summary>"
+   and say so clearly so the human can merge your branch.
+```
+
+### 9.6 Merging — still a human step, still periodic
+
+`coordination.db` tells you *when* a Block is done and *what depends on what*; it
+doesn't merge anything. When `status` shows a Block as `done`:
+
+1. `git fetch` that instance's branch.
+2. Review the diff.
+3. Merge into `main`.
+4. Fold that branch's `STATE.md` entries into the canonical `STATE.md` on `main`.
+
+Do this per finished Block, not continuously — there's no need to merge more often
+than work actually completes.
 
 This document is itself under Planner ownership. If something here is unclear, that is
 a `BLOCKED` entry addressed to the Planner — do not reinterpret these rules on your
