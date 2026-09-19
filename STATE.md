@@ -60,3 +60,76 @@ Decisions," answers them (even briefly), then an Executor begins Phase 1, Block 
 Task A ("Repo scaffold") as defined in docs/16-implementation-roadmap.md.
 
 ---
+
+### [2.7] IN_PROGRESS — Data Pipeline (re-verified + Task G gap fixed)
+Timestamp: 2026-09-19T19:05:00Z
+Agent: executor-3 (claim via coordination.py; prior implementation by a previous
+session, commit 635a1b2, was never marked done in coordination.db)
+Status: IN_PROGRESS
+Files touched:
+  - backend/data/app/main.py
+  - backend/data/app/tests/test_pipeline_acceptance.py
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.7 (Tasks A–G + acceptance)
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2, §5.3
+  - docs/08-secondary-monitor-components.md §8.10
+  - docs/04-hftbacktest-engine-analysis.md §4.9
+  - docs/15-api-and-data-model-spec.md §15.5 (DataQualityReport)
+Summary: Claimed Block 2.7. Found the pipeline stages (Validation, Normalization,
+Order Book Reconstruction, Trade Alignment, Timestamp Validation, HftBacktest-
+format conversion) and the 🔴-blocks-backtest gate already implemented by a prior
+session and merged (commit 635a1b2), but that block was never closed out in
+coordination.db. Installed the docs/03 stack deps locally (fastapi, polars, httpx,
+pytest) and ran the acceptance suite: all 6 pre-existing tests pass. Reviewed Task
+G against the spec and found one real safety gap in my lane: POST /quality-report
+was a TODO stub returning a hardcoded all-green DataQualityReport for any
+dataset_id (and it read request.datasetId while the model field is dataset_id, so
+it would 500). Fixed it: added _events_quality() sharing the same check thresholds
+as /validate, and rewrote /quality-report to load the stored canonical events.json
+(content-addressed under ticklab_{dataset_id}, as written by Task F) and compute a
+real report; unknown/prepared-never dataset → 404. Added 3 tests: good dataset →
+real green report, corrupted stored dataset → report is not green and
+/validate-for-backtest blocks it, unknown id → 404. Full suite now 9/9 passing.
+Deviations from spec: none. Assumption (from prior session, unchanged): tick/lot
+sizes come from a built-in table for BTC/ETH/SOL pending Block 2.1's
+instrument_metadata DB lookup; HftBacktest-format writes a documented interim
+binary layout pending the vendor submodule checkout.
+Open questions for Planner: none.
+Next step: none — this work is complete; commit on exec/executor-3 and mark Block
+2.7 done in coordination.py.
+
+---
+
+### [2.7] DONE — Data Pipeline
+Timestamp: 2026-09-19T19:20:00Z
+Agent: executor-3
+Status: DONE
+Files touched:
+  - backend/data/app/main.py
+  - backend/data/app/tests/test_pipeline_acceptance.py
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.7 (Tasks A–G + acceptance)
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2, §5.3
+  - docs/08-secondary-monitor-components.md §8.10
+Summary: Block 2.7 closed out. All six stages (Validation → Normalization → Order
+Book Reconstruction → Trade Alignment → Timestamp Validation → HftBacktest-format
+conversion) plus Task G's DataQualityReport generator and 🔴-blocks-backtest gate
+were already implemented and merged (commit 635a1b2) but never marked done in
+coordination.db. This session re-ran the full acceptance suite (6/6 pre-existing
+tests pass) and closed the one remaining Task G gap: POST /quality-report was a
+stub returning a hardcoded all-green report for any dataset_id (and 500'd via
+request.datasetId). Rewrote it to compute a real report from the prepared
+dataset's stored canonical events.json (content-addressed ticklab_{dataset_id}),
+404 on unknown datasets, sharing _events_quality()'s check thresholds with
+/validate. Added three acceptance tests; suite is now 9/9. Committed as 3b293df on
+exec/executor-3 and pushed (1ce6f28..3b293df) for the human merge.
+Deviations from spec: none. Carried-over assumptions from the earlier session
+stand: built-in tick/lot table pending Block 2.1's instrument_metadata; interim
+binary layout pending vendor submodule checkout.
+Open questions for Planner: none.
+Next step: human merges exec/executor-3 into main per AGENTS.md §9.6; then Block
+2.7 is fully closed.
+
+---

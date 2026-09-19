@@ -82,6 +82,62 @@ class BacktestGateResponse(BaseModel):
     message: str
 
 
+def _events_quality(events: List[dict]) -> dict:
+    """Compute DataQualityReport fields from a list of canonical Event dicts.
+
+    Mirrors the per-check statuses (green/yellow/red) and thresholds used by the
+    /validate stage (docs/05 §5.2, docs/08 §8.10) so a report generated for a
+    previously-prepared dataset agrees with one generated at validation time:
+      - duplicate events: exact duplicates, green if 0, yellow if < 100, else red
+      - sequence gaps: forward timestamp jumps > 1s (unit-aware ns), green if 0,
+        yellow if < 50, else red
+      - missing intervals: count of > 1s gaps; red if duplicates exist or > 10
+        gaps (the same "has_critical_issues" rule as /validate), else green
+    """
+    total = len(events)
+    trades = sum(1 for e in events if e.get("type") == "trade")
+    book_updates = sum(1 for e in events if e.get("type") == "book_update")
+    snapshots = sum(1 for e in events if e.get("type") == "snapshot")
+
+    seen = set()
+    duplicates = 0
+    timestamps_ns = []
+    for e in events:
+        key = json.dumps(e, sort_keys=True, separators=(",", ":"))
+        if key in seen:
+            duplicates += 1
+        seen.add(key)
+        timestamps_ns.append(int(e.get("timestampNs", 0)))
+
+    timestamps_ns = sorted(timestamps_ns)
+    gaps = 0
+    for i in range(1, len(timestamps_ns)):
+        diff = timestamps_ns[i] - timestamps_ns[i - 1]
+        if diff > 1e9:
+            gaps += 1
+
+    has_critical = duplicates > 0 or gaps > 10
+
+    dup_status = "green" if duplicates == 0 else \
+        "yellow" if duplicates < 100 else "red"
+    gap_status = "green" if gaps == 0 else \
+        "yellow" if gaps < 50 else "red"
+    missing_status = "red" if has_critical else "green"
+
+    return {
+        "totalEvents": total,
+        "trades": trades,
+        "orderBookUpdates": book_updates,
+        "snapshots": snapshots,
+        "missingIntervals": {"count": gaps, "status": missing_status, "ranges": []},
+        "duplicateEvents": {"count": duplicates, "status": dup_status},
+        "sequenceGaps": {"count": gaps, "status": gap_status},
+        "timestampRange": (
+            [timestamps_ns[0], timestamps_ns[-1]] if timestamps_ns else [0, 0]
+        ),
+    }
+
+
 @app.get("/")
 async def root() -> dict:
     return {"message": "TickLab Data Pipeline API"}
@@ -959,29 +1015,42 @@ async def hftbacktest_format(file: UploadFile = File(...)) -> dict:
 
 @app.post("/quality-report")
 async def quality_report(request: PipelineRequest) -> DataQualityReport:
-    """Generate DataQualityReport for a dataset.
+    """Generate DataQualityReport for a previously-prepared dataset.
 
-    This endpoint generates the 🟢/🟡/🔴 quality report that the Data Quality panel
-    visualizes and that the Dataset Selector uses to block corrupt datasets from
-    backtest submission.
+    Here the "selected dataset" is the canonical events JSON the HftBacktest-format
+    stage (Task F) wrote under its content-addressed dir, `ticklab_{dataset_id}`
+    (docs/05 §5.3). We re-run the same checks the /validate stage applies so the
+    report shown by the Data Quality panel (docs/08 §8.10) is real, never a
+    hardcoded green — a dataset that was never prepared (unknown dataset_id) or
+    whose stored events fail a check must not silently read as healthy. The
+    🔴-blocks-backtest rule is enforced downstream by /validate-for-backtest.
     """
 
-    # TODO: Generate actual report from dataset storage
-    # - Read the dataset from object storage
-    # - Run validation checks
-    # - Return DataQualityReport with proper statuses
+    out_dir = os.path.join(tempfile.gettempdir(), f"ticklab_{request.dataset_id}")
+    events_path = os.path.join(out_dir, "events.json")
+    if not os.path.exists(events_path):
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No prepared dataset {request.dataset_id}; "
+                "run the pipeline stages first (docs/05 §5.2)"
+            ),
+        )
 
+    with open(events_path, "r", encoding="utf-8") as f:
+        stored = json.load(f)
+    events = stored.get("events", [])
+    if not events:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dataset {request.dataset_id} has no stored events",
+        )
+
+    quality = _events_quality(events)
     return DataQualityReport(
-        datasetId=request.datasetId,
-        totalEvents=0,
-        trades=0,
-        orderBookUpdates=0,
-        snapshots=0,
-        missingIntervals={"count": 0, "status": "green", "ranges": []},
-        duplicateEvents={"count": 0, "status": "green"},
-        sequenceGaps={"count": 0, "status": "green"},
-        timestampRange=[0, 0],
-        fileSizeBytes=0,
+        datasetId=request.dataset_id,
+        **quality,
+        fileSizeBytes=os.path.getsize(events_path),
         source=request.source,
         normalizationVersion="v1.0.0",
         tickSize=0.01,
