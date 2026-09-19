@@ -1,3 +1,0 @@
-[submodule "engine/vendor/hftbacktest"]
-	path = engine/vendor/hftbacktest
-	url = https://github.com/nkaz001/hftbacktest.git
