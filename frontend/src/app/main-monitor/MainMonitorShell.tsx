@@ -3,6 +3,7 @@ import { GlobalHeader } from '../../features/header/GlobalHeader'
 import { useMarketTicker } from '../../features/header/useMarketTicker'
 import { PriceChart } from '../../features/price-chart/PriceChart'
 import { fixtureTickSize } from '../../features/price-chart/fixtureData'
+import { OrderBookLadder } from '../../features/order-book/OrderBookLadder'
 
 export function MainMonitorShell() {
   // Symbol/exchange always from the Sync Bus (docs/14 §14.12 — never hardcoded).
@@ -46,9 +47,7 @@ export function MainMonitorShell() {
           </div>
         </section>
         <aside style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ flex: 1, background: '#1a1a1a', borderRadius: '4px', border: '1px solid #333' }}>
-            Order Book Ladder Area
-          </div>
+<OrderBookLadder />
           <div style={{ flex: 1, background: '#1a1a1a', borderRadius: '4px', border: '1px solid #333' }}>
             Order Flow / Microstructure Area
           </div>
