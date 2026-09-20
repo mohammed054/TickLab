@@ -1,4 +1,6 @@
-import { useWorkspaceContext } from '../../shared/sync-bus'
+import { useWorkspaceContext } from "../../shared/sync-bus"
+import { StrategyPanel } from "../../features/strategy-editor/StrategyPanel"
+import { ParametersPanel } from "../../features/parameters/ParametersPanel"
 
 export function SecondaryMonitorShell() {
   const { symbol, exchange, environment, strategy, dataset, experiment, activeTab } = useWorkspaceContext()
@@ -62,8 +64,8 @@ export function SecondaryMonitorShell() {
         <div style={{ background: '#1a1a1a', borderRadius: '4px', border: '1px solid #333', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
           {(() => {
             switch (activeTab?.secondaryMonitor) {
-              case 'strategy': return 'Strategy Editor — Monaco Integration'
-              case 'parameters': return 'Parameter Form — Generated from Schema'
+              case 'strategy': return <StrategyPanel strategyName={strategy?.name || 'Unnamed'} version={strategy?.version || '0.0.1'} status={strategy?.status || 'DRAFT'} environment={environment} />
+              case 'parameters': return <ParametersPanel parameters={strategy?.parameters || []} onParameterChange={() => {}} />
               case 'dataset': return 'Dataset Selector — with Quality Report'
               case 'backtest': return 'Backtest Configuration & Progress'
               case 'results': return 'Backtest Results — Headline Metrics'
