@@ -9,6 +9,8 @@
 //!   services program against.
 //! - [`types`]: normalized types mirroring `docs/15` §15.5.
 //! - [`error`]: typed errors; no panics on fallible paths (`AGENTS.md` §5.1).
+//! - [`execution_model`]: Block 2.3 resolution of the §8.7 execution model into
+//!   vendored `hftbacktest` model types (`docs/04` §4.4).
 //! - [`hftbacktest_impl`]: the sole translator between normalized types and
 //!   `hftbacktest` native types.
 //! - [`grpc_service`]: the `EngineService` gRPC host; `backend/jobs` is the
@@ -16,6 +18,7 @@
 
 pub mod contract;
 pub mod error;
+pub mod execution_model;
 pub mod grpc_service;
 pub mod hftbacktest_impl;
 pub mod types;

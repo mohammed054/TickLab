@@ -22,6 +22,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::contract::SimulatorContract;
 use crate::error::EngineError;
+use crate::execution_model::{resolve_execution_model, ResolvedExecutionModel};
 use crate::types::{
     BacktestHandle, BacktestProgress, BacktestRequest, BacktestResult, BacktestStatus,
     DataQualityReport, DatasetRef, EventStream, PreparedDataset,
@@ -48,6 +49,10 @@ pub struct HftbacktestConfig {
     pub market_depth: MarketDepthKind,
     /// Engine version string recorded on results (`docs/10` §10.3).
     pub engine_version: String,
+    /// Block 2.3: the §8.7 execution model resolved to vendor selections
+    /// (`docs/04` §4.4; see `execution_model.rs`). Applied to the vendor
+    /// `Asset` builders when the execution path (`TODO(2.2)` below) lands.
+    pub execution: ResolvedExecutionModel,
 }
 
 impl Default for HftbacktestConfig {
@@ -55,6 +60,7 @@ impl Default for HftbacktestConfig {
         Self {
             market_depth: MarketDepthKind::default(),
             engine_version: env!("CARGO_PKG_VERSION").to_string(),
+            execution: ResolvedExecutionModel::default(),
         }
     }
 }
@@ -62,15 +68,20 @@ impl Default for HftbacktestConfig {
 impl HftbacktestConfig {
     /// Build simulator config from a normalized request.
     ///
-    /// Full execution-model application (fee/queue/latency wiring per
-    /// `docs/04` §4.4) is Block 2.3; the request's execution model is validated
-    /// for shape here and carried for that wiring.
+    /// Validates request shape AND resolves the §8.7 execution model
+    /// (fee/queue/latency/exchange/order-type selections per `docs/04` §4.4).
     pub fn from_request(req: &BacktestRequest) -> Result<Self, EngineError> {
         validate_request(req)?;
         Ok(Self {
             market_depth: MarketDepthKind::default(),
             engine_version: env!("CARGO_PKG_VERSION").to_string(),
+            execution: resolve_execution_model(&req.execution_model, &req.parameters)?,
         })
+    }
+
+    /// The resolved §8.7 execution model for this config.
+    pub fn execution_model(&self) -> &ResolvedExecutionModel {
+        &self.execution
     }
 }
 

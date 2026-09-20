@@ -16,10 +16,11 @@ use crate::contract::SimulatorContract;
 use crate::error::EngineError;
 use crate::hftbacktest_impl::HftbacktestEngine;
 use crate::types::{
-    BacktestHandle, BacktestProgress, BacktestRequest, BacktestResult, BacktestStatus, DataQualityReport,
-    DatasetRef, EventType, ExecutionModelConfig, HeadlineMetrics, LatencyModelKind,
-    MarketEvent, NamedParameter, OrderType, ParameterValue, PipelineProgress,
-    PreparedDataset, QualityCount, QualityStatus, RiskLimitsConfig, Side, StrategyRef, TimestampRange,
+    BacktestHandle, BacktestProgress, BacktestRequest, BacktestResult, BacktestStatus,
+    DataQualityReport, DatasetRef, EventType, ExecutionModelConfig, HeadlineMetrics,
+    LatencyModelKind, MarketEvent, NamedParameter, OrderType, ParameterValue, PipelineProgress,
+    PreparedDataset, QualityCount, QualityStatus, RiskLimitsConfig, Side, StrategyRef,
+    TimestampRange,
 };
 
 /// Compiled protobuf definitions (`proto/engine.proto`, via `build.rs`).
@@ -38,9 +39,14 @@ impl EngineService {
     }
 
     /// Serve the `EngineService` on `addr` until shutdown.
-    pub async fn serve(engine: Arc<HftbacktestEngine>, addr: std::net::SocketAddr) -> Result<(), tonic::transport::Error> {
+    pub async fn serve(
+        engine: Arc<HftbacktestEngine>,
+        addr: std::net::SocketAddr,
+    ) -> Result<(), tonic::transport::Error> {
         tonic::transport::Server::builder()
-            .add_service(proto::engine_service_server::EngineServiceServer::new(Self::new(engine)))
+            .add_service(proto::engine_service_server::EngineServiceServer::new(
+                Self::new(engine),
+            ))
             .serve(addr)
             .await
     }
@@ -92,7 +98,10 @@ impl proto::engine_service_server::EngineService for EngineService {
         request: Request<proto::BacktestRequest>,
     ) -> Result<Response<proto::BacktestHandle>, Status> {
         let req = from_proto_request(request.into_inner())?;
-        let handle = self.engine.start_backtest(req).map_err(engine_error_to_status)?;
+        let handle = self
+            .engine
+            .start_backtest(req)
+            .map_err(engine_error_to_status)?;
         let id = handle_id_of(&handle);
         Ok(Response::new(proto::BacktestHandle { handle_id: id }))
     }
@@ -132,7 +141,10 @@ impl proto::engine_service_server::EngineService for EngineService {
         request: Request<proto::BacktestHandle>,
     ) -> Result<Response<proto::BacktestResult>, Status> {
         let handle = self.resolve(&request.into_inner().handle_id)?;
-        let result = self.engine.collect_results(&handle).map_err(engine_error_to_status)?;
+        let result = self
+            .engine
+            .collect_results(&handle)
+            .map_err(engine_error_to_status)?;
         Ok(Response::new(to_proto_result(&result)))
     }
 
@@ -141,7 +153,9 @@ impl proto::engine_service_server::EngineService for EngineService {
         request: Request<proto::BacktestHandle>,
     ) -> Result<Response<proto::Empty>, Status> {
         let handle = self.resolve(&request.into_inner().handle_id)?;
-        self.engine.cancel(&handle).map_err(engine_error_to_status)?;
+        self.engine
+            .cancel(&handle)
+            .map_err(engine_error_to_status)?;
         Ok(Response::new(proto::Empty {}))
     }
 }
@@ -154,7 +168,9 @@ impl EngineService {
         if handle_id.trim().is_empty() {
             return Err(Status::invalid_argument("handle_id must not be empty"));
         }
-        self.engine.lookup(handle_id).map_err(engine_error_to_status)
+        self.engine
+            .lookup(handle_id)
+            .map_err(engine_error_to_status)
     }
 }
 
@@ -164,8 +180,12 @@ fn handle_id_of(handle: &Arc<crate::hftbacktest_impl::HftbacktestHandle>) -> Str
 
 fn engine_error_to_status(err: EngineError) -> Status {
     match err {
-        EngineError::InvalidDataset(msg) => Status::invalid_argument(format!("invalid dataset: {msg}")),
-        EngineError::InvalidRequest(msg) => Status::invalid_argument(format!("invalid request: {msg}")),
+        EngineError::InvalidDataset(msg) => {
+            Status::invalid_argument(format!("invalid dataset: {msg}"))
+        }
+        EngineError::InvalidRequest(msg) => {
+            Status::invalid_argument(format!("invalid request: {msg}"))
+        }
         EngineError::UnknownHandle(msg) => Status::not_found(format!("unknown handle: {msg}")),
         EngineError::Unsupported(msg) => Status::failed_precondition(msg),
         EngineError::Engine(msg) => Status::internal(msg),
@@ -359,7 +379,8 @@ fn from_proto_request(m: proto::BacktestRequest) -> Result<BacktestRequest, Stat
         initial_capital: m.initial_capital,
         execution_model: execution_model
             .ok_or_else(|| Status::invalid_argument("execution_model is required"))?,
-        risk_limits: risk_limits.ok_or_else(|| Status::invalid_argument("risk_limits is required"))?,
+        risk_limits: risk_limits
+            .ok_or_else(|| Status::invalid_argument("risk_limits is required"))?,
         random_seed: m.random_seed,
         iterations: m.iterations,
     })
@@ -381,9 +402,9 @@ fn from_proto_execution(m: proto::ExecutionModelConfig) -> ExecutionModelConfig 
         taker_fee_pct: m.taker_fee_pct,
         tick_size: m.tick_size,
         lot_size: m.lot_size,
-        latency_model: match proto::LatencyModelKind::try_from(m.latency_model).unwrap_or(
-            proto::LatencyModelKind::Unspecified,
-        ) {
+        latency_model: match proto::LatencyModelKind::try_from(m.latency_model)
+            .unwrap_or(proto::LatencyModelKind::Unspecified)
+        {
             proto::LatencyModelKind::Fixed => LatencyModelKind::Fixed,
             proto::LatencyModelKind::Empirical => LatencyModelKind::Empirical {
                 data_file: m.latency_data_file.clone(),
