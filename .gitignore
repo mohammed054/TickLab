@@ -2,6 +2,8 @@
 /target/
 /*.pid
 /node_modules/
+frontend/node_modules/
+frontend/dist/
 
 # Rust build artifacts and locks
 engine/abstraction/target/

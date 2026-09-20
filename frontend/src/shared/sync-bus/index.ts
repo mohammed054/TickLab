@@ -96,54 +96,76 @@ type WorkspaceStore = WorkspaceContext & {
   syncFromServer: (patch: Partial<WorkspaceContext>) => void
 }
 
+/** Gateway WebSocket URL (docs/15 §15.3: single connection per client session). */
+export const GATEWAY_WS_URL = 'ws://localhost:8080/api/v1/ws?session=dev-session'
+
+/** Originating window for workspace.sync patches (docs/15 §15.3.4). */
+export type ShellOrigin = 'main' | 'secondary'
+
+export function getShellOrigin(): ShellOrigin {
+  try {
+    return new URLSearchParams(window.location.search).get('shell') === 'secondary'
+      ? 'secondary'
+      : 'main'
+  } catch {
+    return 'main'
+  }
+}
+
 let ws: WebSocket | null = null
 let reconnectAttempts = 0
 const MAX_RECONNECT_ATTEMPTS = 10
 const RECONNECT_BASE_DELAY = 1000
 
-function connectWebSocket(set: (partial: WorkspaceStore | ((state: WorkspaceStore) => WorkspaceStore)) => void) {
-  const wsUrl = `ws://localhost:8080/api/v1/ws?session=dev-session`
-  
-  ws = new WebSocket(wsUrl)
-  
+function connectWebSocket() {
+  // NOTE: use the store's setState directly (not a single action creator) so both
+  // object patches and functional updates behave like a normal zustand set.
+  const setState = useWorkspaceContext.setState
+
+  ws = new WebSocket(GATEWAY_WS_URL)
+
   ws.onopen = () => {
     console.log('[SyncBus] WebSocket connected')
-    set({ isConnected: true })
+    setState({ isConnected: true })
     reconnectAttempts = 0
-    
-    ws!.send(JSON.stringify({
-      type: 'subscribe',
-      topic: 'workspace.sync'
-    }))
+
+    // Wire shape per backend/gateway protocol.rs + docs/15 §15.3:
+    // {"action":"subscribe","topic":"..."} (action-tagged, not {"type":...}).
+    ws!.send(JSON.stringify({ action: 'subscribe', topic: 'workspace.sync' }))
   }
-  
+
   ws.onmessage = (event) => {
     try {
       const message = JSON.parse(event.data)
-      
-      if (message.type === 'workspace.sync' && message.payload) {
-        set((state) => ({
+
+      // Fanned-out patch per docs/15 §15.3.4: {topic, origin, patch}.
+      if (message && message.topic === 'workspace.sync' && message.patch && typeof message.patch === 'object') {
+        setState((state) => ({
           ...state,
-          ...message.payload
+          ...message.patch
         }))
+      } else if (message && message.error) {
+        // Typed wire error (docs/14 §14.9) — logged, connection stays open.
+        console.warn('[SyncBus] gateway error:', message.error)
       }
+      // Subscribe acks ({type:'subscribed'|'unsubscribed', topic}) need no action.
     } catch (e) {
       console.error('[SyncBus] Failed to parse message:', e)
     }
   }
-  
+
   ws.onclose = () => {
     console.log('[SyncBus] WebSocket disconnected')
-    set({ isConnected: false })
-    
+    setState({ isConnected: false })
+
     if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       const delay = RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts)
       reconnectAttempts++
       console.log(`[SyncBus] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`)
-      setTimeout(() => connectWebSocket(set), delay)
+      setTimeout(() => connectWebSocket(), delay)
     }
   }
-  
+
   ws.onerror = (error) => {
     console.error('[SyncBus] WebSocket error:', error)
   }
@@ -153,7 +175,7 @@ export const useWorkspaceContext = create<WorkspaceStore>()(
   devtools(
     (set) => ({
       ...initialContext,
-      
+
       setSymbol: (symbol) => set({ symbol }),
       setExchange: (exchange) => set({ exchange }),
       setEnvironment: (environment) => set({ environment }),
@@ -167,9 +189,9 @@ export const useWorkspaceContext = create<WorkspaceStore>()(
       setReplay: (replay) => set({ replay }),
       setActiveTab: (activeTab) => set({ activeTab: { secondaryMonitor: activeTab } }),
       setConnected: (isConnected) => set({ isConnected }),
-      
+
       reset: () => set(initialContext),
-      
+
       syncFromServer: (patch) => set((state) => ({ ...state, ...patch }))
     }),
     { name: 'WorkspaceContext' }
@@ -177,10 +199,8 @@ export const useWorkspaceContext = create<WorkspaceStore>()(
 )
 
 export function initSyncBus() {
-  const store = useWorkspaceContext.getState()
-  connectWebSocket(store.setConnected as any)
-  
-  const originalSet = store
+  connectWebSocket()
+
   return () => {
     if (ws) {
       ws.close()
@@ -189,12 +209,20 @@ export function initSyncBus() {
   }
 }
 
-export function publishWorkspaceChange(patch: Partial<WorkspaceContext>) {
+/**
+ * Publish a partial WorkspaceContext patch to the other window(s) in the session.
+ * Wire shape per docs/15 §15.3.4 + backend/gateway protocol.rs:
+ * {action:'publish', topic:'workspace.sync', origin, patch}.
+ * The gateway fans out to every OTHER connection in-session (sender excluded),
+ * so callers must also apply the change locally via a store action.
+ */
+export function publishWorkspaceChange(patch: Partial<WorkspaceContext>, origin: ShellOrigin = getShellOrigin()) {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
-      type: 'publish',
+      action: 'publish',
       topic: 'workspace.sync',
-      payload: patch
+      origin,
+      patch
     }))
   }
 }

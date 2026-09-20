@@ -674,3 +674,39 @@ Summary: Claimed Block 5.1 via coordination.py. This block requires standing up 
 Deviations from spec: none — blocked by design.
 Open questions for Planner: None for this block — OD-1 must be answered by the project owner before Phase 5 work can begin.
 Next step: Wait for project owner to resolve OD-1 (and OD-2/OD-3/OD-4 per §0). Once resolved, Planner will update docs/ and coordination system will make Phase 5 blocks claimable.
+
+---
+
+### [3.2] DONE — Header and Chart (GlobalHeader + PriceChart)
+Timestamp: 2026-09-20T17:30:00Z
+Agent: executor-1 (opencode)
+Status: DONE
+Files touched:
+  - frontend/src/features/header/GlobalHeader.tsx (new)
+  - frontend/src/features/header/useMarketTicker.ts (new)
+  - frontend/src/features/price-chart/types.ts (new)
+  - frontend/src/features/price-chart/fixtureData.ts (new)
+  - frontend/src/features/price-chart/indicators.ts (new)
+  - frontend/src/features/price-chart/PriceChart.tsx (new)
+  - frontend/src/features/price-chart/PriceChartOverlay.tsx (new)
+  - frontend/src/shared/design-system/tokens.css (new)
+  - frontend/src/shared/sync-bus/index.ts (protocol-shape repair)
+  - frontend/src/app/main-monitor/MainMonitorShell.tsx (mount header + chart)
+  - frontend/src/app/single-display/SingleDisplayShell.tsx (remove dead code)
+  - frontend/src/main.tsx (import tokens.css)
+  - .gitignore (ignore frontend/node_modules, frontend/dist)
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 3.2
+  - docs/07-main-monitor-components.md §7.1, §7.2.1–§7.2.7, §7.17–§7.18
+  - docs/02-two-monitor-workspace-spec.md §2.3.1, §2.3.2, §2.3.3, §2.6
+  - docs/03-tech-stack-and-repo-structure.md §3.3, §3.5, §3.6
+  - docs/09-analytics-and-investigation-suite.md §9.11
+  - docs/11-design-system.md §11.1–§11.3, §11.5–§11.6
+  - docs/12-execution-modes-and-risk.md §12.1
+  - docs/14-cross-cutting-systems.md §14.6, §14.7, §14.9, §14.11, §14.12
+  - docs/15-api-and-data-model-spec.md §15.1, §15.3, §15.3.4, §15.5
+  - backend/gateway/src/protocol.rs, ws.rs (read-only protocol verification)
+Summary: Task A — GlobalHeader with the exact §7.1 props and left-to-right field order, UTC HH:MM:SS.mmm clock, three-state dots (green/red booleans; yellow derived honestly as never-received-data-yet), flat sign-only change coloring (§11.1), LIVE warning-tint badge (§12.1), latency null renders — (§14.7). useMarketTicker subscribes to market.{symbol}.ticker per §15.3; the Block 2.8 gateway answers market.* with unknown_topic until a later phase, so all fields stay null and the header shows dashes — no fabricated numbers. Task B — PriceChart candle/line/area/tick/trades modes on lightweight-charts v4 with full §7.2.3 hover tooltip (OHLCV, trade count, buy/sell, delta, spread avg, intra-candle σ in bps). Task C — timeframe selector incl. custom popover (local state, §2.3.3) with client-side OHLCV aggregation; overlays VWAP/MA(period)/EMA(period)/volume/realized-vol close-to-close annualized per §9.11/CVD/mid-price, persisted per-user in localStorage (no prefs endpoint in §15.2 yet); book/strategy/event overlays present but disabled with reason tooltips (§7.2.1, §14.7); crosshair hover publishes throttled ≤20Hz timestamp previews and click commits timestamp via the Sync Bus (§7.2.5, §2.3.2 items 3–4); remote timestamp changes animate-jump without snapping (§7.2.6) plus context menu (jump-to-timestamp/latest, copy, screenshot); zoom/pan native, F fit, Esc clears lock, fullscreen toggle, canvas PNG screenshot, reset preserves prefs (§7.2.7). PriceChartOverlay canvas syncs to the visible range and draws §11.5 lifecycle marks (empty with no strategy). Chart data is a deterministic seeded fixture behind a FIXTURE badge until a candle/event source exists. Verified: npm run build green (350 kB bundle), npx tsc --noEmit clean.
+Deviations from spec: none in behavior. Repairs inside frontend/ lane, all required for this block: (1) sync-bus WS frames changed {type:...} to action-tagged {action:subscribe/publish,...} with {topic,origin,patch} envelope and topic-based inbound parsing — the Block 3.1 shapes are rejected by backend/gateway protocol.rs (§15.3), so crosshair commits could never reach the other monitor; also fixed initSyncBus passing a single action creator as the generic set (isConnected would have become an object/function, breaking header dots); keeps all 3.1 store exports. (2) Removed dead isSecondaryActive variable + now-unused store import in SingleDisplayShell (blocked tsc clean). (3) .gitignore covers frontend/node_modules + frontend/dist. Assumptions (smallest, flagged): fixture candles labeled FIXTURE; tickSize from fixture magnitude until instrument_metadata is served; overlay prefs in localStorage; F/Esc handled chart-scoped until the central useKeyboardShortcuts lands in Block 4.8 (§14.6); preset switcher (§14.11) deferred to the block that owns panel visibility.
+Open questions for Planner: (1) workspace.sync wire carries preview and commit as identical {timestamp} patches — confirm whether a preview/commit flag should be added to the §15.3.4 envelope so Secondary can preview without navigating, or keep single-field semantics. (2) Confirm localStorage-first overlay prefs with later user_chart_prefs server sync. (3) Confirm MA default 20 / EMA default 12 (spec: configurable, no defaults given).
+Next step: human merges exec/executor-1 per AGENTS.md §9.6 (uncommitted on this branch). Block 3.3 (Order Book) unblocked — claimable via coordination.py.

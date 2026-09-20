@@ -1,12 +1,8 @@
 import { MainMonitorShell } from '../main-monitor/MainMonitorShell'
 import { SecondaryMonitorShell } from '../secondary-monitor/SecondaryMonitorShell'
-import { useWorkspaceContext } from '../../shared/sync-bus'
 
 export function SingleDisplayShell() {
-  const { activeTab } = useWorkspaceContext()
   const [currentView, setCurrentView] = React.useState<'main' | 'secondary'>('main')
-
-  const isSecondaryActive = activeTab?.secondaryMonitor !== undefined && activeTab?.secondaryMonitor !== 'strategy'
 
   return (
     <div className="single-display-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0d0d0d' }}>
