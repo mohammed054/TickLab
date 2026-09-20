@@ -7,10 +7,14 @@ edition = "2021"
 # Vendored hftbacktest crate — the core engine types and simulation logic
 # (docs/04). Points at the `hftbacktest` package inside the upstream workspace
 # (engine/vendor/hftbacktest is a virtual manifest; the crate lives in its
-# `hftbacktest/` subdirectory). Block 2.3 fix: the original
-# `path = "../vendor/hftbacktest"` never resolved and the crate could not
-# compile. Only the `backtest` feature is enabled — the `live` connector/IPC
-# stack is not needed by the abstraction layer (Phase 5 concern, docs/06).
+# `hftbacktest/` subdirectory). The vendor dir holds the full upstream workspace
+# at pinned commit 5f3ec40 (Block 1.1 layout per docs/04 §4.2); the crate itself
+# is the workspace member `hftbacktest/`.
+# Block 2.3 fix / Block 2.2 decision: the original `path = "../vendor/hftbacktest"`
+# never resolved and the crate could not compile. Only the `backtest` feature is
+# enabled — the `live` connector/IPC stack (iceoryx2, tokio "full", rand/toml/serde)
+# is not needed by the abstraction layer (Phase 5 concern, docs/06, docs/12).
+# Disabling it keeps the dependency tree honest and the build small.
 hftbacktest = { path = "../vendor/hftbacktest/hftbacktest", default-features = false, features = ["backtest"] }
 
 # Error handling
@@ -21,8 +25,15 @@ thiserror = { version = "1.0" }
 # server; tokio-stream provides the server-streaming response types.
 tonic = { version = "0.11" }
 prost = "0.12"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tokio-stream = { version = "0.1", features = ["sync"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tokio-stream = { version = "0.1", features = ["sync", "net"] }
 
 [build-dependencies]
 tonic-build = { version = "0.11" }
+
+# Lint policy (AGENTS.md §2 quality bar): pedantic advises-by-default so
+# deviations are visible on every `cargo clippy`; nursery is deliberately
+# allowed so unfinished-opinion lints never gate work.
+[lints.clippy]
+pedantic = "warn"
+nursery = "allow"

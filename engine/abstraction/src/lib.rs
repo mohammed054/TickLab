@@ -13,6 +13,8 @@
 //!   vendored `hftbacktest` model types (`docs/04` §4.4).
 //! - [`hftbacktest_impl`]: the sole translator between normalized types and
 //!   `hftbacktest` native types.
+//! - [`metrics`]: headline metrics over the Recorder series (`docs/09` §9.1),
+//!   ported from upstream's Polars `Metric` classes (`docs/04` §4.7).
 //! - [`grpc_service`]: the `EngineService` gRPC host; `backend/jobs` is the
 //!   primary client.
 
@@ -21,4 +23,5 @@ pub mod error;
 pub mod execution_model;
 pub mod grpc_service;
 pub mod hftbacktest_impl;
+pub mod metrics;
 pub mod types;
