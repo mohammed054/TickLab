@@ -16,6 +16,9 @@
 
 pub mod contract;
 pub mod error;
+pub mod event_analytics;
+pub mod extended_events;
+pub mod extended_recorder;
 pub mod grpc_service;
 pub mod hftbacktest_impl;
 pub mod types;

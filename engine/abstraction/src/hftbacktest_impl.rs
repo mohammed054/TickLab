@@ -22,9 +22,10 @@ use std::sync::{Arc, Mutex};
 
 use crate::contract::SimulatorContract;
 use crate::error::EngineError;
+use crate::extended_events::{ExtendedEvent, ExtendedEventType};
 use crate::types::{
     BacktestHandle, BacktestProgress, BacktestRequest, BacktestResult, BacktestStatus,
-    DataQualityReport, DatasetRef, EventStream, PreparedDataset,
+    DataQualityReport, DatasetRef, EventStream, PreparedDataset, Side,
 };
 
 /// Engine-internal market-depth implementation choice (`docs/04` §4.4).
@@ -80,6 +81,12 @@ pub struct HftbacktestHandle {
     progress: Mutex<BacktestProgress>,
     events: Mutex<EventStream>,
     result: Mutex<Option<BacktestResult>>,
+    /// Extended order/fill stream captured via the Task A hooks
+    /// (`docs/05` §5.5; hook-point map in `crate::extended_events`).
+    /// Populated observation-only alongside the run; drained into the
+    /// `{experiment_id}/extended_events` artifact (see
+    /// `crate::extended_recorder`).
+    extended: Mutex<Vec<ExtendedEvent>>,
 }
 
 impl HftbacktestHandle {
@@ -102,6 +109,7 @@ impl HftbacktestHandle {
             progress: Mutex::new(progress),
             events: Mutex::new(Vec::new()),
             result: Mutex::new(None),
+            extended: Mutex::new(Vec::new()),
         }
     }
 
@@ -287,4 +295,69 @@ fn validate_request(req: &BacktestRequest) -> Result<(), EngineError> {
         ));
     }
     Ok(())
+}
+
+// --- Block 2.5: extended-stream capture bridge (Task A hooks, Task B) ---
+//
+// Per `docs/05` §5.1 this file is the only place allowed to translate between
+// `hftbacktest` native types and the normalized extended-stream types. The
+// capture itself is observation-only: recording an event never mutates the
+// simulated order/bus state (Task A requirement).
+
+impl HftbacktestHandle {
+    /// Capture one extended-stream row on this handle (hooks H1–H7).
+    ///
+    /// Validates the row and enforces non-decreasing timestamps, mirroring
+    /// `ExtendedRecorder::record` so handles and standalone recorders can
+    /// never diverge on acceptance rules.
+    pub fn record_extended(&self, event: ExtendedEvent) -> Result<(), EngineError> {
+        event.validate()?;
+        let mut extended = self
+            .extended
+            .lock()
+            .map_err(|_| EngineError::Engine("extended stream lock poisoned".to_string()))?;
+        if let Some(last) = extended.last() {
+            if event.timestamp_ns < last.timestamp_ns {
+                return Err(EngineError::InvalidEvent(format!(
+                    "out-of-order event: {} < last {}",
+                    event.timestamp_ns, last.timestamp_ns
+                )));
+            }
+        }
+        extended.push(event);
+        Ok(())
+    }
+
+    /// Clone the captured extended stream for this handle.
+    pub fn extended_events(&self) -> Vec<ExtendedEvent> {
+        self.extended.lock().map(|e| e.clone()).unwrap_or_default()
+    }
+}
+
+/// Map a vendored order-response `Status` to the extended-stream event kind
+/// (hook H6: `Local::process_recv_order_<USE_HANDLER=true>` observes
+/// `hftbacktest::types::Order` values carrying these statuses).
+///
+/// Non-terminal / request-side statuses (`None`, `New`, `Replaced`,
+/// `Unsupported`) yield `None`: submissions are observed at hooks H1–H2,
+/// never inferred from responses.
+pub fn extended_event_type_of(status: hftbacktest::types::Status) -> Option<ExtendedEventType> {
+    match status {
+        hftbacktest::types::Status::Filled => Some(ExtendedEventType::Fill),
+        hftbacktest::types::Status::PartiallyFilled => Some(ExtendedEventType::PartialFill),
+        hftbacktest::types::Status::Canceled => Some(ExtendedEventType::Cancel),
+        hftbacktest::types::Status::Rejected => Some(ExtendedEventType::Reject),
+        hftbacktest::types::Status::Expired => Some(ExtendedEventType::Expire),
+        _ => None,
+    }
+}
+
+/// Map a vendored `Side` to the normalized [`Side`] (`docs/15` §15.5).
+/// `None`/`Unsupported` (depth events without a side) map to `None`.
+pub fn normalize_vendor_side(side: hftbacktest::types::Side) -> Option<Side> {
+    match side {
+        hftbacktest::types::Side::Buy => Some(Side::Bid),
+        hftbacktest::types::Side::Sell => Some(Side::Ask),
+        _ => None,
+    }
 }

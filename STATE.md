@@ -94,3 +94,72 @@ Next step: human merges branch exec/executor-4 (this session only adds the accep
 test plus this STATE.md folding); no remaining 2.6 work.
 
 ---
+
+### [2.5] IN_PROGRESS — Extended Event/Fill Recording (implementation complete, pending merge)
+Timestamp: 2026-09-20T14:30:00Z
+Agent: executor-4 (Muse Spark, ws-executor-4, branch exec/executor-4)
+Status: IN_PROGRESS
+Files touched:
+  - engine/abstraction/src/extended_events.rs (new)
+  - engine/abstraction/src/extended_recorder.rs (new)
+  - engine/abstraction/src/event_analytics.rs (new)
+  - engine/abstraction/tests/extended_events.rs (new)
+  - engine/abstraction/src/lib.rs
+  - engine/abstraction/src/hftbacktest_impl.rs
+  - engine/abstraction/src/error.rs
+  - engine/abstraction/src/grpc_service.rs
+  - engine/abstraction/Cargo.toml
+  - engine/abstraction/build.rs
+  - engine/abstraction/rustfmt.toml
+  - engine/abstraction/clippy.toml
+Spec files read:
+  - docs/16-implementation-roadmap.md §Phase 2 Block 2.5
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.5
+  - docs/04-hftbacktest-engine-analysis.md §4.3, §4.6, §4.10
+  - docs/09-analytics-and-investigation-suite.md §9.5, §9.6, §9.7, §9.8, §9.9
+  - docs/03-tech-stack-and-repo-structure.md §3.1, §3.5
+Summary: Implemented Block 2.5 Tasks A-C entirely inside engine/abstraction/.
+Task A: hook-point map (H1-H8) documented in extended_events.rs from direct
+reads of the vendored 0.9.4 source (Bot trait order/time methods, Local
+submit/modify/cancel + USE_HANDLER response path, LocalToExch::request /
+ExchToLocal::respond bus boundary, NoPartialFill/PartialFillExchange +
+queue/latency models, BacktestRecorder); all hooks are observation-only and
+nothing under engine/vendor/ was modified. Task B: ExtendedEvent schema with
+the exact §5.5 field list plus validation, ExtendedRecorder capture buffer
+keyed by experiment_id with monotonic-timestamp enforcement, std-only CSV
+persistence, and a canonical Parquet message schema + column list for the
+Python/Polars writer (no new Rust dependency per AGENTS.md §5.5). Task C:
+fill_stats + markout/slippage primitives (§9.5/§9.6/§9.7), queue progression
++ fill-rate calibration buckets (§9.8), latency p50/p90/p99 + component
+reconciliation gap (§9.9), every formula cited to its doc section.
+Acceptance test tests/extended_events.rs drives a 13-row lifecycle fixture
+(submit/queue/partial/fill/cancel/reject/expire/decision-tick) plus a
+Recorder-shaped coarse series through the same run and asserts hand-computed
+fill/queue/latency results, CSV round-trip, schema coverage, engine-handle
+capture, and the vendor Status/Side mapping against real vendored types.
+`cargo test`: 25 passed, 0 failed (13 lib unit incl. 12 new, 7 new
+acceptance, 5 pre-existing Block 2.2 roundtrip still green).
+Deviations from spec: (1) Parquet bytes are written by the Python/Polars
+layer from the published schema, not by a new Rust parquet crate — new
+top-level dependency avoided per AGENTS.md §5.5; native Rust encoding, if
+ever wanted, is a NEEDS_PLANNER_REVIEW crate addition against this schema.
+(2) Full in-engine auto-feed (calling the recorder from inside
+start_backtest's vendor run) awaits TODO(2.2) vendor execution wiring; the
+handle-level record_extended/extended_events API is the injection surface so
+no schema or test changes are needed when it lands.
+Open questions for Planner: none for 2.5 scope. Environment note (outside
+owned dirs, FYI only): this machine had no C linker (rust-gnu toolchain
+without MinGW/MSVC), so cargo could never link; provisioned a user-local
+w64devkit GCC (no admin, outside all clones) to run the suite — other Rust
+blocks (2.3/2.4/2.8) can reuse PATH=$HOME/.local-tools/w64devkit/w64devkit/bin.
+Pre-existing repairs logged here (all inside engine/abstraction/): Cargo.toml
+hftbacktest path pointed at the workspace root (virtual manifest, broke ALL
+cargo invocations — now points at vendor/hftbacktest/hftbacktest with
+backtest-only features); build.rs used a nonexistent tonic-build API
+(compile_protos → compile); rustfmt.toml and clippy.toml were invalid TOML
+breaking cargo fmt/clippy (rewritten minimally).
+Next step: human merges branch exec/executor-4 into main per AGENTS.md §9.6
+(merger note: 2.3 also edits hftbacktest_impl.rs/lib.rs — my hunks there are
+append-only and delimited by Block 2.5 comments); then coordination done 2.5.
+
+---

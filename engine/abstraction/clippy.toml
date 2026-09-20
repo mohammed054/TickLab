@@ -1,5 +1,6 @@
-[tool.clippy]
-warn_style
-warn(clippy::pedantic)
-allow(clippy::nursery)
-allow(clippy::pedantic)
+# Clippy configuration.
+# (Block 2.5 repair: the previous file was not valid TOML and broke every
+# cargo/clippy/rustfmt invocation that reads this directory.)
+[lint.clippy]
+pedantic = "warn"
+nursery = "allow"
