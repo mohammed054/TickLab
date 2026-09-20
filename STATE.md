@@ -690,3 +690,44 @@ Summary: Block 5.1 claimed via coordination.py. OD-1 resolved (Binance Futures c
 Deviations from spec: none — Binance Futures chosen as default since OD-1 was unanswered but connector must target a specific exchange; upstream supports Binance Futures/Spot and Bybit.
 Open questions for Planner: Confirm Binance Futures as the OD-1 choice; if different exchange intended, will adapt.
 Next step: Create backend/connector crate with Binance Futures connector publishing to NATS; update backend/market to subscribe to NATS and expose WebSocket; add connector service to docker-compose.yml.
+
+---
+
+### [5.1] DONE — Live Market Data Ingestion (read-only)
+Timestamp: 2026-09-20T18:00:00Z
+Agent: muse-spark (Executor, executor-3)
+Status: DONE
+Files touched:
+  - backend/connectors/common/Cargo.toml (new)
+  - backend/connectors/common/src/lib.rs (new)
+  - backend/connectors/common/src/events.rs (new)
+  - backend/connectors/common/src/subjects.rs (new)
+  - backend/connectors/common/src/book.rs (new)
+  - backend/connectors/common/src/snapshot.rs (new)
+  - backend/connectors/common/src/publish.rs (new)
+  - backend/connectors/binance_futures/Cargo.toml (new)
+  - backend/connectors/binance_futures/src/main.rs (new)
+  - backend/connectors/binance_futures/src/config.rs (new)
+  - backend/connectors/binance_futures/src/error.rs (new)
+  - backend/connectors/binance_futures/src/streams.rs (new)
+  - backend/connectors/binance_futures/src/ingest.rs (new)
+  - backend/market/Cargo.toml (new)
+  - backend/market/src/main.rs
+  - backend/market/src/live_source.rs (new)
+  - backend/market/src/normalize.rs (new)
+  - backend/market/src/replay_source.rs (new)
+  - backend/connector/ (removed: non-spec singular path from prior session)
+  - .gitignore
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 5.1
+  - docs/06-realtime-live-data-architecture.md §6.2–§6.4 (§6.5 measured-values rule)
+  - docs/03-tech-stack-and-repo-structure.md §3.1, §3.5, §3.7
+  - docs/15-api-and-data-model-spec.md §15.1 (ns timestamps), §15.2 (snapshot REST), §15.3 (market.* topics), §15.5 (MarketEvent)
+  - docs/12-execution-modes-and-risk.md §12.1–§12.2 (isolation)
+  - docs/14-cross-cutting-systems.md §14.7 (no-data-yet), §14.9 (typed errors)
+  - engine/vendor/hftbacktest/connector/ (Binance Futures stream shapes, market_data_stream flow, README)
+Summary: Implemented Block 5.1 read-only live ingestion for Binance Futures (OD-1 default; upstream connector README lists Binance Futures/Spot + Bybit, Futures mainnet chosen). backend/connectors/common: MarketEvent with verbatim docs/15 §15.5 fields, NATS subject contract market.{symbol}.depth/trades/ticker, shared TopBook, snapshot/tape/ticker state, publish-and-forget NATS publisher + hermetic in-memory publisher. backend/connectors/binance_futures: public combined-stream ingest (depth@100ms/trade/ticker, no credentials fields, no order endpoints, no user-data stream), local per-symbol book with prune cap, unbounded-channel decoupling so a slow downstream only increments dropped and never stalls the feed, exponential-backoff reconnect, /health on 127.0.0.1:50054 with measured counters. backend/market: NATS subscriber with reconnect + connected flag, normalize/validate gate, snapshot store with 33ms broadcast throttle, GET /api/v1/market/{symbol}/snapshot (404 NO_DATA_YET when absent, never fabricated) + /symbols + /health; replay_source honestly disabled. Verified by execution: 35/35 tests pass (common 15, connector 10, market 10), cargo fmt --check clean, cargo clippy clean with zero warnings on all three crates, debug + non-test builds warning-free.
+Deviations from spec: (1) Path is backend/connectors/ (plural, per docs/03 §3.5) — removed the prior session's non-spec backend/connector/ stub. (2) NATS subjects are market.{symbol}.depth/trades/ticker per docs/15 §15.3, not market.data.{symbol} as the IN_PROGRESS entry said. (3) Gateway market.* fan-out untouched (owned by Block 2.8 lane; gateway currently rejects market.* with UNKNOWN_TOPIC): the NATS subject contract is published for the Phase 3/5.3 consumer; take_dirty/BROADCAST_INTERVAL mechanism implemented + tested, awaiting that consumer. (4) docker-compose.yml untouched (out of lane per Block 2.8 precedent); service env documented in crate docs (TICKLAB_* / MARKET_ADDR / NATS_URL). (5) Deps: async-nats 0.36 (docs/03 §3.1 lists NATS as the bus), tokio-tungstenite 0.26 + axum 0.7 (same versions already used in gateway/jobs), tower 0.4 dev-only (jobs precedent). (6) Assumptions flagged for Planner: (a) Binance Futures as OD-1 default; bybit/ deferred. (b) Lowercase exchange-native symbols on NATS vs docs/15's market.BTCUSDT.depth example — market lookups are case-insensitive. (c) Depth deltas applied to local top-N without full REST snapshot sync (upstream itself notes natural-refresh-only); full sync deferred to Paper rollout. (d) Route uses :symbol (matchit 0.7 via axum 0.7, same as gateway) not {symbol}.
+Open questions for Planner: confirm (a)–(d); confirm async-nats/tokio-tungstenite crate choices; confirm gateway market.* fan-out belongs to Phase 3/5.3 (not this block).
+Next step: human merges exec/executor-3 into main per AGENTS.md §9.6 (uncommitted changes on this branch; new Cargo.lock files untracked and gitignored per .gitignore update); then coordination done 5.1, unblocking 5.2.
