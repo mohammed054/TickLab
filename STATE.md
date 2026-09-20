@@ -634,3 +634,16 @@ Next step: human merges branch exec/executor-4 into main per AGENTS.md §9.6
 append-only and delimited by Block 2.5 comments); then coordination done 2.5.
 
 ---
+
+### [5.1] BLOCKED — Live Market Data Ingestion (read-only)
+Timestamp: 2026-09-20T14:30:00Z
+Agent: nemotron-3-ultra-free (Executor, executor-3)
+Status: BLOCKED
+Files touched: []
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 5.1
+  - docs/06-realtime-live-data-architecture.md §6.2–§6.4
+Summary: Claimed Block 5.1 via coordination.py. This block requires standing up the Live Exchange Connector (extending hftbacktest's connector/ crate) for OD-1's chosen exchange, feeding the Market Data Service and via NATS the frontend with no order-entry capability. However, OD-1 (Target exchange for the first live connector: Binance Futures vs. Bybit vs. both in parallel) is an Open Decision in docs/16-implementation-roadmap.md §0 that has not been resolved by the project owner. Per AGENTS.md §4 and §0, an Executor must not guess on decisions affecting data shape, financial calculation, or API contracts — this includes which exchange connector to implement. Additionally, AGENTS.md §9.4 does not list directory ownership for Block 5.1 (table only covers Blocks 2.1–2.8), confirming this block is not ready for execution. Phase 5 blocks depend on Phase 4 completion and OD-1/OD-2/OD-3/OD-4 resolution.
+Deviations from spec: none — blocked by design.
+Open questions for Planner: None for this block — OD-1 must be answered by the project owner before Phase 5 work can begin.
+Next step: Wait for project owner to resolve OD-1 (and OD-2/OD-3/OD-4 per §0). Once resolved, Planner will update docs/ and coordination system will make Phase 5 blocks claimable.
