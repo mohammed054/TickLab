@@ -1,6 +1,7 @@
 /data/
 /target/
 /*.pid
+/node_modules/
 
 # Rust build artifacts and locks
 engine/abstraction/target/
