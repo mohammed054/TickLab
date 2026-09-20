@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
+
 interface BottomBarProps {
-  positionQty: number
+  quantity: number
   realizedPnl: number
   unrealizedPnl: number
   fees: number
@@ -7,89 +9,89 @@ interface BottomBarProps {
   orderCount: number
   fillCount: number
   latencyMs: number | null
-  dataConnected: boolean
-  engineConnected: boolean
-  riskOk: boolean
+  dataConnected: boolean | null
+  engineConnected: boolean | null
+  riskConnected: boolean | null
+  environment: 'RESEARCH' | 'PAPER' | 'LIVE'
 }
 
-function fmtPnl(v: number): string {
-  const sign = v >= 0 ? '+' : ''
-  return `${sign}$${Math.abs(v).toFixed(2)}`
+const EMPTY_STATE = {
+  title: 'NO STRATEGY LOADED',
+  action: 'CREATE STRATEGY',
 }
 
-function pnlColor(v: number): string {
-  if (v > 0) return 'var(--color-positive)'
-  if (v < 0) return 'var(--color-negative)'
-  return 'var(--color-text-secondary)'
-}
+export function BottomBar(props: BottomBarProps) {
+  const {
+    quantity, realizedPnl, unrealizedPnl, fees, netPnl,
+    orderCount, fillCount, latencyMs, dataConnected,
+    engineConnected, riskConnected, environment,
+  } = props
 
-function Dot({ ok }: { ok: boolean }) {
+  if (!environment) {
+    return (
+      <div className="empty-state">
+        <div />
+        <h3>{EMPTY_STATE.title}</h3>
+        <p>{EMPTY_STATE.action}</p>
+      </div>
+    )
+  }
+
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        width: '6px',
-        height: '6px',
-        borderRadius: '50%',
-        background: ok ? 'var(--color-positive)' : 'var(--color-negative)',
-      }}
-    />
+    <div className="bottom-bar" style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '4px 16px', borderTop: '1px solid var(--color-border-subtle)',
+      background: 'var(--color-bg-panel)', color: 'var(--color-text-primary)',
+      fontSize: '12px', height: 32,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <span style={{ fontWeight: 600 }}>POSITION {quantity.toLocaleString()} BTC</span>
+        <span>REALIZED {sign(realizedPnl)}</span>
+        <span>UNREALIZED {sign(unrealizedPnl)}</span>
+        <span>FEES {-${fees.toFixed(2)}}</span>
+        <span>NET {sign(netPnl)}</span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 16 }}>
+        <span>ORDERS {orderCount}</span>
+        <span>FILLS {fillCount}</span>
+        <span>LATENCY {latencyMs != null ? `${latencyMs}ms` : '—'}</span>
+        <span>DATA {dataDot(dataConnected)}</span>
+        <span>ENGINE {engineDot(engineConnected)}</span>
+        <span>RISK {riskDot(riskConnected)}</span>
+      </div>
+    </div>
   )
 }
 
-export function BottomBar({
-  positionQty,
-  realizedPnl,
-  unrealizedPnl,
-  fees,
-  netPnl,
-  orderCount,
-  fillCount,
-  latencyMs,
-  dataConnected,
-  engineConnected,
-  riskOk,
-}: BottomBarProps) {
-  const item = (label: string, value: string, color?: string) => (
-    <span>
-      <span style={{ color: 'var(--color-text-secondary)' }}>{label} </span>
-      <span className="num" style={{ color: color ?? 'var(--color-text-primary)' }}>{value}</span>
+function sign(v: number): string {
+  return v >= 0 ? '+' : '-'
+}
+
+function dotState(connected: boolean | null): 'ok' | 'degraded' | 'down' {
+  if (connected === true) return 'ok'
+  if (connected === false || connected === null) return 'down'
+  return 'degraded'
+}
+
+function DataDot({ state }: { state: 'ok' | 'degraded' | 'down' }) {
+  return (
+    <span title={`${state}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span style={{
+        display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
+        background: state === 'ok' ? 'var(--color-positive)' : state === 'degraded' ? 'var(--color-warning)' : 'var(--color-negative)'
+      }} />
     </span>
   )
+}
 
+function StatusDot({ state }: { state: 'ok' | 'degraded' | 'down' }) {
   return (
-    <footer
-      style={{
-        padding: '4px 16px',
-        borderTop: '1px solid var(--color-border-subtle)',
-        background: 'var(--color-bg-panel)',
-        display: 'flex',
-        gap: '16px',
-        alignItems: 'center',
-        fontSize: 'var(--font-size-xs)',
-        fontFamily: 'inherit',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {item('POSITION', `${positionQty} BTC`)}
-      {item('REALIZED', fmtPnl(realizedPnl), pnlColor(realizedPnl))}
-      {item('UNREALIZED', fmtPnl(unrealizedPnl), pnlColor(unrealizedPnl))}
-      {item('FEES', `-$${Math.abs(fees).toFixed(2)}`)}
-      {item('NET', fmtPnl(netPnl), pnlColor(netPnl))}
-      <span style={{ borderLeft: '1px solid var(--color-border-subtle)', height: '12px' }} />
-      {item('ORDERS', String(orderCount))}
-      {item('FILLS', String(fillCount))}
-      {item('LATENCY', latencyMs != null ? `${latencyMs}ms` : '—')}
-      <span style={{ borderLeft: '1px solid var(--color-border-subtle)', height: '12px' }} />
-      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ color: 'var(--color-text-secondary)' }}>DATA </span><Dot ok={dataConnected} />
-      </span>
-      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ color: 'var(--color-text-secondary)' }}>ENGINE </span><Dot ok={engineConnected} />
-      </span>
-      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ color: 'var(--color-text-secondary)' }}>RISK </span><Dot ok={riskOk} />
-      </span>
-    </footer>
+    <span title={`${state}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span style={{
+        display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
+        background: state === 'ok' ? 'var(--color-positive)' : state === 'degraded' ? 'var(--color-warning)' : 'var(--color-negative)'
+      }} />
+    </span>
   )
 }

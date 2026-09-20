@@ -1,68 +1,131 @@
-import { Panel } from '../../shared/design-system/Panel'
-import { MetricRow } from '../../shared/design-system/MetricRow'
+import { useEffect, useState } from 'react'
+
+interface RiskLimit {
+  name: string
+  threshold: number
+  current: number
+  breach: boolean
+}
 
 interface RiskPanelProps {
-  currentExposure: number
+  exposure: number
   maxExposure: number
   dailyPnl: number
   drawdownCurrent: number
   drawdownMax: number
+  risk: number
   dailyLoss: number
   maxPosition: number
   openOrdersCount: number
   potentialExecutionRisk: number
   marginUsage: number | null
   liquidationDistance: number | null
+  environment: 'RESEARCH' | 'PAPER' | 'LIVE'
 }
 
-function pnlColor(v: number): string {
-  if (v > 0) return 'var(--color-positive)'
-  if (v < 0) return 'var(--color-negative)'
-  return 'var(--color-text-primary)'
+const EMPTY_STATE = {
+  title: 'NO STRATEGY LOADED',
+  action: 'CREATE STRATEGY',
 }
 
-function warnColor(current: number, limit: number): string | undefined {
-  if (limit <= 0) return undefined
-  const ratio = Math.abs(current) / limit
-  if (ratio >= 1) return 'var(--color-negative)'
-  if (ratio >= 0.8) return 'var(--color-warning)'
-  return undefined
+function formatMargin(v: number | null): string {
+  return v != null ? `${v.toFixed(1)}%` : 'N/A (Research)'
 }
 
-export function RiskPanel({
-  currentExposure,
-  maxExposure,
-  dailyPnl,
-  drawdownCurrent,
-  drawdownMax,
-  dailyLoss,
-  maxPosition,
-  openOrdersCount,
-  potentialExecutionRisk,
-  marginUsage,
-  liquidationDistance,
-}: RiskPanelProps) {
-  return (
-    <Panel header="Risk">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        <MetricRow label="Exposure" value={`$${currentExposure.toLocaleString()}`} color={warnColor(currentExposure, maxExposure)} />
-        <MetricRow label="Max Exposure" value={`$${maxExposure.toLocaleString()}`} />
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', margin: '4px 0' }} />
-        <MetricRow label="Daily P&L" value={`$${dailyPnl.toFixed(2)}`} color={pnlColor(dailyPnl)} />
-        <MetricRow label="Drawdown" value={`$${drawdownCurrent.toFixed(2)}`} color={drawdownCurrent > 0 ? 'var(--color-negative)' : undefined} />
-        <MetricRow label="Max Drawdown" value={`$${drawdownMax.toFixed(2)}`} />
-        <MetricRow label="Daily Loss" value={`$${dailyLoss.toFixed(2)}`} color={warnColor(dailyLoss, maxExposure * 0.1)} />
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', margin: '4px 0' }} />
-        <MetricRow label="Max Position" value={`${maxPosition}`} />
-        <MetricRow label="Open Orders" value={openOrdersCount} />
-        <MetricRow label="Exec Risk" value={`$${potentialExecutionRisk.toLocaleString()}`} />
-        {marginUsage != null && (
-          <MetricRow label="Margin" value={`${(marginUsage * 100).toFixed(1)}%`} color={warnColor(marginUsage, 1)} />
-        )}
-        {liquidationDistance != null && (
-          <MetricRow label="Liquidation" value={`${liquidationDistance.toFixed(2)}%`} />
-        )}
+function formatLiquidation(v: number | null): string {
+  return v != null ? `${v.toFixed(2)}%` : 'N/A'
+}
+
+export function RiskPanel(props: RiskPanelProps) {
+  const {
+    exposure, maxExposure, dailyPnl, drawdownCurrent, drawdownMax,
+    risk, dailyLoss, maxPosition, openOrdersCount,
+    potentialExecutionRisk, marginUsage, liquidationDistance,
+    environment,
+  } = props
+
+  if (!environment) {
+    return (
+      <div className="empty-state">
+        <div />
+        <h3>{EMPTY_STATE.title}</h3>
+        <p>{EMPTY_STATE.action}</p>
       </div>
-    </Panel>
+    )
+  }
+
+  const limits: RiskLimit[] = [
+    { name: 'Exposure', threshold: maxExposure, current: exposure, breach: exposure > maxExposure },
+    { name: 'Daily Loss', threshold: Math.abs(dailyPnl) * 1.5, current: Math.abs(dailyLoss), breach: dailyLoss < dailyPnl * 1.2 },
+    { name: 'Max Position', threshold: maxPosition, current: exposure, breach: exposure > maxPosition },
+  ]
+
+  return (
+    <div className="risk-panel">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Current Exposure</span>
+          <span>${exposure.toFixed(4)} BTC</span>
+        </div>
+        <div>
+          <span>Max Exposure</span>
+          <span>{maxExposure.toFixed(4)} BTC</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Daily P&L</span>
+          <span>${sign(dailyPnl)}</span>
+        </div>
+        <div>
+          <span>Max Drawdown</span>
+          <span>${sign(drawdownMax)}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Open Orders</span>
+          <span>{openOrdersCount}</span>
+        </div>
+        <div>
+          <span>Potential Exec Risk</span>
+          <span>${potentialExecutionRisk.toFixed(2)} BTC</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Margin Usage</span>
+          <span>{formatMargin(marginUsage)}</span>
+        </div>
+        <div>
+          <span>Liquidation Distance</span>
+          <span>{formatLiquidation(liquidationDistance)}</span>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+        <div>
+          <span>Current Risk</span>
+          <span>{risk.toFixed(1)}</span>
+        </div>
+        <div>
+          <span>Daily Loss</span>
+          <span>${sign(dailyLoss)}</span>
+        </div>
+      </div>
+
+      {environment !== 'RESEARCH' && limits.some(l => l.breach) && (
+        <div style={{ border: '2px solid var(--color-negative)', padding: 8, margin: 8 0, background: 'var(--color-negative-light)' }}>
+          <span>⚠️ RISK LIMIT BREACH DETECTED</span>
+        </div>
+      )}
+    </div>
   )
+}
+
+function sign(v: number): string {
+  return v >= 0 ? '+' : '-'
 }

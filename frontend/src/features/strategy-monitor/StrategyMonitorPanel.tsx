@@ -1,15 +1,17 @@
-import { Panel } from '../../shared/design-system/Panel'
-import { MetricRow } from '../../shared/design-system/MetricRow'
-import { StatusDot } from '../../shared/design-system/StatusDot'
-import { EmptyState } from '../../shared/design-system/EmptyState'
+import { useEffect, useState } from 'react'
 
-type StrategyStatus = 'RUNNING' | 'PAUSED' | 'STOPPED' | 'ERROR'
+interface InventoryItem {
+  qty: number
+  value: number
+  pnl: number
+  history: number[]
+  volatility: number
+}
 
 interface StrategyMonitorProps {
   strategyName: string | null
-  status: StrategyStatus | null
-  inventoryQty: number
-  inventoryValue: number
+  status: 'RUNNING' | 'PAUSED' | 'STOPPED' | 'ERROR'
+  inventory: InventoryItem | null
   realizedPnl: number
   unrealizedPnl: number
   fees: number
@@ -17,82 +19,97 @@ interface StrategyMonitorProps {
   orderCount: number
   fillCount: number
   cancelledCount: number
-  fillRatePct: number
+  fillRate: number
   latencyMs: number | null
 }
 
-function pnlColor(v: number): string {
-  if (v > 0) return 'var(--color-positive)'
-  if (v < 0) return 'var(--color-negative)'
-  return 'var(--color-text-primary)'
+const EMPTY_STATE = {
+  title: 'NO STRATEGY LOADED',
+  action: 'CREATE STRATEGY',
 }
 
-function fmtPnl(v: number): string {
-  const sign = v >= 0 ? '+' : ''
-  return `${sign}$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+export function StrategyMonitorPanel(props: StrategyMonitorProps) {
+  const { strategyName, status, inventory, realizedPnl, unrealizedPnl, fees, netPnl, orderCount, fillCount, cancelledCount, fillRate, latencyMs } = props
 
-const STATUS_DOT: Record<StrategyStatus, 'positive' | 'warning' | 'negative' | 'neutral'> = {
-  RUNNING: 'positive',
-  PAUSED: 'warning',
-  STOPPED: 'neutral',
-  ERROR: 'negative',
-}
-
-export function StrategyMonitorPanel({
-  strategyName,
-  status,
-  inventoryQty,
-  inventoryValue,
-  realizedPnl,
-  unrealizedPnl,
-  fees,
-  netPnl,
-  orderCount,
-  fillCount,
-  cancelledCount,
-  fillRatePct,
-  latencyMs,
-}: StrategyMonitorProps) {
-  if (!strategyName || !status) {
+  if (!strategyName) {
     return (
-      <Panel header="Strategy Monitor">
-        <EmptyState
-          message="NO STRATEGY LOADED"
-          actions={[
-            { label: 'CREATE STRATEGY', onClick: () => {} },
-            { label: 'OPEN EXPERIMENT', onClick: () => {} },
-          ]}
-        />
-      </Panel>
+      <div className="empty-state">
+        <div />
+        <h3>{EMPTY_STATE.title}</h3>
+        <p>{EMPTY_STATE.action}</p>
+      </div>
     )
   }
 
+  const statusLabels: Record<'RUNNING' | 'PAUSED' | 'STOPPED' | 'ERROR', string> = {
+    RUNNING: 'Running',
+    PAUSED: 'Paused',
+    STOPPED: 'Stopped',
+    ERROR: 'Error',
+  }
+
   return (
-    <Panel header="Strategy Monitor">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-          <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-            {strategyName}
-          </span>
-          <StatusDot status={STATUS_DOT[status]} />
-          <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{status}</span>
-        </div>
-        <MetricRow label="Inventory" value={`${inventoryQty} BTC`} />
-        <MetricRow label="Inventory Value" value={`$${inventoryValue.toLocaleString()}`} />
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', margin: '4px 0' }} />
-        <MetricRow label="Realized P&L" value={fmtPnl(realizedPnl)} color={pnlColor(realizedPnl)} />
-        <MetricRow label="Unrealized P&L" value={fmtPnl(unrealizedPnl)} color={pnlColor(unrealizedPnl)} />
-        <MetricRow label="Fees" value={`-$${Math.abs(fees).toFixed(2)}`} />
-        <MetricRow label="NET P&L" value={fmtPnl(netPnl)} color={pnlColor(netPnl)} />
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', margin: '4px 0' }} />
-        <MetricRow label="Orders" value={orderCount} />
-        <MetricRow label="Fills" value={fillCount} />
-        <MetricRow label="Cancelled" value={cancelledCount} />
-        <MetricRow label="Fill Rate" value={`${fillRatePct.toFixed(1)}%`} />
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', margin: '4px 0' }} />
-        <MetricRow label="Latency" value={latencyMs != null ? `${latencyMs}ms` : '—'} />
+    <div className="strategy-monitor-panel">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span>{strategyName}</span>
+        <span style={{ display: 'inline-flex', width: 8, height: 8, borderRadius: '50' }} />
+        <span>{statusLabels[status]}</span>
       </div>
-    </Panel>
+
+      <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+        <div>
+          <span>Inventory</span>
+          <span>{inventory?.qty?.toLocaleString() ?? '—'} BTC</span>
+        </div>
+        <div>
+          <span>Inventory Value</span>
+          <span>${inventory?.value?.toFixed(2) ?? '—'}</span>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+        <div>
+          <span>Realized P&L</span>
+          <span>${sign(inventory?.pnl ?? realizedPnl)}</span>
+        </div>
+        <div>
+          <span>Unrealized P&L</span>
+          <span>${sign(unrealizedPnl)}</span>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+        <span>Fees</span>
+        <span>-${fees.toFixed(2)}</span>
+      </div>
+
+      <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+        <span>NET P&L</span>
+        <span>${sign(netPnl)}</span>
+      </div>
+
+      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        <span>Orders</span>
+        <span>{orderCount}</span>
+        <span>Fills</span>
+        <span>{fillCount}</span>
+      </div>
+
+      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        <span>Cancelled</span>
+        <span>{cancelledCount}</span>
+        <span>Fill Rate</span>
+        <span>{fillRate.toFixed(1)}%</span>
+      </div>
+
+      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        <span>Latency</span>
+        <span>{latencyMs != null ? `${latencyMs}ms` : '—'}</span>
+      </div>
+    </div>
   )
+}
+
+function sign(v: number): string {
+  return v >= 0 ? '+' : ''
 }

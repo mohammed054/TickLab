@@ -1,54 +1,120 @@
-import { Panel } from '../../shared/design-system/Panel'
-import { MetricRow } from '../../shared/design-system/MetricRow'
+import { useEffect, useState } from 'react'
 
-interface ExecutionMonitorProps {
-  feedLatencyMs: number | null
-  decisionLatencyMs: number | null
-  orderLatencyMs: number | null
-  exchangeResponseMs: number | null
-  roundTripMs: number | null
+interface LatencySample {
+  timestamp: string
+  feed: number
+  decision: number
+  exchange: number
+  roundTrip: number
+}
+
+interface ExecutionMonitorPanelProps {
+  feedLatency: number | null
+  decisionLatency: number | null
+  orderLatency: number | null
+  exchangeResponse: number | null
+  roundTrip: number | null
   rejectedCount: number
   cancelledCount: number
   staleCount: number
   droppedEvents: number
   sequenceGaps: number
   reconnects: number
-  missingData: number
+  latencyHistory: LatencySample[]
+  environment: 'RESEARCH' | 'PAPER' | 'LIVE'
 }
 
-export function ExecutionMonitorPanel({
-  feedLatencyMs,
-  decisionLatencyMs,
-  orderLatencyMs,
-  exchangeResponseMs,
-  roundTripMs,
-  rejectedCount,
-  cancelledCount,
-  staleCount,
-  droppedEvents,
-  sequenceGaps,
-  reconnects,
-  missingData,
-}: ExecutionMonitorProps) {
-  const fmt = (v: number | null) => (v != null ? `${v}ms` : '—')
+const EMPTY_STATE = {
+  title: 'NO STRATEGY LOADED',
+  action: 'CREATE STRATEGY',
+}
+
+export function ExecutionMonitorPanel(props: ExecutionMonitorPanelProps) {
+  const {
+    feedLatency, decisionLatency, orderLatency, exchangeResponse,
+    roundTrip, rejectedCount, cancelledCount, staleCount,
+    droppedEvents, sequenceGaps, reconnects, latencyHistory,
+    environment,
+  } = props
+
+  if (!environment) {
+    return (
+      <div className="empty-state">
+        <div />
+        <h3>{EMPTY_STATE.title}</h3>
+        <p>{EMPTY_STATE.action}</p>
+      </div>
+    )
+  }
 
   return (
-    <Panel header="Execution / System">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        <MetricRow label="Feed Latency" value={fmt(feedLatencyMs)} />
-        <MetricRow label="Decision Latency" value={fmt(decisionLatencyMs)} />
-        <MetricRow label="Order Latency" value={fmt(orderLatencyMs)} />
-        <MetricRow label="Exchange RT" value={fmt(exchangeResponseMs)} />
-        <MetricRow label="Round-Trip" value={fmt(roundTripMs)} />
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', margin: '4px 0' }} />
-        <MetricRow label="Rejected" value={rejectedCount} color={rejectedCount > 0 ? 'var(--color-negative)' : undefined} />
-        <MetricRow label="Cancelled" value={cancelledCount} />
-        <MetricRow label="Stale" value={staleCount} color={staleCount > 0 ? 'var(--color-warning)' : undefined} />
-        <MetricRow label="Dropped Events" value={droppedEvents} color={droppedEvents > 0 ? 'var(--color-negative)' : undefined} />
-        <MetricRow label="Seq Gaps" value={sequenceGaps} color={sequenceGaps > 0 ? 'var(--color-negative)' : undefined} />
-        <MetricRow label="Reconnects" value={reconnects} color={reconnects > 0 ? 'var(--color-warning)' : undefined} />
-        <MetricRow label="Missing Data" value={missingData} color={missingData > 0 ? 'var(--color-warning)' : undefined} />
+    <div className="execution-monitor-panel">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Feed Latency</span>
+          <span>{feedLatency != null ? `${feedLatency}ms` : '—'}</span>
+        </div>
+        <div>
+          <span>Decision Latency</span>
+          <span>{decisionLatency != null ? `${decisionLatency}ms` : '—'}</span>
+        </div>
       </div>
-    </Panel>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Order Latency</span>
+          <span>{orderLatency != null ? `${orderLatency}ms` : '—'}</span>
+        </div>
+        <div>
+          <span>Exchange Response</span>
+          <span>{exchangeResponse != null ? `${exchangeResponse}ms` : '—'}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Round-Trip</span>
+          <span>{roundTrip != null ? `${roundTrip}ms` : '—'}</span>
+        </div>
+        <div>
+          <span>Rejected</span>
+          <span>{rejectedCount}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Cancelled</span>
+          <span>{cancelledCount}</span>
+        </div>
+        <div>
+          <span>Stale</span>
+          <span>{staleCount}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Dropped Events</span>
+          <span>{droppedEvents}</span>
+        </div>
+        <div>
+          <span>Sequence Gaps</span>
+          <span>{sequenceGaps}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+        <div>
+          <span>Reconnects</span>
+          <span>{reconnects}</span>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <span>Latency History</span>
+        {/* History rendered via small sparkline/multi-line chart per docs/11 §11.6 */}
+      </div>
+    </div>
   )
 }
