@@ -183,10 +183,10 @@ pub enum ParameterValue {
 
 /// Execution model configuration (`docs/08` §8.7 panel fields).
 ///
-/// Full model wiring (fee/queue/latency application inside the engine) is
-/// Block 2.3; here the config is carried through opaquely. The queue-model
-/// preset list itself is finalized in Task 2.3.B against the vendored
-/// `models/` source (`docs/04` §4.4), so the preset travels as a string.
+/// Block 2.3 resolves this into vendor selections
+/// (`execution_model::resolve_execution_model`, `docs/04` §4.4); the queue-model
+/// preset list was finalized in Task 2.3.B against the vendored `models/`
+/// source, so the preset travels as a string and is parsed there.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExecutionModelConfig {
     /// Maker fee, percent (`docs/08` §8.7).

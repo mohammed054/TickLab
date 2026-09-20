@@ -1,5 +1,8 @@
-[tool.clippy]
-warn_style
-warn(clippy::pedantic)
-allow(clippy::nursery)
-allow(clippy::pedantic)
+# Clippy configuration for the engine abstraction layer.
+#
+# Note (Block 2.3 repair): this file previously contained lint-level entries
+# (`warn_style`, `warn(...)` / `allow(...)`) that are not valid clippy.toml
+# keys, which made `cargo clippy` refuse to run at all. Lint *levels* are not
+# expressible in clippy.toml (only option thresholds are); per-crate levels
+# belong in `Cargo.toml [lints]` or source attributes — left for the Planner
+# to decide, so this file is intentionally option-free until then.

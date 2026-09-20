@@ -113,14 +113,19 @@ fn malformed_requests_are_rejected_with_typed_errors() {
 #[test]
 fn handle_lifecycle_start_poll_cancel() {
     let engine = HftbacktestEngine::new(HftbacktestConfig::default());
-    let handle = engine.start_backtest(fixture_request()).expect("valid fixture");
+    let handle = engine
+        .start_backtest(fixture_request())
+        .expect("valid fixture");
 
     let progress = engine.poll_progress(&handle);
     assert_eq!(progress.status, BacktestStatus::Queued);
     assert_eq!(progress.job_id, handle.id());
 
     engine.cancel(&handle).expect("cancel known handle");
-    assert_eq!(engine.poll_progress(&handle).status, BacktestStatus::Cancelled);
+    assert_eq!(
+        engine.poll_progress(&handle).status,
+        BacktestStatus::Cancelled
+    );
 
     // No fabricated results: without a vendor run there is nothing to collect.
     assert!(matches!(
@@ -132,15 +137,25 @@ fn handle_lifecycle_start_poll_cancel() {
 #[test]
 fn cancel_is_idempotent_and_sticky() {
     let engine = HftbacktestEngine::new(HftbacktestConfig::default());
-    let handle = engine.start_backtest(fixture_request()).expect("valid fixture");
+    let handle = engine
+        .start_backtest(fixture_request())
+        .expect("valid fixture");
 
     engine.cancel(&handle).expect("first cancel");
     engine.cancel(&handle).expect("second cancel is idempotent");
-    assert_eq!(engine.poll_progress(&handle).status, BacktestStatus::Cancelled);
+    assert_eq!(
+        engine.poll_progress(&handle).status,
+        BacktestStatus::Cancelled
+    );
     // Handles are engine-scoped: a second engine starts its own id sequence.
     let engine2 = HftbacktestEngine::new(HftbacktestConfig::default());
-    let handle2 = engine2.start_backtest(fixture_request()).expect("valid fixture");
-    assert_eq!(engine2.poll_progress(&handle2).status, BacktestStatus::Queued);
+    let handle2 = engine2
+        .start_backtest(fixture_request())
+        .expect("valid fixture");
+    assert_eq!(
+        engine2.poll_progress(&handle2).status,
+        BacktestStatus::Queued
+    );
     let _ = Arc::clone(&handle);
 }
 

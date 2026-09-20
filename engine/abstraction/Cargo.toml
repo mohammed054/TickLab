@@ -5,8 +5,13 @@ edition = "2021"
 
 [dependencies]
 # Vendored hftbacktest crate — the core engine types and simulation logic
-# (docs/04). Initialized in Block 1.1; see STATE.md [2.2.B] for status.
-hftbacktest = { path = "../vendor/hftbacktest" }
+# (docs/04). Points at the `hftbacktest` package inside the upstream workspace
+# (engine/vendor/hftbacktest is a virtual manifest; the crate lives in its
+# `hftbacktest/` subdirectory). Block 2.3 fix: the original
+# `path = "../vendor/hftbacktest"` never resolved and the crate could not
+# compile. Only the `backtest` feature is enabled — the `live` connector/IPC
+# stack is not needed by the abstraction layer (Phase 5 concern, docs/06).
+hftbacktest = { path = "../vendor/hftbacktest/hftbacktest", default-features = false, features = ["backtest"] }
 
 # Error handling
 thiserror = { version = "1.0" }
