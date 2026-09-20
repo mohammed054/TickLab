@@ -20,6 +20,11 @@ pub enum EngineError {
     #[error("invalid backtest request: {0}")]
     InvalidRequest(String),
 
+    /// An extended-stream event failed structural validation (`docs/05` §5.5;
+    /// caught at capture time by `ExtendedEvent::validate`, Block 2.5).
+    #[error("invalid extended event: {0}")]
+    InvalidEvent(String),
+
     /// Wiring explicitly deferred to a later block (e.g. full execution-model
     /// application in Block 2.3, dataset preparation stages in Block 2.7).
     /// Returned instead of silently stubbing behavior.

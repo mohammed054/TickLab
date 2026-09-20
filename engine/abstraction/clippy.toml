@@ -1,8 +1,9 @@
 # Clippy configuration for the engine abstraction layer.
 #
-# Note (Block 2.3 repair): this file previously contained lint-level entries
-# (`warn_style`, `warn(...)` / `allow(...)`) that are not valid clippy.toml
-# keys, which made `cargo clippy` refuse to run at all. Lint *levels* are not
-# expressible in clippy.toml (only option thresholds are); per-crate levels
-# belong in `Cargo.toml [lints]` or source attributes — left for the Planner
-# to decide, so this file is intentionally option-free until then.
+# Note (Block 2.3 / 2.5 repair, both lanes fixed the same invalid file): this file
+# previously contained lint-level entries (`warn_style`, `warn(...)` / `allow(...)`)
+# that are not valid clippy.toml keys and was not valid TOML, which made
+# `cargo clippy` (and every cargo invocation reading this directory) refuse to run.
+# Lint *levels* are not expressible in clippy.toml (only option thresholds are);
+# per-crate levels belong in `Cargo.toml [lints]` (see [lints.clippy] there, added in
+# Block 2.2) or source attributes — so this file is intentionally option-free.

@@ -10,11 +10,14 @@ edition = "2021"
 # `hftbacktest/` subdirectory). The vendor dir holds the full upstream workspace
 # at pinned commit 5f3ec40 (Block 1.1 layout per docs/04 §4.2); the crate itself
 # is the workspace member `hftbacktest/`.
-# Block 2.3 fix / Block 2.2 decision: the original `path = "../vendor/hftbacktest"`
-# never resolved and the crate could not compile. Only the `backtest` feature is
-# enabled — the `live` connector/IPC stack (iceoryx2, tokio "full", rand/toml/serde)
-# is not needed by the abstraction layer (Phase 5 concern, docs/06, docs/12).
-# Disabling it keeps the dependency tree honest and the build small.
+# Block 2.2 decision / Block 2.3 fix / Block 2.5 fix (all three lanes repaired the
+# same line independently): the original `path = "../vendor/hftbacktest"` addressed
+# the workspace root (virtual manifest) and made every `cargo` invocation fail
+# dependency resolution. Path must address the `hftbacktest` package
+# (engine/vendor/hftbacktest/hftbacktest). Only the `backtest` feature is enabled —
+# the `live` connector/IPC stack (iceoryx2, tokio "full", rand/toml/serde) and live
+# bot runtime are Phase 5 scope (docs/04 §4.5, docs/06, docs/12) and are not fetched
+# here. Disabling it keeps the dependency tree honest and the build small.
 hftbacktest = { path = "../vendor/hftbacktest/hftbacktest", default-features = false, features = ["backtest"] }
 
 # Error handling

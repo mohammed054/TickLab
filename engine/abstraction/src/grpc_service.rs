@@ -186,6 +186,9 @@ fn engine_error_to_status(err: EngineError) -> Status {
         EngineError::InvalidRequest(msg) => {
             Status::invalid_argument(format!("invalid request: {msg}"))
         }
+        EngineError::InvalidEvent(msg) => {
+            Status::invalid_argument(format!("invalid event: {msg}"))
+        }
         EngineError::UnknownHandle(msg) => Status::not_found(format!("unknown handle: {msg}")),
         EngineError::Unsupported(msg) => Status::failed_precondition(msg),
         EngineError::Engine(msg) => Status::internal(msg),
