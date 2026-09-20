@@ -14,6 +14,7 @@
 //! - [`progress`]: jobs-service polling forwarders.
 //! - [`routes`]: REST surface (jobs proxy + health).
 //! - [`auth`]: session-token validation.
+//! - [`logging`]: structured JSON logging (docs/14-cross-cutting-systems.md §14.4).
 //!
 //! Environment isolation (`docs/12` §12.2): this service exposes backtest
 //! job submission and read-only progress over historical datasets only.
@@ -26,6 +27,7 @@ pub mod progress;
 pub mod protocol;
 pub mod routes;
 pub mod ws;
+pub mod logging;
 
 use std::sync::Arc;
 
