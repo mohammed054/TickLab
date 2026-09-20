@@ -8,3 +8,9 @@ frontend/dist/
 # Rust build artifacts and locks
 engine/abstraction/target/
 engine/abstraction/Cargo.lock
+backend/connectors/common/target/
+backend/connectors/common/Cargo.lock
+backend/connectors/binance_futures/target/
+backend/connectors/binance_futures/Cargo.lock
+backend/market/target/
+backend/market/Cargo.lock
