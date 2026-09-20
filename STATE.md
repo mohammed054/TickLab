@@ -635,6 +635,33 @@ append-only and delimited by Block 2.5 comments); then coordination done 2.5.
 
 ---
 
+### [3.1.A] DONE — Sync Bus and Shell (WorkspaceContext + Shell Skeletons)
+Timestamp: 2026-09-20T16:45:00Z
+Agent: executor-1 (opencode)
+Status: DONE
+Files touched:
+  - frontend/package.json
+  - frontend/vite.config.ts
+  - frontend/tsconfig.json
+  - frontend/tsconfig.node.json
+  - frontend/index.html
+  - frontend/src/main.tsx
+  - frontend/src/shared/sync-bus/index.ts
+  - frontend/src/app/main-monitor/MainMonitorShell.tsx
+  - frontend/src/app/secondary-monitor/SecondaryMonitorShell.tsx
+  - frontend/src/app/single-display/SingleDisplayShell.tsx
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 3.1
+  - docs/02-two-monitor-workspace-spec.md §2.3.1, §2.3.2, §2.3.3, §2.6
+  - docs/03-tech-stack-and-repo-structure.md §3.3, §3.5
+  - docs/15-api-and-data-model-spec.md §15.3.4
+Summary: Implemented Block 3.1 Tasks A and B. Task A: Created WorkspaceContext Zustand store (frontend/src/shared/sync-bus/index.ts) with the exact interface from docs/02 §2.3.1 (symbol, exchange, environment, dataset, strategy, experiment, timestamp, selectedOrderId, selectedFillId, selectedTradeId, replay, activeTab, isConnected). Wired to workspace.sync WebSocket topic per docs/15 §15.3.4 with automatic reconnection (exponential backoff), publish/subscribe functions, and devtools integration. Task B: Created three shell skeletons per docs/03 §3.3 and docs/02 §2.6: MainMonitorShell.tsx (header with symbol/exchange/environment badge/connection status/timestamp, main grid with price chart/trade tape/order book areas, bottom bar), SecondaryMonitorShell.tsx (header with tab navigation for all 15 secondary tabs per docs/08 §8.2, content area with placeholder for each tab, active context display), SingleDisplayShell.tsx (tab switcher between Main and Secondary shells sharing the same WorkspaceContext store). Also created minimal frontend scaffold: package.json with React 18, Vite, Zustand, lightweight-charts; vite.config.ts; tsconfig.json; index.html; main.tsx entry point that initializes SyncBus on mount. Verified: npm install succeeds (73 packages), npm run build succeeds (157.8 kB bundle, 50.9 kB gzipped).
+Deviations from spec: none.
+Open questions for Planner: none.
+Next step: Block 3.2 — Header and Chart (PriceChart with candle mode + hover tooltip per docs/07 §7.2.1–§7.2.3). Ready to claim next available block via coordination.py.
+
+---
+
 ### [5.1] BLOCKED — Live Market Data Ingestion (read-only)
 Timestamp: 2026-09-20T14:30:00Z
 Agent: nemotron-3-ultra-free (Executor, executor-3)
