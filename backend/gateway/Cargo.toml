@@ -4,14 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = "0.7"
-tower-cors = { version = "0.5", features = ["tower-service"] }
-serde = { version = "1", features = ["derive"] }
+axum = { version = "0.7", features = ["ws"] }
 tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Service-to-service HTTP forwarding (gateway -> jobs). Same Tower/hyper
+# stack Axum itself is built on; logged in STATE.md [2.8].
+reqwest = { version = "0.12", features = ["json"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+futures = "0.3"
 tracing = "0.1"
-tracing-subscriber = "0.3"
-# Engine abstraction layer gRPC client
-ticklab-engine-abstraction = { path = "../../engine/abstraction" }
-# For JSON serialization
-chrono = { version = "0.4", features = ["serde"] }
-thiserror = "1.0"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "1"
+
+[dev-dependencies]
+# WS test clients for the Block 2.8 acceptance test (test-only; not shipped).
+tokio-tungstenite = "0.26"
+# Boots the real jobs service in-process for the gateway acceptance test.
+ticklab-jobs = { path = "../jobs" }

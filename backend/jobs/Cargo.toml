@@ -5,14 +5,14 @@ edition = "2021"
 
 [dependencies]
 axum = "0.7"
-tower = "0.4"
-futures = "0.3"
 tokio = { version = "1", features = ["full"] }
-tracing = "0.1"
-tracing-subscriber = "0.3"
-# Engine abstraction layer gRPC client
-ticklab-engine-abstraction = { path = "../../engine/abstraction" }
-# Job queue / NATS integration
-nats = { version = "0.25", features = ["std"] }
 serde = { version = "1", features = ["derive"] }
-thiserror = "1.0"
+serde_json = "1"
+tower = { version = "0.4", features = ["util"] }
+futures = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "1"
+
+[dev-dependencies]
+# (none yet)
