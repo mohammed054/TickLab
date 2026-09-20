@@ -1,88 +1,30 @@
-/// Job Runner — Rust/Axum job queue, engine gRPC client, progress streaming.
-/// 
-/// This service owns job lifecycle/queueing and calls the Engine Abstraction
-/// Layer's gRPC methods directly. It is the bridge between the backend API
-/// (FastAPI) and the Rust backtest engine.
-/// 
-/// Key responsibilities:
-/// - Accept backtest job submissions from the gateway or API
-/// - Queue jobs and dispatch workers
-/// - Stream progress updates via WebSocket/NATS
-/// - Call the engine gRPC service for backtest execution
-/// - Handle job cancellation and retry logic
-/// - Persist job state in PostgreSQL
-/// 
-/// The Job Runner is the critical path between user interaction and backtest
-/// execution. It must be reliable and able to handle restarts without data loss.
-use axum::{
-    routing::{get, post, put, delete},
-    Json, Router,
-};
-use serde::Deserialize;
+//! Job Runner service entry point (`docs/03` §3.5 `backend/jobs/src/main.rs`).
+//!
+//! Binds `JOBS_ADDR` (default `127.0.0.1:50052`, the pre-existing scaffold
+//! default) and serves the [`ticklab_jobs::api`] router. The Gateway reaches
+//! this service over localhost HTTP in Phase 2 local dev (`docs/03` §3.7);
+//! the choice of in-process vs. localhost-gRPC engine calls is documented in
+//! `STATE.md` per `docs/03` §3.4 (in-process runner-stage execution until the
+//! vendor checkout lands).
+
 use std::net::SocketAddr;
-use tower::ServiceBuilder;
-use tracing_subscriber::fmt::Layer;
 
-mod queue;
-mod runner;
-mod sweep;
-mod walkforward;
-mod robustness;
+use ticklab_jobs::{api, queue::JobStore};
 
-/// Create the job router with all routes
-pub fn create_router() -> Router {
-    Router::new()
-        .route("/jobs", post(queue::submit_job))
-        .route("/jobs/:id", get(queue::get_job))
-        .route("/jobs/:id/cancel", post(queue::cancel_job))
-        .route("/jobs/:id/progress", get(queue::get_progress))
-        .nest("/api", routes::router())
-}
-
-/// Job submission request
-#[derive(Debug, Deserialize)]
-pub struct SubmitJobRequest {
-    /// Dataset identifier
-    pub dataset_id: String,
-    /// Strategy identifier
-    pub strategy_id: String,
-    /// Parameters for the strategy
-    pub parameters: serde_json::Value,
-    /// Priority level
-    pub priority: u8,
-}
-
-/// Job status response
-#[derive(Debug, serde::Serialize)]
-pub struct JobStatusResponse {
-    /// Job ID
-    pub id: String,
-    /// Current status: queued, running, completed, failed, cancelled
-    pub status: String,
-    /// Progress percentage (0-100)
-    pub progress: f32,
-    /// Estimated completion time
-    pub estimated_completion: Option<String>,
-}
-
-/// Entry point for the Job Runner service
 #[tokio::main]
-async fn main() {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .with(tracing_subscriber::EnvFilter::from_default_env())
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    let router = create_router();
-    let addr = SocketAddr::from(([127, 0, 0, 1], 50052));
-    tracing::info!("Job Runner listening on {}", addr);
+    let addr: SocketAddr = std::env::var("JOBS_ADDR")
+        .unwrap_or_else(|_| "127.0.0.1:50052".to_string())
+        .parse()?;
+    let state = api::AppState::new(JobStore::new());
+    let router = api::router(state);
+    tracing::info!("ticklab-jobs listening on {addr}");
 
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .unwrap();
-
-    axum::serve(listener, router)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, router).await?;
+    Ok(())
 }
