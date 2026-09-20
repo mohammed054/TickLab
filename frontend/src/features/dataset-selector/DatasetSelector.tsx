@@ -6,6 +6,9 @@ const MARKETS = ['USDT Futures', 'COIN-M Futures', 'Spot'] as const
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT', 'XRPUSDT'] as const
 const DATA_TYPES = ['Trades', 'L2 Order Book', 'L3 Order Book'] as const
 
+// L3 (Market-By-Order) is backtest-only per docs/04 §4.10/§4.5 — live L3 not yet supported upstream
+const L3_BACKTEST_ONLY = true
+
 interface DatasetSelectorProps {
   exchange: string
   market: string
@@ -67,15 +70,16 @@ export function DatasetSelector({
                 onClick={() => toggleType(t)}
                 style={{
                   padding: '3px 8px',
-                  background: dataTypes.includes(t) ? 'var(--color-info)' : 'var(--color-bg-base)',
+                  background: dataTypes.includes(t) && t !== 'L3 Order Book' ? 'var(--color-info)' : t === 'L3 Order Book' && dataTypes.includes(t) ? 'var(--color-warning)' : 'var(--color-bg-base)',
                   border: '1px solid var(--color-border-subtle)',
                   borderRadius: '4px',
-                  color: dataTypes.includes(t) ? '#fff' : 'var(--color-text-secondary)',
+                  color: dataTypes.includes(t) && t !== 'L3 Order Book' ? '#fff' : t === 'L3 Order Book' && dataTypes.includes(t) ? '#000' : 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   fontSize: 'var(--font-size-xs)',
                 }}
               >
                 {t}
+                title={t === 'L3 Order Book' && dataTypes.includes(t) ? 'L3 (Market-By-Order) — backtest-only: live L3 not yet supported upstream (docs/04 §4.10/§4.5)' : undefined}
               </button>
             ))}
           </div>

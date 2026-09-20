@@ -98,6 +98,9 @@ def _events_quality(events: List[dict]) -> dict:
     trades = sum(1 for e in events if e.get("type") == "trade")
     book_updates = sum(1 for e in events if e.get("type") == "book_update")
     snapshots = sum(1 for e in events if e.get("type") == "snapshot")
+    l3_order_events = sum(
+        1 for e in events if e.get("type") in ("order_add", "order_modify", "order_cancel")
+    )
 
     seen = set()
     duplicates = 0
@@ -135,6 +138,7 @@ def _events_quality(events: List[dict]) -> dict:
         "timestampRange": (
             [timestamps_ns[0], timestamps_ns[-1]] if timestamps_ns else [0, 0]
         ),
+        "l3ActiveOrderCount": l3_order_events,
     }
 
 
@@ -294,6 +298,7 @@ async def validate(file: UploadFile = File(...)) -> DataQualityReport:
         normalizationVersion="v1.0.0",
         tickSize=0.01,  # default, will be refined during normalization
         lotSize=1.0,  # default, will be refined during normalization
+        l3ActiveOrderCount=0,
     )
 
     return report
@@ -549,7 +554,11 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
     (a diff that doesn't apply cleanly signals a missed update — this becomes a
     🟡/🔴 quality flag and a "missing interval").
 
+    For L3 (Market-By-Order) feeds: replays individual order add/modify/cancel events
+    to maintain per-order state and derive the best-bid/best-ask at each timestamp.
+
     Input: Normalized events (from /normalize) with type=snapshot and type=book_update
+    (for L3, type may also include "order_add", "order_modify", "order_cancel").
     Output: Reconstructed order book states at each event timestamp
     """
 
@@ -564,9 +573,18 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
         if not normalized_events:
             raise HTTPException(status_code=400, detail="No normalized events provided")
 
+        # Detect data type: L2 vs L3
+        # L3 data has event types beyond snapshot/book_update (order_add, order_modify, order_cancel)
+        is_l3 = any(e.get("type") in ("order_add", "order_modify", "order_cancel") for e in normalized_events)
+
         # Separate snapshots and updates
         snapshots = [e for e in normalized_events if e.get("type") == "snapshot"]
         updates = [e for e in normalized_events if e.get("type") == "book_update"]
+
+        # L3-specific event types
+        l3_add_events = [e for e in normalized_events if e.get("type") == "order_add"]
+        l3_modify_events = [e for e in normalized_events if e.get("type") == "order_modify"]
+        l3_cancel_events = [e for e in normalized_events if e.get("type") == "order_cancel"]
 
         # If no snapshots, we can't reconstruct - need at least one initial snapshot
         if not snapshots:
@@ -580,6 +598,9 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
         # {price: size} for each side
         bid_levels = {}
         ask_levels = {}
+
+        # L3: track individual orders by order_id
+        l3_active_orders: dict[str, dict] = {}  # order_id -> {price, size, side}
 
         reconstructed_states = []
         missing_intervals = []
@@ -604,9 +625,10 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
             side = event.get("side", "")
             price = event.get("price")
             size = event.get("size")
+            order_id = event.get("order_id")
 
             if event_type == "snapshot":
-                # Snapshot provides full depth - in real impl, would have array of levels
+                # Snapshot provides full depth - in real impl, snapshot would have full depth
                 # For testing, we'll use the event's price/size as a level
                 last_snapshot_ts = ts
                 if side == "bid" and price is not None:
@@ -619,7 +641,7 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
                 ask_levels = {p: s for p, s in ask_levels.items() if s > 0}
 
             elif event_type == "book_update" and price is not None:
-                # Apply incremental update
+                # Apply incremental update (L2)
                 if size is None or size <= 0:
                     # Remove level
                     if side == "bid":
@@ -633,10 +655,46 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
                     elif side == "ask":
                         ask_levels[price] = size
 
-            # Record reconstructed state
+            # L3: process individual order events
+            if is_l3:
+                if event_type == "order_add" and order_id is not None and price is not None and size is not None:
+                    # Add a new order at the given price/size/side
+                    l3_active_orders[order_id] = {"price": price, "size": size, "side": side}
+                elif event_type == "order_modify" and order_id is not None and price is not None and size is not None:
+                    # Modify existing order's size at price level
+                    if order_id in l3_active_orders:
+                        l3_active_orders[order_id]["size"] = size
+                elif event_type == "order_cancel" and order_id is not None:
+                    # Cancel/remove an order
+                    l3_active_orders.pop(order_id, None)
+
+            # Record reconstructed state - derive best bid/ask from both L2 levels and L3 active orders
+            # Combine L2 book levels with L3 active orders: for L3, each active order contributes its price/size
+            # to the appropriate price level
+
+            # Start with existing L2 levels
+            current_bid_levels = dict(bid_levels)
+            current_ask_levels = dict(ask_levels)
+
+            # Add L3 active orders to the appropriate price levels
+            for _, order in l3_active_orders.items():
+                p = order["price"]
+                s = order["size"]
+                so = order["side"]
+                if so == "bid":
+                    if p in current_bid_levels:
+                        current_bid_levels[p] = max(current_bid_levels[p], s)  # Keep larger size
+                    else:
+                        current_bid_levels[p] = s
+                elif so == "ask":
+                    if p in current_ask_levels:
+                        current_ask_levels[p] = max(current_ask_levels[p], s)  # Keep larger size
+                    else:
+                        current_ask_levels[p] = s
+
             # Sort bids descending (highest first), asks ascending (lowest first)
-            sorted_bids = sorted(bid_levels.items(), key=lambda x: x[0], reverse=True)
-            sorted_asks = sorted(ask_levels.items(), key=lambda x: x[0])
+            sorted_bids = sorted(current_bid_levels.items(), key=lambda x: x[0], reverse=True)
+            sorted_asks = sorted(current_ask_levels.items(), key=lambda x: x[0])
 
             reconstructed_states.append({
                 "timestampNs": ts,
@@ -644,6 +702,8 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
                 "asks": [{"price": p, "size": s} for p, s in sorted_asks[:10]],  # Top 10 levels
                 "spread": (sorted_asks[0][0] - sorted_bids[0][0]) if sorted_asks and sorted_bids else None,
                 "mid_price": ((sorted_bids[0][0] + sorted_asks[0][0]) / 2) if sorted_asks and sorted_bids else None,
+                "l3ActiveOrders": len(l3_active_orders),  # L3: count of active orders
+                "dataType": "L3" if is_l3 else ("L2" if updates else "unknown"),
             })
 
         # Detect missing intervals (gaps > 1 second without snapshots)
@@ -656,10 +716,13 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
                     "duration_ns": gap
                 })
 
-        # Build quality report
+        # Build quality report - include L3-specific fields
         total_events = len(normalized_events)
         snapshot_count = len(snapshots)
         update_count = len(updates)
+        l3_add_count = len(l3_add_events)
+        l3_modify_count = len(l3_modify_events)
+        l3_cancel_count = len(l3_cancel_events)
 
         # Determine status based on missing intervals
         has_critical = len(missing_intervals) > 5
@@ -671,6 +734,15 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
             missing_status = "yellow"
         else:
             missing_status = "green"
+
+        # L3: also check for missing order_id sequences
+        l3_quality_issue = False
+        if is_l3:
+            # Check that we have a reasonable number of order events
+            l3_event_count = l3_add_count + l3_modify_count + l3_cancel_count
+            if l3_event_count == 0 and len(snapshots) > 0:
+                # L3 data without any order events - may be incomplete
+                l3_quality_issue = True
 
         quality_report = DataQualityReport(
             datasetId=file.filename or "reconstructed_dataset",
@@ -688,6 +760,8 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
             normalizationVersion="v1.0.0",
             tickSize=0.01,
             lotSize=1.0,
+            # L3-specific extensions (backtest-only labeled)
+            l3ActiveOrderCount=l3_add_count + l3_modify_count + l3_cancel_count if is_l3 else 0,
         )
 
         return {
@@ -696,7 +770,8 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
             "total_reconstructed": len(reconstructed_states),
             "missing_intervals": missing_intervals,
             "quality_report": quality_report.model_dump(),
-            "message": f"Reconstructed {len(reconstructed_states)} order book states from {snapshot_count} snapshots and {update_count} updates"
+            "message": f"Reconstructed {len(reconstructed_states)} order book states from {snapshot_count} snapshots and {update_count} updates" + (f" (L3: {l3_add_count add}, {l3_modify_count modify}, {l3_cancel_count cancel})" if is_l3 else ""),
+            "dataType": "L3" if is_l3 else ("L2" if updates else "unknown"),
         }
 
     except HTTPException:

@@ -49,6 +49,7 @@ class DataQualityReport(BaseModel):
     normalizationVersion: str
     tickSize: float
     lotSize: float
+    l3ActiveOrderCount: int = 0  # L3: count of active orders (backtest-only data type, docs/05 §5.4)
 
 
 class Dataset(BaseModel):
