@@ -62,7 +62,7 @@ export function InventoryPanel(props: InventoryPanelProps) {
       </div>
 
       {accumulatedOneSided && (
-        <div style={{ borderLeft: '3px solid var(--color-warning)', paddingLeft: 8, margin: 8 0 }}>
+        <div style={{ borderLeft: '3px solid var(--color-warning)', paddingLeft: 8, margin: '8px 0' }}>
           <span>One-sided accumulation detected — shaded region on history sparkline</span>
         </div>
       )}

@@ -8,6 +8,7 @@ import { InventoryPanel } from '../../features/inventory/InventoryPanel'
 import { RiskPanel } from '../../features/risk/RiskPanel'
 import { ExecutionMonitorPanel } from '../../features/execution-monitor/ExecutionMonitorPanel'
 import { BottomBar } from '../../features/bottom-bar/BottomBar'
+import { OrderBookLadder } from '../../features/order-book/OrderBookLadder'
 
 export function MainMonitorShell() {
   const { symbol, exchange, environment, isConnected } = useWorkspaceContext()
@@ -36,7 +37,7 @@ export function MainMonitorShell() {
         latencyMs={null}
         environment={environment}
       />
-      <main style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 300px', gap: '8px', padding: '8px', background: 'var(--color-bg-base)' }}>
+      <main style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 320px', gap: '8px', padding: '8px', background: 'var(--color-bg-base)' }}>
         <section style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ flex: 1, minHeight: 0 }}>
             <PriceChart symbol={symbol} exchange={exchange} />
@@ -46,8 +47,16 @@ export function MainMonitorShell() {
           </div>
         </section>
         <aside style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflow: 'auto' }}>
-          <div style={{ flex: 1, background: 'var(--color-bg-panel)', borderRadius: '4px', border: '1px solid var(--color-border-subtle)' }}>
-            Order Book Ladder Area
+          <div style={{ background: 'var(--color-bg-panel)', borderRadius: '4px', border: '1px solid var(--color-border-subtle)', overflow: 'hidden' }}>
+            <OrderBookLadder
+              bids={[]}
+              asks={[]}
+              midPrice={0}
+              spreadTicks={spreadTicks || 1}
+              rowHeight={22}
+              width={320}
+              height={400}
+            />
           </div>
           <StrategyMonitorPanel
             strategyName={null}

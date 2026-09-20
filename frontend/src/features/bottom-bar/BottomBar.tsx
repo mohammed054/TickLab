@@ -48,7 +48,8 @@ export function BottomBar(props: BottomBarProps) {
         <span style={{ fontWeight: 600 }}>POSITION {quantity.toLocaleString()} BTC</span>
         <span>REALIZED {sign(realizedPnl)}</span>
         <span>UNREALIZED {sign(unrealizedPnl)}</span>
-        <span>FEES {-${fees.toFixed(2)}}</span>
+        {/* FEES formatted as $-xx.xx per spec §7.16 */}
+        <span>FEES $-${fees.toFixed(2)}</span>
         <span>NET {sign(netPnl)}</span>
       </div>
 

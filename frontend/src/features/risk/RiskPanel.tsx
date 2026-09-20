@@ -118,7 +118,7 @@ export function RiskPanel(props: RiskPanelProps) {
       </div>
 
       {environment !== 'RESEARCH' && limits.some(l => l.breach) && (
-        <div style={{ border: '2px solid var(--color-negative)', padding: 8, margin: 8 0, background: 'var(--color-negative-light)' }}>
+        <div style={{ border: '2px solid var(--color-negative)', padding: 8, margin: '8px 0', background: 'var(--color-negative-light)' }}>
           <span>⚠️ RISK LIMIT BREACH DETECTED</span>
         </div>
       )}
