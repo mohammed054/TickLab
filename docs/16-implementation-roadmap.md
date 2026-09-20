@@ -7,23 +7,20 @@ Executor may need to split a Task into sub-steps) but never at the Block level �
 every Block's scope and acceptance bar is fully determined by the spec files it
 references.
 
-## §0 — Open Decisions (project owner must answer before the referenced phase)
+## §0 — Open Decisions (resolved 2026-09-20 by project owner)
 
-These are real decisions this document cannot make unilaterally. Each is logged
-here rather than guessed at in the specs above.
+All Open Decisions have been resolved. An Executor reaching a point that depends on
+an OD-# no longer needs to self-block.
 
-| # | Decision | Needed before | Referenced in |
+| # | Decision | Resolution | Resolved |
 |---|---|---|---|
-| OD-1 | Target exchange for the first live connector (Binance Futures vs. Bybit vs. both in parallel) | Phase 5 | `docs/06-realtime-live-data-architecture.md` §6.6 |
-| OD-2 | Colocation/infrastructure approach for Live-mode latency (cloud region near exchange vs. bare-metal/colocation provider vs. accept standard cloud latency initially) | Phase 5 | `docs/06` §6.6 |
-| OD-3 | Cloud provider / hosting target for the Phase 5+ scale-out Kubernetes deployment | Phase 5 | `docs/03-tech-stack-and-repo-structure.md` §3.8 |
-| OD-4 | Minimum Paper-trading track record (duration and/or fill count) required before a strategy is Live-eligible | Phase 5 | `docs/12-execution-modes-and-risk.md` §12.4 |
-| OD-5 | Initial LLM provider/model for the AI Research Assistant (the client is provider-agnostic by design, but an initial choice is needed to build against) | Phase 4, Block 4.7 | `docs/10-experiment-management-and-ai-research.md` §10.5.2 |
-| OD-6 | License for `/frontend`, `/backend`, `/docs` (separate from the inherited MIT license on vendored `/engine`) | Before any public repo visibility | `README.md` |
-| OD-7 | Whether Phase 1–4 development targets a single local developer machine only, or a small shared dev server, for resource planning (affects worker-pool sizing defaults, `docs/05-engine-abstraction-and-data-pipeline.md` §5.6) | Phase 1 | `docs/03-tech-stack-and-repo-structure.md` §3.7 |
-
-An Executor reaching a point that depends on an unanswered OD-# logs a `BLOCKED`
-`STATE.md` entry citing the exact OD number rather than guessing.
+| OD-1 | Target exchange for the first live connector | **Both Binance Futures and Bybit in parallel** | 2026-09-20 |
+| OD-2 | Colocation/infrastructure approach for Live-mode latency | **Accept standard cloud latency initially** (system is backtesting-first; live latency optimization deferred) | 2026-09-20 |
+| OD-3 | Cloud provider / hosting target for Phase 5+ Kubernetes | **Deferred** — Phase 1-4 targets a single local dev machine; revisit when deploying Phase 5+ | 2026-09-20 |
+| OD-4 | Minimum Paper-trading track record before Live-eligible | **Backtest-only for now** — Phase 5 (Paper/Live modes) deferred entirely; focus on Phases 1-4 backtesting workstation | 2026-09-20 |
+| OD-5 | Initial LLM provider/model for AI Research Assistant | **OpenRouter** (provider-agnostic client, use OpenRouter API keys) | 2026-09-20 |
+| OD-6 | License for frontend/backend/docs | **MIT** (matches vendored engine license) | 2026-09-20 |
+| OD-7 | Dev target environment for Phases 1-4 | **Single local developer machine** | 2026-09-20 |
 
 ## Phase 0 — Specification
 
