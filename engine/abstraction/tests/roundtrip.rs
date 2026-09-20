@@ -168,8 +168,13 @@ fn handle_lifecycle_start_poll_complete_collect() {
     );
     assert!((result.headline.fees - 0.10).abs() < 1e-9);
     assert_eq!(result.headline.fill_rate_pct, 100.0);
-    assert!(result.headline.sharpe.is_nan());
-    assert!(result.headline.sortino.is_nan());
+    // Block 2.4: series-based headline metrics are populated end to end
+    // (hand-derived in `hftbacktest_impl::tests::headline_metrics_are_hand_computed`).
+    assert!((result.headline.max_drawdown_pct - 0.0021).abs() < 1e-12);
+    let rel = |a: f64, e: f64| (a - e).abs() / e.abs();
+    assert!(rel(result.headline.sharpe, -1_076_544_471.91) < 1e-9);
+    assert!(rel(result.headline.sortino, -724_982.676_2) < 1e-9);
+    // Block 2.5 owns slippage: still NaN, never fabricated.
     assert!(result.headline.slippage.is_nan());
 }
 
@@ -361,6 +366,11 @@ async fn grpc_round_trip_runs_real_backtest() -> Result<(), Box<dyn std::error::
     assert!((headline.final_capital - 99_997.90).abs() < 1e-9);
     assert!((headline.fees - 0.10).abs() < 1e-9);
     assert_eq!(headline.fill_rate_pct, 100.0);
+    // Block 2.4 headline figures survive the proto round-trip.
+    assert!((headline.max_drawdown_pct - 0.0021).abs() < 1e-12);
+    assert!(headline.sharpe.is_finite() && headline.sharpe < 0.0);
+    assert!(headline.sortino.is_finite() && headline.sortino < 0.0);
+    assert!(headline.slippage.is_nan());
 
     serve.abort();
     Ok(())

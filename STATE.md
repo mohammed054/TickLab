@@ -164,3 +164,65 @@ Next step: Block 2.2 complete; merge exec/executor-2 into main, then claim Block
 (Execution Model Wiring), which depends on 2.2.
 
 ---
+
+### [2.4] DONE — Metrics & Stats Integration (headline metrics end to end)
+Timestamp: 2026-09-20T10:24:16Z
+Agent: executor-2 (opencode)
+Status: DONE
+Files touched:
+  - engine/abstraction/src/metrics.rs (new)
+  - engine/abstraction/src/lib.rs
+  - engine/abstraction/src/hftbacktest_impl.rs
+  - engine/abstraction/tests/roundtrip.rs
+  - backend/experiments/app/metrics/headline.py (new)
+  - backend/experiments/app/metrics/_vendor.py (new)
+  - backend/experiments/app/metrics/tests/test_headline.py (new)
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.4
+  - docs/09-analytics-and-investigation-suite.md §9.1, §9.3
+  - docs/04-hftbacktest-engine-analysis.md §4.6, §4.7
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.1
+  - docs/15-api-and-data-model-spec.md §15.5 (BacktestResult/headline)
+  - docs/08-secondary-monitor-components.md §8.16
+  - docs/03-tech-stack-and-repo-structure.md §3.1, §3.4, §3.5
+  - engine/vendor/hftbacktest/py-hftbacktest/hftbacktest/stats/metrics.py, stats.py, utils.py
+  - engine/vendor/hftbacktest/hftbacktest/src/backtest/recorder.rs, mod.rs, models/latency.rs
+Summary: Task A placement decision: series-based headline computation lives in
+`engine/abstraction/metrics/` (pure-std Rust, no new crates) because the engine
+must fill `BacktestResult::headline` synchronously inside the gRPC service with
+no Python dependency on the hot path (docs/03 §3.1/§3.4); the Python mirror in
+`backend/experiments/app/metrics/` calls the vendored upstream `Metric`
+classes (`Ret`, `MaxDrawdown`, `SR`, `Sortino`) directly for the
+analytics-suite path and parity-checks the Rust numbers. Task B: fixture
+driver now captures 3 Recorder samples (post-drain, post-buy-fill, terminal)
+with the exact upstream record fields; `metrics::headline` computes Return,
+Return%, MaxDrawdown% (0.0021), Sharpe (−1_076_544_471.91), Sortino
+(−724_982.676_2), trades, fill rate, fees per docs/09 §9.1 with upstream-cited
+formulas (sample-std ddof=1 verified empirically, 365 trading days for 24/7
+crypto per upstream's own guidance, 0% risk-free stated). Annualization uses
+the first sample interval (60µs → c=5.256e11), mirroring upstream
+`get_num_samples_per_day`. Acceptance: 21/21 Rust tests green (13 lib incl. 5
+new metrics unit tests with hand-derived bands + full fixture headline
+literals; 8 roundtrip incl. live-gRPC headline assertions) and 3/3 new Python
+parity tests green (upstream-direct computation agrees with Rust to 1e-9
+relative); full `backend/` suite 9/9; `cargo fmt --check` clean. Slippage stays
+NaN for Block 2.5, never fabricated. Two empirical findings documented in code:
+(1) upstream `Backtest::current_timestamp()` goes stale once the event queue
+is exhausted (still read T0 after drain+fills), so the reference driver books
+true simulated time (last feed ts + entry+response per fill) — retires with
+the driver when Blocks 2.5/2.6 land; (2) degenerate series yield NaN, not
+upstream's ±inf (wire-safe; Results screen has no infinite rendering).
+Deviations from spec: none in behavior. Two flagged assumptions needing
+Planner sign-off: (a) 365 (not 252) trading days/year; (b) NaN instead of
+±inf on zero-dispersion/zero-interval inputs.
+Open questions for Planner: (1) Confirm (a)/(b) above. (2) PACKAGING GAP
+(env-only, no repo change made): root `pyproject.toml` has `dependencies = []`
+yet backends already need fastapi/polars and 2.4 additionally needs numpy to
+execute upstream stats (installed env-only for tests); please declare the
+Python runtime set properly. (3) MERGE NOTE for human (§9.6): this branch
+touches `engine/abstraction/src/hftbacktest_impl.rs`, also owned by Blocks
+2.3/2.5 — expect a small manual merge with exec/executor-1 and
+exec/executor-4 around `RunOutcome`/`headline_metrics`.
+Next step: human merges exec/executor-2 into main per §9.6 (fold this entry
+into canonical STATE.md); Block 2.4 unblocks nothing further (2.3/2.5 already
+claimed off done-2.2).

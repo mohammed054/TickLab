@@ -32,12 +32,13 @@ use hftbacktest::backtest::models::{
 use hftbacktest::backtest::{Backtest, BacktestError, DataSource, ExchangeKind, L2AssetBuilder};
 use hftbacktest::depth::{BTreeMarketDepth, L2MarketDepth, MarketDepth, ROIVectorMarketDepth};
 use hftbacktest::prelude::{
-    Bot, ElapseResult, Event, OrdType, StateValues, TimeInForce, BUY_EVENT, DEPTH_EVENT,
-    EXCH_EVENT, LOCAL_EVENT, SELL_EVENT,
+    Bot, ElapseResult, Event, OrdType, TimeInForce, BUY_EVENT, DEPTH_EVENT, EXCH_EVENT,
+    LOCAL_EVENT, SELL_EVENT,
 };
 
 use crate::contract::SimulatorContract;
 use crate::error::EngineError;
+use crate::metrics::RecorderSample;
 use crate::types::{
     BacktestHandle, BacktestProgress, BacktestRequest, BacktestResult, BacktestStatus,
     DataQualityReport, DatasetRef, EventStream, EventType, HeadlineMetrics, PreparedDataset,
@@ -382,19 +383,73 @@ impl HftbacktestEngine {
             }
         };
         let last_feed_ts = outcome.last_feed_ts;
-        let result = headline_metrics(handle.id(), &self.config.engine_version, &req, outcome);
+        let result = headline_metrics(handle.id(), &self.config.engine_version, &req, &outcome);
         Ok((result, last_feed_ts))
     }
 }
 
 /// Everything re-derived from one deterministic run of the fixture.
+///
+/// The per-step Recorder series (`docs/04` §4.6) sampled at the reference
+/// driver's observation points: post-feed-drain, post-each-fill, terminal.
+/// Block 2.4 computes every headline metric from this series
+/// (`crate::metrics`, `docs/09` §9.1) instead of terminal state alone.
 struct RunOutcome {
-    /// Terminal local `StateValues` (position, balance, fee, trades, ...).
-    state: StateValues,
-    /// Terminal mid price for mark-to-market equity (`docs/09` §9.1).
-    mid_price: f64,
+    /// Recorder samples in time order (post-drain, post-buy-fill, terminal).
+    samples: Vec<RecorderSample>,
     /// Timestamp of the last fixture feed event (simulated time span).
     last_feed_ts: i64,
+}
+
+/// Capture one Recorder observation from a live `Backtest`.
+///
+/// Takes exactly the fields upstream's `BacktestRecorder::record` takes
+/// (`engine/vendor/hftbacktest/hftbacktest/src/backtest/recorder.rs`:
+/// timestamp, mid price, balance, position, fee, num_trades, trading_volume,
+/// trading_value) at the instant it is called. An empty book (no touch) is an
+/// engine error, never a NaN sample — the driver only samples where the book
+/// is populated.
+///
+/// The observation timestamp is passed in rather than read from
+/// `current_timestamp()`: upstream only advances `cur_ts` when a pending event
+/// exceeds the elapse target (`goto`, `backtest/mod.rs`), so once the event
+/// queue is exhausted `cur_ts` goes stale — verified empirically, it still
+/// reads the FIRST feed ts after the whole drain + both fills. The driver
+/// instead books true simulated time: the last feed row's local ts for the
+/// post-drain observation, plus one order-entry + order-response latency per
+/// subsequent fill (`ConstantLatency`, `models/latency.rs`; the `wait = true`
+/// submit path elapses exactly that far before the local state applies the
+/// fill). This timestamp bookkeeping retires with the reference driver when
+/// the strategy host (Block 2.6) and extended stream (Block 2.5) provide real
+/// decision ticks.
+fn sample<MD>(
+    backtester: &Backtest<MD>,
+    samples: &mut Vec<RecorderSample>,
+    timestamp_ns: i64,
+) -> Result<(), EngineError>
+where
+    MD: MarketDepth + L2MarketDepth + 'static,
+{
+    let depth = backtester.depth(0);
+    let best_bid = depth.best_bid();
+    let best_ask = depth.best_ask();
+    if best_bid.is_nan() || best_ask.is_nan() {
+        return Err(EngineError::Engine(
+            "fixture backtest produced an empty book; no best bid/ask".to_string(),
+        ));
+    }
+    let state = backtester.state_values(0).clone();
+    samples.push(RecorderSample {
+        timestamp_ns,
+        price: f64::midpoint(best_bid, best_ask),
+        position: state.position,
+        balance: state.balance,
+        fee: state.fee,
+        num_trades: state.num_trades,
+        trading_volume: state.trading_volume,
+        trading_value: state.trading_value,
+    });
+    Ok(())
 }
 
 /// Run the bundled fixture through a real `Backtest<MD>`.
@@ -470,6 +525,16 @@ where
         }
     }
 
+    // Recorder observation points (Block 2.4, `docs/04` §4.6): the reference
+    // driver stands in for the future strategy host, so it samples explicitly
+    // at post-drain (flat, fee-free baseline), after each fill response is
+    // applied locally, and at the terminal state. Timestamps are booked by the
+    // driver (see `sample`): last feed ts, then +entry+response per fill.
+    let mut samples = Vec::with_capacity(3);
+    let per_order_ns = FIXTURE_ORDER_ENTRY_NS + FIXTURE_ORDER_RESPONSE_NS;
+    let t0 = FIXTURE_T0_NS + FIXTURE_FEED_STEP_NS;
+    sample(&backtester, &mut samples, t0)?;
+
     // Marketable taker orders that fill immediately at the far touch. `wait =
     // true` runs until the fill response has been applied to the LOCAL state,
     // which is exactly what `state_values(0)` reads; its
@@ -485,6 +550,7 @@ where
             true,
         )
         .map_err(backtest_error)?;
+    sample(&backtester, &mut samples, t0 + per_order_ns)?;
     backtester
         .submit_sell_order(
             0,
@@ -497,73 +563,54 @@ where
         )
         .map_err(backtest_error)?;
     let _ = backtester.goto_end().map_err(backtest_error)?;
-
-    let state = backtester.state_values(0).clone();
-    let depth = backtester.depth(0);
-    let best_bid = depth.best_bid();
-    let best_ask = depth.best_ask();
-    if best_bid.is_nan() || best_ask.is_nan() {
-        return Err(EngineError::Engine(
-            "fixture backtest produced an empty book; no best bid/ask".to_string(),
-        ));
-    }
+    sample(&backtester, &mut samples, t0 + 2 * per_order_ns)?;
 
     Ok(RunOutcome {
-        state,
-        mid_price: f64::midpoint(best_bid, best_ask),
+        samples,
         last_feed_ts: FIXTURE_T0_NS + FIXTURE_FEED_STEP_NS,
     })
 }
 
-/// Map terminal state to result headline metrics.
+/// Map the fixture Recorder series to result headline metrics.
 ///
-/// All formulas cited (`docs/09` §9.1):
-/// - Return = (equity_final − fee_final) − (equity_initial − fee_initial),
-///   with equity = balance + position·mid for `LinearAsset` (contract_size=1);
-///   the fixture starts at zero balance/position, so Return = equity_final − fee.
-/// - Return% = Return / initial_capital, as a percent.
-/// - final_capital = initial_capital + Return.
+/// All formulas cited (`docs/09` §9.1, computed in `crate::metrics` as ports
+/// of upstream `py-hftbacktest/.../stats/metrics.py`, verified by the Python
+/// parity test in `backend/experiments/app/metrics/`):
+/// - Return = equity[-1] − equity[0] with equity = balance + position·mid − fee
+///   (`LinearAsset`, contract size 1); the fixture starts flat, so
+///   Return = equity_final = −2.10.
+/// - Return% = Return / initial_capital × 100; final_capital = initial + Return.
+/// - MaxDrawdown% = |min(equity − cummax(equity))| / initial × 100 (`docs/09` §9.3).
+/// - Sharpe/Sortino over equity diffs, annualized with 365 trading days and 0%
+///   risk-free (`docs/09` §9.1).
+/// - Trades = fills observed; fill_rate = fills / orders_submitted; fees = fee[-1].
 ///
-/// `fill_rate_pct` = fills / orders_submitted — both genuinely observed on the
-/// run, so it is computed here; Sharpe/Sortino/max-drawdown require per-step
-/// equity series and belong to Block 2.4 (`docs/09` §9.3), and slippage plus
-/// per-event fills belong to the extended recording in Block 2.5 — left `NaN`
-/// / empty here, never faked.
+/// Slippage and per-event fills belong to the extended recording in Block 2.5
+/// (`docs/09` §9.7) — left `NaN` here, never faked.
 fn headline_metrics(
     job_id: &str,
     engine_version: &str,
     req: &BacktestRequest,
-    outcome: RunOutcome,
+    outcome: &RunOutcome,
 ) -> BacktestResult {
-    let fees = outcome.state.fee;
-    let equity_wo_fee = outcome.state.balance + outcome.state.position * outcome.mid_price;
-    let net_pnl = (equity_wo_fee - fees) - 0.0;
-    let final_capital = req.initial_capital + net_pnl;
-    let return_pct = (net_pnl / req.initial_capital) * 100.0;
-    let trades = outcome.state.num_trades as u64;
-    let orders_submitted = FIXTURE_ORDERS;
-    let fill_rate_pct = if orders_submitted > 0 {
-        100.0 * trades as f64 / orders_submitted as f64
-    } else {
-        f64::NAN
-    };
+    let computed = crate::metrics::headline(&outcome.samples, req.initial_capital, FIXTURE_ORDERS);
 
     BacktestResult {
         job_id: job_id.to_string(),
         experiment_id: String::new(),
         engine_version: engine_version.to_string(),
         headline: HeadlineMetrics {
-            initial_capital: req.initial_capital,
-            final_capital,
-            net_pnl,
-            return_pct,
-            max_drawdown_pct: f64::NAN,
-            sharpe: f64::NAN,
-            sortino: f64::NAN,
-            trades,
-            fill_rate_pct,
-            fees,
-            slippage: f64::NAN,
+            initial_capital: computed.initial_capital,
+            final_capital: computed.final_capital,
+            net_pnl: computed.net_pnl,
+            return_pct: computed.return_pct,
+            max_drawdown_pct: computed.max_drawdown_pct,
+            sharpe: computed.sharpe,
+            sortino: computed.sortino,
+            trades: computed.trades,
+            fill_rate_pct: computed.fill_rate_pct,
+            fees: computed.fees,
+            slippage: computed.slippage,
         },
         recorder_series_ref: String::new(),
         fine_grained_events_ref: String::new(),
@@ -776,6 +823,43 @@ mod tests {
     }
 
     #[test]
+    fn fixture_run_captures_three_recorder_samples() {
+        let req = fixture_request();
+        let (depth_min, depth_max) = fixture_roi_bounds();
+        let depth = move || {
+            ROIVectorMarketDepth::new(
+                req.execution_model.tick_size,
+                req.execution_model.lot_size,
+                depth_min,
+                depth_max,
+            )
+        };
+        let outcome = run_fixture_backtest::<ROIVectorMarketDepth>(&req, depth)
+            .expect("fixture run succeeds");
+
+        // Observation points: post-drain, post-buy-fill, terminal. Each
+        // `wait = true` order elapses exactly order-entry + response latency.
+        let per_order_ns = FIXTURE_ORDER_ENTRY_NS + FIXTURE_ORDER_RESPONSE_NS;
+        let t0 = FIXTURE_T0_NS + FIXTURE_FEED_STEP_NS;
+        assert_eq!(outcome.samples.len(), 3);
+        assert_eq!(outcome.samples[0].timestamp_ns, t0);
+        assert_eq!(outcome.samples[1].timestamp_ns, t0 + per_order_ns);
+        assert_eq!(outcome.samples[2].timestamp_ns, t0 + 2 * per_order_ns);
+
+        // Both books drained to bid 99 / ask 101 before trading: mid 100.
+        for s in &outcome.samples {
+            assert!((s.price - 100.0).abs() < 1e-12, "mid {}", s.price);
+        }
+        // Equities (balance + position·mid − fee):
+        // flat 0; buy 1 @ 101 → −101 + 100 − 0.0505 = −1.0505;
+        // sell 1 @ 99 → −2 + 0 − 0.1 = −2.10.
+        let equity = |s: &RecorderSample| s.balance + s.position * s.price - s.fee;
+        assert_eq!(equity(&outcome.samples[0]), 0.0);
+        assert!((equity(&outcome.samples[1]) - (-1.0505)).abs() < 1e-9);
+        assert!((equity(&outcome.samples[2]) - (-2.10)).abs() < 1e-9);
+    }
+
+    #[test]
     fn roi_vector_fixture_run_matches_hand_computed_metrics() {
         let req = fixture_request();
         let (depth_min, depth_max) = fixture_roi_bounds();
@@ -793,28 +877,19 @@ mod tests {
         // Hand-computed expected terminal LOCAL state (AGENTS.md §5.7):
         // buy 1 @ 101 (taker) → balance −101, fee +101·0.0005 = 0.0505;
         // sell 1 @ 99 (taker) → balance +99, fee +99·0.0005 = 0.0495;
-        // position 0, balance −2, fees 0.1, 2 trades.
-        assert_eq!(outcome.state.position, 0.0);
+        // position 0, balance −2, fees 0.1, 2 trades. Read off the terminal
+        // Recorder sample (identical to the old terminal-state read).
+        let last = outcome.samples.last().expect("terminal sample");
+        assert_eq!(last.position, 0.0);
         assert!(
-            (outcome.state.balance - (-2.0)).abs() < 1e-9,
+            (last.balance - (-2.0)).abs() < 1e-9,
             "balance {}",
-            outcome.state.balance
+            last.balance
         );
-        assert!(
-            (outcome.state.fee - 0.1).abs() < 1e-9,
-            "fee {}",
-            outcome.state.fee
-        );
-        assert_eq!(outcome.state.num_trades, 2);
-        assert_eq!(outcome.state.trading_volume, 2.0);
-        assert!((outcome.state.trading_value - 200.0).abs() < 1e-9);
-
-        // Both books drained to bid 99 / ask 101 before trading: mid 100.
-        assert!(
-            (outcome.mid_price - 100.0).abs() < 1e-12,
-            "mid {}",
-            outcome.mid_price
-        );
+        assert!((last.fee - 0.1).abs() < 1e-9, "fee {}", last.fee);
+        assert_eq!(last.num_trades, 2);
+        assert_eq!(last.trading_volume, 2.0);
+        assert!((last.trading_value - 200.0).abs() < 1e-9);
     }
 
     #[test]
@@ -838,29 +913,44 @@ mod tests {
         let btree_outcome = run_fixture_backtest::<BTreeMarketDepth>(&req, btree_depth)
             .expect("btree run succeeds");
 
-        assert_eq!(btree_outcome.state.position, roi_outcome.state.position);
-        assert!((btree_outcome.state.balance - roi_outcome.state.balance).abs() < 1e-9);
-        assert!((btree_outcome.state.fee - roi_outcome.state.fee).abs() < 1e-9);
-        assert_eq!(btree_outcome.state.num_trades, roi_outcome.state.num_trades);
-        assert!((btree_outcome.mid_price - roi_outcome.mid_price).abs() < 1e-12);
+        assert_eq!(roi_outcome.samples.len(), btree_outcome.samples.len());
+        for (a, b) in roi_outcome.samples.iter().zip(&btree_outcome.samples) {
+            assert_eq!(a.timestamp_ns, b.timestamp_ns);
+            assert!((a.price - b.price).abs() < 1e-12);
+            assert_eq!(a.position, b.position);
+            assert!((a.balance - b.balance).abs() < 1e-9);
+            assert!((a.fee - b.fee).abs() < 1e-9);
+            assert_eq!(a.num_trades, b.num_trades);
+        }
     }
 
     #[test]
     fn headline_metrics_are_hand_computed() {
         let req = fixture_request();
-        let outcome = RunOutcome {
-            state: StateValues {
-                balance: -2.0,
-                position: 0.0,
-                fee: 0.1,
-                num_trades: 2,
-                trading_volume: 2.0,
-                trading_value: 200.0,
-            },
-            mid_price: 100.0,
-            last_feed_ts: FIXTURE_T0_NS + FIXTURE_FEED_STEP_NS,
+        // Fixture Recorder series (same shape the engine captures):
+        // post-drain flat, post-buy, terminal. Timestamps mirror the run:
+        // last feed ts, then one order-entry+response latency per fill.
+        let per_order_ns = FIXTURE_ORDER_ENTRY_NS + FIXTURE_ORDER_RESPONSE_NS;
+        let t0 = FIXTURE_T0_NS + FIXTURE_FEED_STEP_NS;
+        let row = |t: i64, position: f64, balance: f64, fee: f64, num_trades: i64| RecorderSample {
+            timestamp_ns: t,
+            price: 100.0,
+            position,
+            balance,
+            fee,
+            num_trades,
+            trading_volume: num_trades as f64,
+            trading_value: 200.0 * num_trades as f64 / 2.0,
         };
-        let result = headline_metrics("ut-test", "test", &req, outcome);
+        let outcome = RunOutcome {
+            samples: vec![
+                row(t0, 0.0, 0.0, 0.0, 0),
+                row(t0 + per_order_ns, 1.0, -101.0, 0.0505, 1),
+                row(t0 + 2 * per_order_ns, 0.0, -2.0, 0.1, 2),
+            ],
+            last_feed_ts: t0,
+        };
+        let result = headline_metrics("ut-test", "test", &req, &outcome);
 
         // docs/09 §9.1: Return = (equity − fee) − 0 = (0 − 2) − 0.1 = −2.10.
         assert!(
@@ -877,10 +967,31 @@ mod tests {
         );
         assert_eq!(result.headline.trades, 2);
         assert_eq!(result.headline.fill_rate_pct, 100.0);
-        // Owned by Blocks 2.4/2.5 — never fabricated.
-        assert!(result.headline.sharpe.is_nan());
-        assert!(result.headline.sortino.is_nan());
-        assert!(result.headline.max_drawdown_pct.is_nan());
+        // Max drawdown: equity [0, −1.0505, −2.10] never recovers above 0, so
+        // |min dd| = 2.10; as % of 100_000 capital = 0.0021 (docs/09 §9.3).
+        assert!(
+            (result.headline.max_drawdown_pct - 0.0021).abs() < 1e-12,
+            "max_drawdown_pct {}",
+            result.headline.max_drawdown_pct
+        );
+        // Sharpe: diffs [−1.0505, −1.0495], mean −1.05, sample std 0.0005·√2;
+        // first interval 60µs → c = 86_400/6e-5 × 365 = 5.256e11;
+        // −1.05/0.0007071… × √c = −1_076_544_471.91… (hand-derived; upstream
+        // Python parity test asserts the same figure from the other side).
+        let rel = |a: f64, e: f64| (a - e).abs() / e.abs();
+        assert!(
+            rel(result.headline.sharpe, -1_076_544_471.91) < 1e-9,
+            "sharpe {}",
+            result.headline.sharpe
+        );
+        // Sortino: downside dev √mean(1.0505², 1.0495²) = 1.0500001…;
+        // −1.05/1.0500001… × √c = −724_982.676_2… (hand-derived, same parity).
+        assert!(
+            rel(result.headline.sortino, -724_982.676_2) < 1e-9,
+            "sortino {}",
+            result.headline.sortino
+        );
+        // Owned by Block 2.5 — never fabricated.
         assert!(result.headline.slippage.is_nan());
     }
 
@@ -901,6 +1012,12 @@ mod tests {
         assert!((result.headline.net_pnl - (-2.10)).abs() < 1e-9);
         assert_eq!(result.job_id, progress.job_id);
         assert!(!result.engine_version.is_empty());
+        // Block 2.4: the full series-based headline is populated end to end.
+        assert!((result.headline.max_drawdown_pct - 0.0021).abs() < 1e-12);
+        assert!(result.headline.sharpe.is_finite() && result.headline.sharpe < 0.0);
+        assert!(result.headline.sortino.is_finite() && result.headline.sortino < 0.0);
+        // Block 2.5 owns slippage: still NaN, never fabricated.
+        assert!(result.headline.slippage.is_nan());
 
         // Complete is sticky; cancelling after completion is a no-op.
         engine.cancel(&handle).expect("cancel succeeds");
