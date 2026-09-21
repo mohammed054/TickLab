@@ -1,0 +1,71 @@
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--font-ui);
+}
+
+body {
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.pos { color: var(--pos); }
+.neg { color: var(--neg); }
+.warn { color: var(--warn); }
+.info { color: var(--info); }
+.dim { color: var(--text-2); }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-1); }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a { color: var(--accent); }
+
+/* ---- Persistent mock-data banner ----
+   Non-negotiable per user instruction: every screen must make it obvious,
+   inside AND outside the rendered UI, that all data is simulated. */
+.mock-banner {
+  background: var(--mock-bg);
+  color: var(--mock);
+  border-bottom: 1px solid var(--mock);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.mock-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--mock);
+  background: var(--mock-bg);
+  border: 1px solid var(--mock);
+  border-radius: 2px;
+  padding: 0 4px;
+  line-height: 14px;
+  vertical-align: middle;
+}

@@ -1,0 +1,8 @@
+import { useEffect, useState } from 'react'
+import { syncBus, WorkspaceSelection } from './syncBus'
+
+export function useWorkspace(): [WorkspaceSelection, (p: Partial<WorkspaceSelection>) => void] {
+  const [state, setState] = useState(syncBus.getState())
+  useEffect(() => syncBus.subscribe(setState), [])
+  return [state, (p) => syncBus.update(p)]
+}
