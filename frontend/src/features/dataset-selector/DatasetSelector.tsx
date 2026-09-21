@@ -3,7 +3,6 @@ import { Panel } from '../../shared/design-system/Panel'
 
 const EXCHANGES = ['Binance', 'Bybit', 'OKX'] as const
 const MARKETS = ['USDT Futures', 'COIN-M Futures', 'Spot'] as const
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT', 'XRPUSDT'] as const
 const DATA_TYPES = ['Trades', 'L2 Order Book', 'L3 Order Book'] as const
 
 // L3 (Market-By-Order) is backtest-only per docs/04 §4.10/§4.5 — live L3 not yet supported upstream
@@ -17,6 +16,7 @@ interface DatasetSelectorProps {
   startDate: string
   endDate: string
   onChange: (patch: Partial<DatasetSelectorProps>) => void
+  symbols?: readonly string[]
 }
 
 export function DatasetSelector({
@@ -60,7 +60,7 @@ export function DatasetSelector({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {select('Exchange', exchange, EXCHANGES, 'exchange')}
         {select('Market', market, MARKETS, 'market')}
-        {select('Symbol', symbol, SYMBOLS, 'symbol')}
+        {select('Symbol', symbol, symbols, 'symbol')}
         <div>
           <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>Data Type</span>
           <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>

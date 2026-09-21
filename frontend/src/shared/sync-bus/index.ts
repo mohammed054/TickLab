@@ -61,8 +61,8 @@ export interface WorkspaceContext {
 }
 
 const initialContext: WorkspaceContext = {
-  symbol: 'BTCUSDT',
-  exchange: 'binance-futures',
+  symbol: '',
+  exchange: '',
   environment: 'RESEARCH',
   dataset: null,
   strategy: null,
