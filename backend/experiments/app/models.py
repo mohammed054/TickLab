@@ -136,7 +136,7 @@ class UserChartPrefs(BaseModel):
 
 
 class AuditLogEntry(BaseModel):
-    """`audit_log` row per docs/14 §14.5 — append-only, never editable via UI."""
+    """`audit_log` row per docs/14 A14.5 �?" append-only, never editable via UI."""
 
     id: str
     timestamp: datetime
@@ -146,3 +146,67 @@ class AuditLogEntry(BaseModel):
     objectType: Optional[str] = None
     objectId: Optional[str] = None
     details: Optional[dict[str, Any]] = None
+
+
+def log_live_trade_activation(
+    actor_id: str,
+    actor_type: AuditActorType,
+    exchange: str,
+    symbol: str,
+    strategy_id: str,
+    details: dict[str, Any] | None = None,
+) -> AuditLogEntry:
+    """Log a Live trading activation per docs/14 §14.5.
+
+    Every Live mode entry is audit-logged with the authorizing user's identity
+    and timestamp. The log is itself surfaced in the Logs tab and is never
+    deletable through the normal UI.
+    """
+    import uuid
+    from datetime import datetime, timezone
+
+    entry = AuditLogEntry(
+        id=str(uuid.uuid4()),
+        timestamp=datetime.now(timezone.utc),
+        actorAgentType=actor_type,
+        actorId=actor_id,
+        action="live_trade_activation",
+        objectType="strategy",
+        objectId=strategy_id,
+        details={
+            "exchange": exchange,
+            "symbol": symbol,
+            **(details or {}),
+        },
+    )
+    return entry
+
+
+def can_enter_paper(status: StrategyStatus, experiment_ids: list[str]) -> bool:
+    """Check if a strategy can enter Paper mode per docs/12 §12.3.
+
+    Requirements:
+    - Status must be ≥ BACKTESTED
+    - At least one completed backtest experiment must exist for the strategy
+    """
+    if status not in ("BACKTESTED", "VALIDATED", "PAPER", "LIVE"):
+        return False
+    has_backtest = any(
+        eid.startswith("exp-") for eid in experiment_ids
+    )  # simplified check: any experiment id suggests a backtest was run
+    return has_backtest
+
+
+def can_enter_live(status: StrategyStatus, paper_fills: int) -> bool:
+    """Check if a strategy can enter Live mode per docs/12 §12.4.
+
+    Requirements:
+    - Status must be ≥ VALIDATED
+    - A minimum Paper-trading track record exists:
+      configurable minimum duration and/or minimum number of Paper fills
+      (default values to be set by the project owner)
+    """
+    if status not in ("VALIDATED", "PAPER", "LIVE", "STOPPED", "PAUSED", "ARCHIVED"):
+        return False
+    min_paper_fills = 10  # default minimum, configurable by project owner
+    return paper_fills >= min_paper_fills

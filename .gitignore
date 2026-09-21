@@ -14,3 +14,4 @@ backend/connectors/binance_futures/target/
 backend/connectors/binance_futures/Cargo.lock
 backend/market/target/
 backend/market/Cargo.lock
+__pycache__/
