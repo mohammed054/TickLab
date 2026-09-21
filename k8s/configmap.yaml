@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ticklab-config
+  namespace: ticklab
+data:
+  DATABASE_URL: "postgres://postgres@postgres:5432/ticklab"
+  REDIS_URL: "redis://redis:6379"
+  NATS_URL: "nats://nats:4222"

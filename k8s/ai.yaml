@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai
+  namespace: ticklab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai
+  template:
+    metadata:
+      labels:
+        app: ai
+    spec:
+      containers:
+        - name: ai
+          image: ghcr.io/ticklab/ai:latest
+          env:
+            - name: DATABASE_URL
+              value: postgres://postgres@postgres:5432/ticklab
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: LLM_PROVIDER
+              value: ${LLM_PROVIDER:-openai}
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

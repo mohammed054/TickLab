@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market
+  namespace: ticklab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: market
+  template:
+    metadata:
+      labels:
+        app: market
+    spec:
+      containers:
+        - name: market
+          image: ghcr.io/ticklab/market:latest
+          env:
+            - name: DATABASE_URL
+              value: postgres://postgres@postgres:5432/ticklab
+            - name: NATS_URL
+              value: nats://nats:4222
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

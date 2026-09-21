@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: engine
+  namespace: ticklab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: engine
+  template:
+    metadata:
+      labels:
+        app: engine
+    spec:
+      containers:
+        - name: engine
+          image: ghcr.io/ticklab/engine:latest
+          ports:
+            - containerPort: 50051
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: experiments
+  namespace: ticklab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: experiments
+  template:
+    metadata:
+      labels:
+        app: experiments
+    spec:
+      containers:
+        - name: experiments
+          image: ghcr.io/ticklab/experiments:latest
+          env:
+            - name: DATABASE_URL
+              value: postgres://postgres@postgres:5432/ticklab
+            - name: REDIS_URL
+              value: redis://redis:6379
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
