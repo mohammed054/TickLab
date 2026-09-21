@@ -1,6 +1,8 @@
 import { useWorkspaceContext } from "../../shared/sync-bus"
 import { StrategyPanel } from "../../features/strategy-editor/StrategyPanel"
 import { ParametersPanel } from "../../features/parameters/ParametersPanel"
+import { ExperimentTree } from "../../features/experiments/ExperimentTree"
+import { ResearchNotes } from "../../features/notes/ResearchNotes"
 
 export function SecondaryMonitorShell() {
   const { symbol, exchange, environment, strategy, dataset, experiment, activeTab } = useWorkspaceContext()
@@ -70,11 +72,11 @@ export function SecondaryMonitorShell() {
               case 'backtest': return 'Backtest Configuration & Progress'
               case 'results': return 'Backtest Results — Headline Metrics'
               case 'analytics': return 'Analytics Suite — Equity, Drawdown, Attribution...'
-              case 'experiments': return 'Experiment Tree — Reproduce, Compare, Notes'
+              case 'experiments': return <ExperimentTree />
               case 'replay': return 'Replay Controls — Speed, Range, Crosshair Sync'
               case 'events': return 'Event Inspector — Fine-grained Event Stream'
               case 'why': return 'Why Investigation — Counterfactual Analysis'
-              case 'notes': return 'Research Notes — Markdown + Links'
+              case 'notes': return <ResearchNotes />
               case 'ai': return 'AI Research Assistant — Evidence-based Q&A'
               case 'logs': return 'System Logs — Structured & Searchable'
               case 'alerts': return 'Alert History — Rules & Notifications'
