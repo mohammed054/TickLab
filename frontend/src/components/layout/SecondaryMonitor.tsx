@@ -15,6 +15,10 @@ import { ComparePanel } from '../secondary/ComparePanel'
 import { SweepsPanel } from '../secondary/SweepsPanel'
 import { WalkForwardPanel } from '../secondary/WalkForwardPanel'
 import { ReportPanel } from '../secondary/ReportPanel'
+import { DataQualityPanel } from '../secondary/DataQualityPanel'
+import { EventInspector } from '../secondary/EventInspector'
+import { WhyPanel } from '../secondary/WhyPanel'
+import { NotesPanel } from '../secondary/NotesPanel'
 import { MockBacktestResult } from '../../mock/mockData'
 import { useWorkspace } from '../../state/useWorkspace'
 
@@ -33,6 +37,10 @@ const TABS = [
   'Risk',
   'Report',
   'Logs',
+  'Data Quality',
+  'Event Inspector',
+  'Why Investigation',
+  'Research Notes',
 ] as const
 
 export function SecondaryMonitor() {
@@ -94,6 +102,10 @@ export function SecondaryMonitor() {
         {tab === 'Risk' && <RiskPanel />}
         {tab === 'Report' && <ReportPanel result={result} />}
         {tab === 'Logs' && <LogsPanel />}
+        {tab === 'Data Quality' && <DataQualityPanel />}
+        {tab === 'Event Inspector' && <EventInspector />}
+        {tab === 'Why Investigation' && <WhyPanel />}
+        {tab === 'Research Notes' && <NotesPanel />}
       </div>
     </div>
   )
