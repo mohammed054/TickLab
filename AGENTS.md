@@ -313,20 +313,45 @@ session so the plain filename form works from any working directory.)
 
 ### 9.4 Directory ownership by Block
 
-| Block | Directories it owns |
-|---|---|
-| 2.1 Data Models | `backend/*/models.py`, migration files |
-| 2.2 Engine Abstraction Layer | `engine/abstraction/` |
-| 2.6 Strategy Templates | `backend/experiments/app/templates/` |
-| 2.7 Data Pipeline | `backend/data/app/` |
-| 2.3 Execution Model Wiring | `engine/abstraction/` (depends on 2.2 being `done`) |
-| 2.4 Metrics & Stats Integration | `engine/abstraction/metrics/`, `backend/experiments/app/metrics/` (depends on 2.2) |
-| 2.5 Extended Event/Fill Recording | `engine/abstraction/` (depends on 2.2) |
-| 2.8 Gateway & Job Runner | `backend/gateway/`, `backend/jobs/` (depends on 2.2) |
+Phases 0–2 are complete (marked `done` in `coordination.db`, kept for the
+dependency graph and audit trail). The live board covers Phases 3–6:
 
-`claim` already enforces the dependency ordering (a dependent Block can't be
-claimed until its dependency is `done`); this table is what tells an instance
-which directories it's allowed to touch once it has its Block.
+| Block | Description | Directories it owns | Depends on |
+|---|---|---|---|
+| 3.1 | Sync Bus and Shell | `frontend/src/shared/sync-bus/`, `frontend/src/app/` | — |
+| 3.2 | Header and Chart | `frontend/src/features/header/`, `frontend/src/features/price-chart/` | 3.1 |
+| 3.3 | Order Book | `frontend/src/features/order-book/` | 3.1 |
+| 3.4 | Flow, Microstructure, Regime | `frontend/src/features/order-flow/`, `microstructure/`, `market-regime/` | 3.1 |
+| 3.5 | Strategy/Inventory/Risk/Execution/BottomBar | `frontend/src/features/strategy-monitor/`, `inventory/`, `risk/`, `execution-monitor/`, `bottom-bar/` | 3.1 |
+| 4.1 | Strategy Editor and Parameters | `frontend/src/features/strategy-editor/`, `parameters/` | 3.1 |
+| 4.2 | Dataset Selector and Data Quality | `frontend/src/features/dataset-selector/`, `data-quality/` | 3.1 |
+| 4.3 | Backtest Configuration/Progress/Results | `frontend/src/features/backtest-config/`, `backtest-progress/`, `results/` | 3.1 |
+| 4.4 | Full Analytics Suite | `frontend/src/features/analytics/` | 4.3 |
+| 4.5 | Replay, Event Inspector, Why Investigation | `frontend/src/features/replay/`, `event-inspector/`, `why-investigation/` | 4.2 |
+| 4.6 | Experiment Management and Research Notes | `frontend/src/features/experiments/`, `research-notes/` | 4.3 |
+| 4.7 | AI Research Assistant | `frontend/src/features/ai-research/`, `backend/ai/` | 4.4 |
+| 4.8 | Logs, Alerts, Search, Command Palette | `frontend/src/features/logs/`, `alerts/`, `search/`, `command-palette/` | 3.1 |
+| 4.9 | L3 (Market-By-Order) Backtest Support | `backend/data/app/`, `frontend/src/features/dataset-selector/` | 4.2, 2.7 |
+| 5.1 | Live Market Data Ingestion (read-only) | `backend/connectors/`, `backend/market/` | 2.2 |
+| 5.2 | Paper Fill Simulation | `backend/connectors/`, `engine/abstraction/` | 5.1 |
+| 5.3 | Paper Mode Rollout | `frontend/src/features/paper-live/`, `backend/experiments/` | 5.2, 4.3 |
+| 5.4 | Live Trading Enablement | `backend/connectors/`, `frontend/src/features/risk-controls/` | 5.3 |
+| 5.5 | Initial Scale-Out | `infra/`, `docker-compose.yml`, k8s manifests | 5.4 |
+| 6.1 | Multi-Symbol Support | `frontend/src/features/header/`, `dataset-selector/`, `backend/market/` | 4.4 |
+| 6.2 | Derivatives Analytics Expansion | `frontend/src/features/analytics/`, `backend/market/` | 6.1 |
+| 6.3 | Remaining Scale-Out (full k8s migration) | `infra/` | 5.5 |
+
+`claim` enforces this dependency ordering directly — including multi-dependency
+Blocks like 4.9 and 5.3, which need *all* comma-separated dependencies `done`
+before they're claimable — so this table is only for telling an instance which
+directories it's allowed to touch once it has its Block, not for checking
+eligibility yourself.
+
+Note: 5.1 depends only on 2.2, which is already `done` — it can be claimed and
+worked on in parallel with Phase 3/4 frontend work, since read-only live-data
+ingestion doesn't touch any frontend directory. If you'd rather sequence Phase 5
+strictly after Phase 4 finishes instead, change 5.1's `depends_on` in
+`coordination.py`'s `SEED` to `"4.4"` before running `init`.
 
 ### 9.5 Kickoff prompt template
 
