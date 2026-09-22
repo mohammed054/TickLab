@@ -114,3 +114,26 @@ by the green build above. No backend/data-shape changes (mock-only per F.1).
 Open questions for Planner: none.
 Next step: Human merges exec/executor-4 into main and folds this entry into
 canonical STATE.md; F.4 (AI Research tab, depends on F.3) is now unblocked.
+
+---
+
+### [F.5] DONE — Mock data contract audit vs docs/15 §15.5 schemas
+Timestamp: 2026-09-22T15:10:00Z
+Agent: executor-3 (entry written at merge time — session ended without logging, folded here per AGENTS §9.6)
+Status: DONE
+Files touched:
+  - frontend/src/mock/mockData.ts
+  - STATE.md
+Spec files read:
+  - docs/15-api-and-data-model-spec.md §15.5
+Summary: Audited mock data types against docs/15 §15.5 and added the missing core model
+interfaces (MarketEvent, DataQualityReport, BacktestRequest, BacktestProgress, Note,
+AlertRecord, WorkspacePreset). Extended MockBacktestResult with the §15.5 BacktestResult
+fields (jobId, experimentId, engineVersion, recorderSeriesRef, fineGrainedEventsRef,
+headline) and populated them in genMockBacktestResult; attached the §15.5 Note fields to
+MockStrategyState as optional (audit completeness). Generator/interface alignment done at
+merge time so the branch typechecks.
+Deviations from spec: Note fields added to MockStrategyState are optional additions for
+audit completeness (not a §15.5 StrategyState shape) — flagged here rather than dropped.
+Open questions for Planner: none.
+Next step: F.5 merged to main; remaining available blocks are F.4 (build) and F.6 (design only).

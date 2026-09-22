@@ -141,6 +141,13 @@ export interface MockStrategyState {
   cancelled: number
   fillRate: number
   latencyMs: number
+  // docs/15 §15.5: Note fields (for audit completeness)
+  id?: string
+  targetType?: "strategy" | "experiment" | "timestamp" | "trade" | "fill" | "chart_view"
+  targetId?: string
+  body?: string
+  authoredBy?: { agentType: "human" | "ai-assistant"; id: string }
+  createdAt?: string
 }
 
 export function genMockStrategyState(): MockStrategyState {
@@ -177,26 +184,72 @@ export interface MockBacktestResult {
   fillRate: number
   fees: number
   slippage: number
+  // docs/15 §15.5: BacktestResult fields (for audit completeness)
+  jobId: string
+  experimentId: string
+  engineVersion: string
+  recorderSeriesRef: string
+  fineGrainedEventsRef: string
+  headline: {
+    initialCapital: number
+    finalCapital: number
+    netPnl: number
+    returnPct: number
+    maxDrawdownPct: number
+    sharpe: number
+    sortino: number
+    trades: number
+    fillRatePct: number
+    fees: number
+    slippage: number
+  }
 }
 
 export function genMockBacktestResult(strategy: string): MockBacktestResult {
   const initialCapital = 10000
   const returnPct = +(rand() * 25 - 5).toFixed(2)
   const finalCapital = +(initialCapital * (1 + returnPct / 100)).toFixed(2)
+  const netPnl = +(finalCapital - initialCapital).toFixed(2)
+  const maxDrawdownPct = +(-(rand() * 8 + 1)).toFixed(2)
+  const sharpe = +(rand() * 3).toFixed(2)
+  const sortino = +(rand() * 4).toFixed(2)
+  const trades = Math.floor(20000 + rand() * 60000)
+  const fillRate = +(20 + rand() * 40).toFixed(1)
+  const fees = +(200 + rand() * 900).toFixed(0)
+  const slippage = +(20 + rand() * 200).toFixed(0)
   return {
     id: `mock-bt-${Date.now()}`,
     strategy,
     initialCapital,
     finalCapital,
-    netPnl: +(finalCapital - initialCapital).toFixed(2),
+    netPnl,
     returnPct,
-    maxDrawdownPct: +(-(rand() * 8 + 1)).toFixed(2),
-    sharpe: +(rand() * 3).toFixed(2),
-    sortino: +(rand() * 4).toFixed(2),
-    trades: Math.floor(20000 + rand() * 60000),
-    fillRate: +(20 + rand() * 40).toFixed(1),
-    fees: +(200 + rand() * 900).toFixed(0),
-    slippage: +(20 + rand() * 200).toFixed(0),
+    maxDrawdownPct,
+    sharpe,
+    sortino,
+    trades,
+    fillRate,
+    fees,
+    slippage,
+    // docs/15 §15.5: BacktestResult fields (audit completeness)
+    jobId: `mock-job-${Date.now()}`,
+    experimentId: `mock-exp-${strategy.toLowerCase()}`,
+    engineVersion: 'hftbacktest-mock-0.1.0',
+    recorderSeriesRef: `mock://recorder/${Date.now()}.npz`,
+    fineGrainedEventsRef: `mock://events/${Date.now()}.parquet`,
+    headline: {
+      initialCapital,
+      finalCapital,
+      netPnl,
+      returnPct,
+      maxDrawdownPct,
+      sharpe,
+      sortino,
+      trades,
+      fillRatePct: fillRate,
+      fees,
+      slippage,
+    },
   }
 }
 
@@ -325,6 +378,104 @@ export function genMockWalkForward(): MockWalkForwardSplit[] {
     { label: 'Split B', range: 'May', role: 'VALIDATION', sharpe: 1.3, returnPct: 4.9 },
     { label: 'Split B', range: 'Jun', role: 'TEST', sharpe: 0.8, returnPct: 1.2 },
   ]
+}
+
+// ---------------------------------------------------------------------------
+// Core data models per docs/15 §15.5 (audit: all interfaces present and typed)
+// ---------------------------------------------------------------------------
+
+// Normalized market event, shared by live, paper, and replay sources
+// (docs/06-realtime-live-data-architecture.md §6.4)
+export interface MarketEvent {
+  timestampNs: number
+  symbol: string
+  exchange: string
+  type: "book_update" | "trade" | "snapshot" | "ticker" | "funding" | "liquidation"
+  side?: "bid" | "ask"
+  price?: number
+  size?: number
+  sequence?: number
+  // derivatives-only fields
+  fundingRate?: number
+  nextFundingTime?: number
+  openInterest?: number
+  markPrice?: number
+  indexPrice?: number
+  basis?: number
+}
+
+// Data quality report per docs/15 §15.5
+export interface DataQualityReport {
+  datasetId: string
+  totalEvents: number
+  trades: number
+  orderBookUpdates: number
+  snapshots: number
+  missingIntervals: { count: number; status: "green" | "yellow" | "red"; ranges: [number, number][] }
+  duplicateEvents: { count: number; status: "green" | "yellow" | "red" }
+  sequenceGaps: { count: number; status: "green" | "yellow" | "red" }
+  timestampRange: [number, number]
+  fileSizeBytes: number
+  source: string
+  normalizationVersion: string
+  tickSize: number
+  lotSize: number
+}
+
+// Backtest request per docs/15 §15.5
+export interface BacktestRequest {
+  strategyRef: { id: string; version: string; codeHash: string }
+  parameters: Record<string, number | string | boolean>
+  datasetId: string
+  dateRange: { start: number; end: number }
+  initialCapital: number
+  executionModel: unknown // docs/08 §8.7
+  riskLimits: unknown // docs/12 §12.5
+  randomSeed: number | null
+  iterations: number
+}
+
+// Backtest progress per docs/15 §15.5
+export interface BacktestProgress {
+  jobId: string
+  eventsProcessed: number
+  totalEvents: number
+  eventsPerSec: number
+  ordersSubmitted: number
+  fills: number
+  simulatedTimeNs: number
+  wallClockElapsedMs: number
+  status: "queued" | "running" | "complete" | "failed" | "cancelled"
+}
+
+// Note per docs/15 §15.5
+export interface Note {
+  id: string
+  targetType: "strategy" | "experiment" | "timestamp" | "trade" | "fill" | "chart_view"
+  targetId: string
+  body: string
+  authoredBy: { agentType: "human" | "ai-assistant"; id: string }
+  createdAt: string
+}
+
+// Alert record per docs/15 §15.5
+export interface AlertRecord {
+  id: string
+  type: string // see docs/14 §14.3's alert-type list
+  severity: "info" | "warning" | "critical"
+  message: string
+  linkedView?: { path: string; params: Record<string, string> }
+  createdAt: string
+  acknowledged: boolean
+}
+
+// Workspace preset per docs/15 §15.5
+export interface WorkspacePreset {
+  id: string
+  userId: string
+  name: "MARKET" | "RESEARCH" | "BACKTEST" | "REPLAY" | "EXECUTION" | "PAPER" | "LIVE" | string
+  mainMonitorLayout: Record<string, unknown>
+  secondaryMonitorLayout: Record<string, unknown>
 }
 
 // ---------------------------------------------------------------------------
