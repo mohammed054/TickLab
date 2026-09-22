@@ -60,3 +60,20 @@ Decisions," answers them (even briefly), then an Executor begins Phase 1, Block 
 Task A ("Repo scaffold") as defined in docs/16-implementation-roadmap.md.
 
 ---
+
+### [F.2.A] DONE — Main Monitor missing panels implemented
+Timestamp: 2026-09-22T00:00:00Z
+Agent: executor-1 (Nemotron 3.5 Lightning)
+Status: DONE
+Files touched:
+  - frontend/src/components/layout/MainMonitor.tsx
+  - frontend/src/components/microstructure/MicrostructurePanel.tsx
+  - frontend/src/components/market-regime/MarketRegimePanel.tsx
+  - frontend/src/components/risk/RiskPanel.tsx
+  - frontend/src/components/execution-monitor/ExecutionMonitorPanel.tsx
+Spec files read:
+  - docs/07-main-monitor-components.md §7.9–§7.15
+Summary: Implemented four missing panels for the Main Monitor per docs/07 §7.9–7.15: MicrostructurePanel displaying spread, depth levels, and total visible depth; MarketRegimePanel showing classified volatility/liquidity/trend label with statistical classification caption; RiskPanel exposing current exposure, max exposure, daily P&L, drawdown, open orders, notional value, margin usage, and liquidation distance; ExecutionMonitorPanel showing feed/decision/order/exchange latency, rejected/cancelled/stale order counts, dropped events, sequence gaps, and reconnects. All panels integrated into MainMonitor component tree with proper imports and render positions per the default grid layout (§7.17). Panels use the shared Panel component and MetricRow pattern consistent with the codebase.
+Deviations from spec: None — all panels match the spec component names, locations, and data presentation requirements from §7.9–§7.15.
+Open questions for Planner: None.
+Next step: Update coordination status and verify integration works end-to-end with mock data.

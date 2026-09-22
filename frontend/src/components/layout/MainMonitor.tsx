@@ -6,6 +6,10 @@ import { OrderBook } from '../main/OrderBook'
 import { TradeTape } from '../main/TradeTape'
 import { OrderFlowPanel } from '../main/OrderFlowPanel'
 import { StrategyMonitorPanel } from '../main/StrategyMonitorPanel'
+import { MicrostructurePanel } from '../microstructure/MicrostructurePanel'
+import { MarketRegimePanel } from '../market-regime/MarketRegimePanel'
+import { RiskPanel } from '../risk/RiskPanel'
+import { ExecutionMonitorPanel } from '../execution-monitor/ExecutionMonitorPanel'
 import { BottomBar } from '../main/BottomBar'
 import { MockBanner } from '../shared/MockBanner'
 import { useWorkspace } from '../../state/useWorkspace'
@@ -51,6 +55,10 @@ export function MainMonitor() {
           </div>
         </div>
         <OrderBook book={book} />
+        <MicrostructurePanel />
+        <MarketRegimePanel />
+        <RiskPanel />
+        <ExecutionMonitorPanel />
       </div>
       <BottomBar s={strategy} />
     </div>
