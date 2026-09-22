@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import './global.css'
-import { MainMonitor } from './app/main-monitor/MainMonitor'
+import App from './App'
+import './styles/global.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MainMonitor />
+    <App />
   </React.StrictMode>
 )

@@ -254,9 +254,82 @@ export function genMockLogs(count: number): MockLogEntry[] {
   return out
 }
 
-export function genMockAlerts() {
+export interface MockAlert {
+  id: string
+  severity: 'info' | 'warn' | 'bad'
+  message: string
+  t: number
+}
+
+const ALERT_POOL: [MockAlert['severity'], string][] = [
+  ['warn', 'Inventory at 82% of soft limit (mock)'],
+  ['info', 'Backtest MM_V19 queued (mock)'],
+  ['bad', 'Feed latency elevated: 61ms (mock)'],
+  ['warn', 'Drawdown threshold approaching: -3.9% (mock)'],
+  ['info', 'Strategy MM_V17 stopped by user (mock)'],
+  ['bad', 'Order rejection spike detected (mock)'],
+]
+
+export function genMockAlerts(count = 4): MockAlert[] {
+  const now = Date.now()
+  return Array.from({ length: count }, (_, i) => {
+    const [severity, message] = ALERT_POOL[Math.floor(rand() * ALERT_POOL.length)]
+    return { id: `mock-alert-${now}-${i}`, severity, message, t: now - i * 60_000 }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Parameter sweep — grid of (spread x inventorySkew) -> pnl, for a heatmap
+// ---------------------------------------------------------------------------
+export interface MockSweepCell {
+  spread: number
+  skew: number
+  pnl: number
+  fillRate: number
+}
+
+export function genMockParameterSweep(): MockSweepCell[] {
+  const spreads = [2, 4, 6, 8, 10, 12]
+  const skews = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+  const out: MockSweepCell[] = []
+  for (const spread of spreads) {
+    for (const skew of skews) {
+      // fabricate a smooth-ish surface with a peak, purely for visual demo
+      const peakSpread = 6
+      const peakSkew = 0.4
+      const dist = Math.pow(spread - peakSpread, 2) / 10 + Math.pow(skew - peakSkew, 2) * 8
+      const pnl = +(400 - dist * 40 + (rand() - 0.5) * 60).toFixed(0)
+      out.push({ spread, skew, pnl, fillRate: +(50 - spread * 2 + rand() * 10).toFixed(1) })
+    }
+  }
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// Walk-forward / out-of-sample split
+// ---------------------------------------------------------------------------
+export interface MockWalkForwardSplit {
+  label: string
+  range: string
+  role: 'TRAIN' | 'VALIDATION' | 'TEST'
+  sharpe: number
+  returnPct: number
+}
+
+export function genMockWalkForward(): MockWalkForwardSplit[] {
   return [
-    { id: 'a1', severity: 'warn' as const, message: 'Inventory at 82% of soft limit (mock alert)' },
-    { id: 'a2', severity: 'info' as const, message: 'Backtest MM_V19 queued (mock alert)' },
+    { label: 'Split A', range: 'Jan → Mar', role: 'TRAIN', sharpe: 2.1, returnPct: 14.2 },
+    { label: 'Split A', range: 'Apr', role: 'VALIDATION', sharpe: 1.6, returnPct: 6.1 },
+    { label: 'Split A', range: 'May', role: 'TEST', sharpe: 1.1, returnPct: 3.4 },
+    { label: 'Split B', range: 'Feb → Apr', role: 'TRAIN', sharpe: 2.4, returnPct: 16.8 },
+    { label: 'Split B', range: 'May', role: 'VALIDATION', sharpe: 1.3, returnPct: 4.9 },
+    { label: 'Split B', range: 'Jun', role: 'TEST', sharpe: 0.8, returnPct: 1.2 },
   ]
+}
+
+// ---------------------------------------------------------------------------
+// Robustness perturbation results
+// ---------------------------------------------------------------------------
+export function genMockRobustness() {
+  return Array.from({ length: 30 }, () => +(180 + (rand() - 0.5) * 500).toFixed(0)).sort((a, b) => a - b)
 }

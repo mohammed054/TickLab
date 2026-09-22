@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { StatusDot } from '../shared/Panel'
 import { MockTag } from '../shared/MockBanner'
+import { AlertCenter } from '../shared/AlertCenter'
 
 export function Header({ price, changePct, bid, ask }: { price: number; changePct: number; bid: number; ask: number }) {
   const [now, setNow] = useState(new Date())
@@ -60,6 +61,7 @@ export function Header({ price, changePct, bid, ask }: { price: number; changePc
         <span>LATENCY 18.4ms</span>
         <span>UTC {utc}</span>
       </div>
+      <AlertCenter />
     </div>
   )
 }
