@@ -60,3 +60,38 @@ Decisions," answers them (even briefly), then an Executor begins Phase 1, Block 
 Task A ("Repo scaffold") as defined in docs/16-implementation-roadmap.md.
 
 ---
+
+### [F.3] DONE — Secondary Monitor: Data Quality, Event Inspector, Why Investigation, Research Notes tabs
+Timestamp: 2026-09-22T14:44:45Z
+Agent: executor-4 (Muse Spark)
+Status: DONE
+Files touched:
+  - frontend/src/components/secondary/DataQualityPanel.tsx
+  - frontend/src/components/secondary/EventInspector.tsx
+  - frontend/src/components/secondary/WhyPanel.tsx
+  - frontend/src/components/secondary/NotesPanel.tsx
+  - frontend/src/components/layout/SecondaryMonitor.tsx
+Spec files read:
+  - docs/17-frontend-first-transition-plan.md §17.2.3, §17.5
+  - docs/08-secondary-monitor-components.md §8.10, §8.21, §8.22, §8.24
+  - docs/09-analytics-and-investigation-suite.md §9.14
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2 (quality-gate rule, via §8.10)
+Summary: Added four mock-only tabs to the Secondary Monitor per Block F.3.
+DataQualityPanel renders the full §8.10 report (counts, 🟢 checks, timestamp
+range, source, normalization, tick/lot) with values consistent with the folded
+summary in DatasetPanel, plus the §5.2 🔴-blocks-backtest gate note.
+EventInspector is a full §8.21 view reading the same Sync Bus
+timestampMs/selectedTradeId as ReplayPanel's folded inspector, with strategy
+snapshot, mock context window (genMockTrades), and a [ view raw event ] toggle.
+WhyPanel is the §8.22 navigation shell whose six questions match the §9.14
+methodology table exactly, each with its evidence route and a jump button that
+navigates via the Sync Bus. NotesPanel implements §8.24 (seeded attributed
+notes, six attach targets wired to live workspace state, local composer).
+SecondaryMonitor.tsx imports all four, extends TABS, and renders them.
+Acceptance: `npm run build` (tsc -b + vite) succeeds, 65 modules transformed.
+Deviations from spec: none. First draft of the four panels had unclosed JSX
+tags and a mistyped notes state; caught on re-read, rewritten, then verified
+by the green build above. No backend/data-shape changes (mock-only per F.1).
+Open questions for Planner: none.
+Next step: Human merges exec/executor-4 into main and folds this entry into
+canonical STATE.md; F.4 (AI Research tab, depends on F.3) is now unblocked.
