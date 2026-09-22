@@ -12,20 +12,20 @@ export function BacktestPanel({ onComplete }: { onComplete: (r: MockBacktestResu
     setRunning(true)
     setProgress(0)
     timer.current = window.setInterval(() => {
-      setProgress((p) => {
-        const next = p + 4 + Math.random() * 6
-        if (next >= 100) {
-          window.clearInterval(timer.current!)
-          setRunning(false)
-          onComplete(genMockBacktestResult('MM_V18'))
-          return 100
-        }
-        return next
-      })
+      const delta = 4 + Math.random() * 6
+      setProgress((p) => Math.min(100, p + delta))
     }, 180)
   }
 
   useEffect(() => () => { if (timer.current) window.clearInterval(timer.current) }, [])
+
+  useEffect(() => {
+    if (running && progress >= 100) {
+      if (timer.current) window.clearInterval(timer.current)
+      setRunning(false)
+      onComplete(genMockBacktestResult('MM_V18'))
+    }
+  }, [running, progress, onComplete])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: '100%', overflow: 'auto' }}>
