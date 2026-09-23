@@ -20,6 +20,7 @@ import { EventInspector } from '../secondary/EventInspector'
 import { WhyPanel } from '../secondary/WhyPanel'
 import { NotesPanel } from '../secondary/NotesPanel'
 import { MockBacktestResult } from '../../mock/mockData'
+import { AiResearchTab } from '../ai-research/AiResearchTab'
 import { useWorkspace } from '../../state/useWorkspace'
 
 const TABS = [
@@ -41,6 +42,7 @@ const TABS = [
   'Event Inspector',
   'Why Investigation',
   'Research Notes',
+  'AI Research',
 ] as const
 
 export function SecondaryMonitor() {
@@ -106,6 +108,7 @@ export function SecondaryMonitor() {
         {tab === 'Event Inspector' && <EventInspector />}
         {tab === 'Why Investigation' && <WhyPanel />}
         {tab === 'Research Notes' && <NotesPanel />}
+        {tab === 'AI Research' && <AiResearchTab />}
       </div>
     </div>
   )

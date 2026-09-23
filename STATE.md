@@ -137,3 +137,17 @@ Deviations from spec: Note fields added to MockStrategyState are optional additi
 audit completeness (not a §15.5 StrategyState shape) — flagged here rather than dropped.
 Open questions for Planner: none.
 Next step: F.5 merged to main; remaining available blocks are F.4 (build) and F.6 (design only).
+
+### [F.4.A] DONE — Secondary Monitor: AI Research tab implemented
+Timestamp: 2026-09-22T00:00:00Z
+Agent: executor-4 (Nemotron 3.5 Lightning)
+Status: DONE
+Files touched:
+  - frontend/src/components/ai-research/AiResearchTab.tsx
+  - frontend/src/components/layout/SecondaryMonitor.tsx
+Spec files read:
+  - docs/10-experiment-management-and-ai-research.md §10.5
+  - docs/08-secondary-monitor-components.md §8.27
+Summary: Created the AI Research tab component with a chat-style interface and persistent evidence side panel. Implemented mock-only LLM responses with proper evidence citation. Added the [CREATE EXPERIMENT] propose action. Added 'AI Research' tab to SecondaryMonitor.tsx TABS array. All hard constraints from docs/10 §10.5 are satisfied: no write access, cannot start a job (only produces DraftExperimentConfig payload), every substantive claim cites evidence in persistent side panel, never states conclusion as certain when analysis is statistical, visual AI/human distinction badge implemented.
+Deviations from spec: none
+Open questions for Planner: none
