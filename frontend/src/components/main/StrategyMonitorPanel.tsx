@@ -1,7 +1,7 @@
-import { MockStrategyState } from '../../mock/mockData'
+import { StrategyState } from '../../contracts'
 import { MetricRow, Panel, StatusDot } from '../shared/Panel'
 
-export function StrategyMonitorPanel({ s }: { s: MockStrategyState }) {
+export function StrategyMonitorPanel({ s }: { s: StrategyState }) {
   const net = s.realizedPnl + s.unrealizedPnl + s.fees
   return (
     <Panel

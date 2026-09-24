@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "BTC Quant Workstation",
+  "version": "0.1.0",
+  "identifier": "com.ticklab.workstation",
+  "build": {
+    "beforeDevCommand": "npm run dev:browser",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost ws://localhost:5173; img-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; frame-src 'none'",
+      "capabilities": ["main", "secondary"]
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "BTC Quant Workstation — Main Monitor",
+        "url": "index.html?shell=main",
+        "width": 2560,
+        "height": 1440,
+        "minWidth": 1280,
+        "minHeight": 720,
+        "resizable": true,
+        "visible": true
+      },
+      {
+        "label": "secondary",
+        "title": "BTC Quant Workstation — Research Lab",
+        "url": "index.html?shell=secondary",
+        "width": 1920,
+        "height": 1200,
+        "minWidth": 1024,
+        "minHeight": 720,
+        "resizable": true,
+        "visible": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.png", "icons/icon.ico"]
+  }
+}

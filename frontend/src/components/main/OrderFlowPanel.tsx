@@ -1,7 +1,7 @@
-import { MockTrade } from '../../mock/mockData'
+import { Trade } from '../../contracts'
 import { MetricRow, Panel } from '../shared/Panel'
 
-export function OrderFlowPanel({ trades }: { trades: MockTrade[] }) {
+export function OrderFlowPanel({ trades }: { trades: Trade[] }) {
   const buyVol = trades.filter((t) => t.side === 'BUY').reduce((s, t) => s + t.size, 0)
   const sellVol = trades.filter((t) => t.side === 'SELL').reduce((s, t) => s + t.size, 0)
   const delta = buyVol - sellVol

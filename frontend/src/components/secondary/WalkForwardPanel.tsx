@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
-import { genMockWalkForward, genMockRobustness } from '../../mock/mockData'
+import { generateRobustness, generateWalkForward } from '../../mock/mockData'
 import { Panel } from '../shared/Panel'
 
 const ROLE_COLOR = { TRAIN: 'var(--info)', VALIDATION: 'var(--warn)', TEST: 'var(--pos)' } as const
 
 export function WalkForwardPanel() {
-  const splits = useMemo(() => genMockWalkForward(), [])
-  const robustness = useMemo(() => genMockRobustness(), [])
+  const splits = useMemo(() => generateWalkForward(), [])
+  const robustness = useMemo(() => generateRobustness(), [])
   const min = Math.min(...robustness)
   const max = Math.max(...robustness)
 

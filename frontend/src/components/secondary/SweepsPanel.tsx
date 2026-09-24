@@ -1,9 +1,9 @@
 import { Fragment, useMemo } from 'react'
-import { genMockParameterSweep } from '../../mock/mockData'
+import { generateParameterSweep } from '../../mock/mockData'
 import { Panel } from '../shared/Panel'
 
 export function SweepsPanel() {
-  const cells = useMemo(() => genMockParameterSweep(), [])
+  const cells = useMemo(() => generateParameterSweep(), [])
   const spreads = Array.from(new Set(cells.map((c) => c.spread)))
   const skews = Array.from(new Set(cells.map((c) => c.skew)))
   const maxAbs = Math.max(...cells.map((c) => Math.abs(c.pnl)))

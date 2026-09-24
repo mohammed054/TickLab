@@ -165,3 +165,21 @@ Concretely, in order:
    alternative is worth reopening given how well the plain-browser approach has
    worked so far — that's a decision for whoever picks this up next, not one this
    document makes for you).
+
+## 17.7 Owner-directed completion extension — 2026-09-24
+
+The owner has directed that the frontend be completed first as a fully interactive,
+offline, mock-first native application. The executable task definitions and
+acceptance criteria are in the `F.7` addendum to `docs/16-implementation-roadmap.md`.
+
+This extension changes the sequence, not the product boundary:
+
+- The frontend must be packaged as a native desktop application rather than delivered
+  only as browser windows.
+- All documented frontend surfaces must work against a deterministic local runtime.
+- Backend, exchange, live-order, and real-LLM integration remain deferred until the
+  frontend release candidate is reviewed.
+- Tauri 2 is the current desktop recommendation, subject to the compatibility spike
+  defined in F.7.D.
+- The mock runtime and its cross-window transport are temporary frontend infrastructure,
+  not substitutes for the Gateway contracts in `docs/15`.

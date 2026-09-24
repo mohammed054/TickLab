@@ -1,68 +1,54 @@
-import { MockBacktestResult } from '../../mock/mockData'
+import { BacktestResult } from '../../contracts'
+import { buildAttribution } from '../../analytics/deriveAnalytics'
 import { Panel, MetricRow } from '../shared/Panel'
-import { useMemo } from 'react'
 
-function EquitySpark({ finalReturn }: { finalReturn: number }) {
-  const points = useMemo(() => {
-    const n = 60
-    let v = 0
-    const arr: number[] = []
-    for (let i = 0; i < n; i++) {
-      v += (finalReturn / n) + (Math.random() - 0.5) * (Math.abs(finalReturn) / 6 + 1)
-      arr.push(v)
-    }
-    return arr
-  }, [finalReturn])
+function EquitySpark({ netPnl }: { netPnl: number }) {
+  const points = Array.from({ length: 60 }, (_, index) => {
+    const progress = index / 59
+    return netPnl * progress + Math.sin(index / 4) * Math.max(1, Math.abs(netPnl) * 0.03)
+  })
   const min = Math.min(...points)
   const max = Math.max(...points)
-  const w = 100
-  const h = 100
-  const path = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i / (points.length - 1)) * w} ${h - ((p - min) / (max - min || 1)) * h}`)
-    .join(' ')
+  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${(index / (points.length - 1)) * 100} ${100 - ((point - min) / (max - min || 1)) * 100}`).join(' ')
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', height: 120 }} preserveAspectRatio="none">
-      <path d={path} fill="none" stroke={finalReturn >= 0 ? '#3ecf8e' : '#ef5b5b'} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    <svg viewBox="0 0 100 100" role="img" aria-label="Mock equity curve" style={{ width: '100%', height: 120 }} preserveAspectRatio="none">
+      <path d={path} fill="none" stroke={netPnl >= 0 ? 'var(--color-positive)' : 'var(--color-negative)'} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
 
-export function ResultsPanel({ result }: { result: MockBacktestResult | null }) {
+export function ResultsPanel({ result }: { result: BacktestResult | null }) {
   if (!result) {
     return (
       <Panel title="RESULTS (MOCK)">
-        <div className="dim">No backtest result yet. Run a backtest from the Backtest tab.</div>
+        <div className="dim">No backtest result selected. Run a backtest or open an experiment.</div>
       </Panel>
     )
   }
 
-  const attribution = [
-    ['Gross trading P&L', result.netPnl + result.fees + result.slippage],
-    ['Fees', -result.fees],
-    ['Slippage', -result.slippage],
-    ['Adverse selection', -(result.slippage * 0.6)],
-  ]
+  const headline = result.headline
+  const attribution = buildAttribution(result)
+  const residual = attribution.find((item) => item.id === 'other')?.value ?? 0
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: '100%', overflow: 'auto' }}>
       <Panel title="EQUITY CURVE (MOCK)">
-        <EquitySpark finalReturn={result.returnPct} />
+        <EquitySpark netPnl={headline.netPnl} />
       </Panel>
       <Panel title="RESULTS SUMMARY (MOCK)">
-        <MetricRow label="Initial capital" value={`$${result.initialCapital.toLocaleString()}`} />
-        <MetricRow label="Final capital" value={`$${result.finalCapital.toLocaleString()}`} />
-        <MetricRow label="Net P&L" value={`${result.netPnl >= 0 ? '+' : ''}$${result.netPnl}`} valueClass={result.netPnl >= 0 ? 'pos' : 'neg'} />
-        <MetricRow label="Return" value={`${result.returnPct >= 0 ? '+' : ''}${result.returnPct}%`} valueClass={result.returnPct >= 0 ? 'pos' : 'neg'} />
-        <MetricRow label="Max drawdown" value={`${result.maxDrawdownPct}%`} valueClass="neg" />
-        <MetricRow label="Sharpe / Sortino" value={`${result.sharpe} / ${result.sortino}`} />
-        <MetricRow label="Trades" value={result.trades.toLocaleString()} />
-        <MetricRow label="Fill rate" value={`${result.fillRate}%`} />
-        <MetricRow label="Fees / Slippage" value={`$${result.fees} / $${result.slippage}`} />
+        <MetricRow label="Initial capital" value={`$${headline.initialCapital.toLocaleString()}`} />
+        <MetricRow label="Final capital" value={`$${headline.finalCapital.toLocaleString()}`} />
+        <MetricRow label="Net P&L" value={`${headline.netPnl >= 0 ? '+' : ''}$${headline.netPnl.toFixed(2)}`} valueClass={headline.netPnl >= 0 ? 'pos' : 'neg'} />
+        <MetricRow label="Return" value={`${headline.returnPct >= 0 ? '+' : ''}${headline.returnPct}%`} valueClass={headline.returnPct >= 0 ? 'pos' : 'neg'} />
+        <MetricRow label="Max drawdown" value={`${headline.maxDrawdownPct}%`} valueClass="neg" />
+        <MetricRow label="Sharpe / Sortino" value={`${headline.sharpe} / ${headline.sortino}`} />
+        <MetricRow label="Trades" value={headline.trades.toLocaleString()} />
+        <MetricRow label="Fill rate" value={`${headline.fillRatePct}%`} />
+        <MetricRow label="Fees / Slippage" value={`$${headline.fees} / $${headline.slippage}`} />
       </Panel>
       <Panel title="P&L ATTRIBUTION (MOCK)">
-        {attribution.map(([k, v]) => (
-          <MetricRow key={k as string} label={k as string} value={`${(v as number) >= 0 ? '+' : ''}$${(v as number).toFixed(0)}`} valueClass={(v as number) >= 0 ? 'pos' : 'neg'} />
-        ))}
+        {attribution.filter((item) => item.id !== 'other').map((item) => <MetricRow key={item.id} label={item.label} value={`${item.value >= 0 ? '+' : ''}$${item.value.toFixed(0)}`} valueClass={item.value >= 0 ? 'pos' : 'neg'} />)}
+        <MetricRow label="Other / residual" value={`${residual >= 0 ? '+' : ''}$${residual.toFixed(0)}`} valueClass={Math.abs(residual) > 1 ? 'warn' : residual >= 0 ? 'pos' : 'neg'} />
       </Panel>
     </div>
   )

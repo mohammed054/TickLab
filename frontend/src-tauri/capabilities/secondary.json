@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "secondary",
+  "description": "Permissions for the Research Lab window",
+  "windows": ["secondary"],
+  "permissions": ["core:default", "dialog:default", { "identifier": "fs:allow-write-text-file", "allow": [{ "path": "$DOWNLOAD/**" }, { "path": "$DESKTOP/**" }, { "path": "$DOCUMENT/**" }] }]
+}

@@ -309,3 +309,141 @@ since they depend on the Open Decisions in §0. When the Planner adds detail, it
 appends a dated note at the bottom of the relevant Phase section explaining what
 changed and why, rather than silently rewriting a Block that an Executor may already
 be mid-task on.
+
+## Frontend-first completion addendum — 2026-09-24
+
+This owner-directed addendum formalizes the expanded scope approved in the working
+session: complete the entire frontend as an offline, deterministic, mock-first desktop
+application before selecting or connecting backend services. The addendum supersedes
+the old Phase 1–4 sequencing for frontend work only; it does not authorize backend,
+exchange, live-order, or real-LLM integration.
+
+### Block F.7 — Complete mock-first desktop frontend
+
+**Goal:** a packaged native workstation whose every documented frontend surface is
+interactive against a local mock runtime, persists state, synchronizes both monitor
+windows, and passes enterprise UI, accessibility, and performance acceptance checks.
+No real backend connection is part of this block.
+
+**Directory ownership:** `frontend/` only. Do not modify `backend/`, `engine/`,
+`data/`, or `scripts/` under this block.
+
+#### Task F.7.A — Canonical contracts and deterministic mock runtime
+
+Create canonical TypeScript contracts and a deterministic local runtime with a fixed
+scenario epoch, seeded random streams, stable IDs, virtual clock/scheduler, normalized
+market events, replayable artifacts, and a data-source interface shared by mock and
+future Gateway implementations. Remove direct `genMock*` usage from feature logic as
+each consumer is migrated. Add the test seams required for deterministic state and
+contract assertions.
+
+**Acceptance:** the same seed and command sequence produces identical state; no
+runtime entity uses `Date.now()` or `Math.random()`; existing panels can consume the
+runtime through typed selectors; the current frontend typecheck/build remains green.
+
+#### Task F.7.B — Canonical workspace and mock session
+
+Implement the full Workspace Context from `docs/02` §2.3.1, including environment,
+dataset, strategy, experiment, timestamp preview/commit, selected order/fill/trade,
+replay state, and typed active tab. Add a mock-only cross-window transport that can be
+replaced by the Gateway transport later, plus versioned workspace preferences.
+
+**Acceptance:** both browser windows converge after every documented Sync Bus
+interaction; a newly opened window receives current context; preview and committed
+timestamp behavior are distinct; stale/duplicate patches are rejected safely.
+
+#### Task F.7.C — Design system, accessibility, and responsive shell
+
+Replace ad hoc inline feature styling with the semantic tokens and primitives in
+`docs/11`, including accessible Panel, DataTable, Tabs, form, tooltip, status,
+attribution, empty, loading, and error primitives. Implement dense/comfortable density,
+focus management, reduced-motion behavior, contrast, and responsive layouts.
+
+**Acceptance:** every interactive element is keyboard reachable; dialogs trap and
+restore focus; supported viewport and zoom profiles do not clip controls; no feature
+uses unapproved literal colors or spacing; missing values render explicit unavailable
+states rather than fabricated zeroes.
+
+#### Task F.7.D — Native Tauri application shell
+
+Package the same React/Vite bundle as a Tauri 2 Windows-first application with Main,
+Secondary, and Single Display shells. Add native window lifecycle, monitor placement,
+window-state persistence, secure capabilities/CSP, native export dialog, and a
+browser-development fallback. The packaged app must not use `window.open()`.
+
+**Acceptance:** a clean Windows build launches two native windows or the single-display
+fallback; window placement survives restart; unavailable displays degrade safely; no
+remote content or arbitrary native command is reachable.
+
+#### Task F.7.E — Main Monitor completion
+
+Complete every Main Monitor surface in `docs/07`: dynamic header, all chart modes,
+timeframes, overlays, crosshair/jump/zoom/screenshot/reset behavior, canvas order-book
+modes and depth controls, trade filters, order flow, microstructure, regime, strategy
+quotes, inventory, risk, execution/system monitoring, bottom bar, layout controls,
+replay projection, and all required states.
+
+**Acceptance:** every Main control changes canonical runtime state or is explicitly
+disabled with a reason; all headline values agree across panels; replay and live mock
+modes use the same event source; performance budgets in `docs/03` §3.6 are met.
+
+#### Task F.7.F — Secondary strategy, data, and backtest workflow
+
+Complete strategy editing, templates, validation/dry-run, status transitions,
+parameters, execution model, dataset selection, data types, pipeline visualization,
+quality gate/override, backtest confirmation, persistent jobs, progress, cancellation,
+retry, and multi-experiment execution per `docs/08` §§8.3–8.15.
+
+**Acceptance:** a user can run the complete strategy → dataset → configuration →
+backtest → result workflow without a dead control, tab unmount, or reload terminating
+the job.
+
+#### Task F.7.G — Replay, event investigation, experiments, and analytics
+
+Implement the replay transport and event stepper, synchronized Event Inspector, Raw
+Event Viewer, Trade Investigation, evidence-routed Why Investigation, immutable
+experiment tree, reproduce/branch/duplicate/compare/export, sweeps, walk-forward,
+robustness, and every analytics view in `docs/09`.
+
+**Acceptance:** every timestamped object routes to the correct view; all analytics are
+computed by one reference mock metrics engine; attribution reconciles; no component
+computes a competing financial metric.
+
+#### Task F.7.H — AI, notes, reports, and cross-cutting systems
+
+Complete deterministic evidence-backed AI chat and draft flows, persistent attributed
+notes, report builder, exports, global search, command palette, shortcuts, alerts,
+structured logs, audit log, presets, notifications, and consistent states.
+
+**Acceptance:** every command corresponds to a normal reachable UI action; AI can
+propose but never auto-run; every factual response has evidence; notes/logs/alerts
+persist and route to their targets; exports use native or simulated async workflows.
+
+#### Task F.7.I — Data, environment, and market breadth
+
+Add the Data Center, Real-Time Monitor, Raw Event Viewer, multi-symbol and derivatives
+views, simulated Paper/Live environments, risk configuration, kill-switch workflow,
+and explicit L3/capability limitation states. No environment may reach a real order
+path.
+
+**Acceptance:** components read symbol/exchange/environment from workspace context;
+Paper/Live badges and isolation are always visible; quality, capability, and
+unsupported states are actionable and honest.
+
+#### Task F.7.J — Enterprise verification and release
+
+Add unit, contract, component, browser E2E, native-window, accessibility,
+visual-regression, persistence, synchronization, and performance coverage. Verify the
+clean Windows package and document the mock-only boundary.
+
+**Acceptance:** all F.7 acceptance checks pass; no serious accessibility violations;
+all required workflows pass in browser and native modes; large-data tests meet the
+performance budgets; no real credentials, exchange, backend, or order endpoint exists
+in the frontend build.
+
+### Sequencing
+
+Execute F.7.A → F.7.B → F.7.C → F.7.D before broad feature migration. Then use
+F.7.E → F.7.F → F.7.G → F.7.H → F.7.I as vertical slices, and finish with F.7.J.
+Do not connect the backend until this block is complete and the owner reviews the
+frontend release candidate.

@@ -1,83 +1,73 @@
 # BTC Quant Workstation — Frontend
 
-## ⚠️ THIS IS A FRONTEND-ONLY BUILD. ALL DATA IS FAKE. ⚠️
+This package is a frontend-only, offline mock implementation. It contains no exchange connection, real market feed, HftBacktest integration, order router, or LLM provider. All runtime values are deterministic simulated data and must not be used for trading decisions.
 
-- There is **no backend**, **no exchange connection**, **no real market data**,
-  **no HftBacktest integration**, and **no real order execution** anywhere in
-  this codebase.
-- Every price, candle, order-book row, trade, fill, strategy stat, backtest
-  result, experiment, and log line you see is **randomly generated in the
-  browser** by `src/mock/mockData.ts`.
-- Every screen displays a persistent orange **"MOCK DATA ONLY"** banner at the
-  top, and a small `MOCK` tag next to key numbers, so it's obvious at runtime
-  too — not just in this file.
-- Nothing here should be used to make real trading decisions.
-
-This build implements the **UI, layout, information architecture, and
-cross-panel interaction model** described in the "Dual-Monitor Bitcoin Quant
-Trading Workstation" spec — not the actual trading/backtesting engine. Wiring
-it to a real backend (market data feed, HftBacktest, exchange connectivity)
-is a separate, much larger project.
-
-## What's implemented
-
-**Main Monitor** (`?monitor=main`)
-- Header: price, bid/ask/spread, connection status, latency, UTC clock
-- Candlestick chart with timeframe selector, VWAP overlay, hover OHLCV, click-to-sync
-- Order book ladder with liquidity bars
-- Live trade tape (click a trade to open it in the Event Inspector)
-- Order flow panel (buy/sell pressure, delta, trades/sec)
-- Strategy monitor panel (inventory, P&L, fills, latency)
-- Bottom status bar
-
-**Secondary Monitor** (`?monitor=secondary`)
-- Tabs: Strategy, Parameters, Data, Backtest, Results, Compare, Sweeps, Walk-Forward, Experiments, Replay, Analytics, Risk, Report, Logs
-- Strategy panel + code editor (textarea, not executed) + template picker
-- Parameter sliders (spread, order size, requote interval, inventory limit/skew)
-- Dataset selector + data-quality panel + pipeline visualization
-- Backtest configuration, animated progress, and results (equity curve, P&L attribution)
-- Strategy comparison table (pick experiments, compare metrics side by side — no "winner" badges)
-- Parameter sweep heatmap (spread × inventory skew → P&L)
-- Walk-forward / out-of-sample split viewer + robustness (perturbation) distribution
-- Experiments list (click one to jump to its results)
-- Replay controls + event inspector + trade markout view
-- Volatility-bucketed analytics + a scripted "AI research assistant" card
-- Risk panel with a two-step confirm kill switch
-- Report builder (downloads a plain-text mock experiment report)
-- Structured logs
-- Alert Center (bell icon in the main header, top-right)
-- Order book display modes: Ladder / Imbalance / Depth Profile
-
-**Linking**
-- `src/state/syncBus.ts` keeps both monitors on the same symbol / timestamp /
-  selected trade / selected experiment / active secondary tab.
-- If both monitors are opened as separate browser windows (buttons in the
-  combined dev view), they stay in sync via `BroadcastChannel`.
-- Clicking a candle or a trade on the Main Monitor jumps the Secondary
-  Monitor to the Replay tab and opens the Event Inspector at that timestamp.
-- `Ctrl/Cmd+K` opens a command palette that can jump the secondary tab.
-
-## What's intentionally NOT implemented (out of scope for "frontend only")
-
-- Real market data / WebSocket feeds / exchange connectivity
-- Real backtest execution or HftBacktest integration
-- Real order routing, paper trading, or live trading
-- Persistence (experiments, notes, and results reset on reload)
-- Multi-symbol support (ETH/SOL), derivatives panel (funding/OI/basis)
-- Order-book heatmap-through-time and microstructure modes (Ladder/Imbalance/Depth Profile are implemented)
-- Replay event-by-event stepping through raw events (controls are present but not wired to real event playback)
-- AI strategy generation (the AI Research Assistant card is scripted text, not a model call)
-- These are all real chunks of the original 110-section spec; happy to build
-  any of them next as their own UI-only slices (still mock data) if useful.
-
-## Running it
+## Run
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173  (combined dev view, both monitors stacked)
-npm run build     # production build to dist/
+npm run dev
 ```
 
-Open `?monitor=main` and `?monitor=secondary` in separate windows/screens for
-the real two-monitor experience, or use the "Open Main/Secondary Monitor
-window" buttons in the combined dev view.
+Open `http://localhost:5173/`. The single-display development shell switches between Main Monitor and Research Lab. Separate browser windows can be opened from the shell toolbar.
+
+For the native Tauri shell:
+
+```bash
+npm run tauri:dev
+npm run tauri:build
+```
+
+The native build requires Rust, Cargo, and Visual Studio Build Tools with the MSVC SDK. `npx tauri info` reports the local toolchain status.
+
+## Verification
+
+```bash
+npm run typecheck
+npm run build
+npm run check
+```
+
+The deterministic runtime and workbench can be checked directly with the repository's temporary `tsx` command; no backend or network service is required.
+
+## Main Monitor
+
+- Runtime-driven header with simulated feed status, environment, latency, and logical UTC time.
+- Canvas price chart with candles, line/area/tick/trade/order-flow/footprint/depth/replay modes, timeframes, zoom, PNG export, fullscreen, VWAP, EMA, volume, CVD, imbalance, and strategy-quote overlays.
+- Order book ladder with liquidity bars, depth selection, heatmap, depth profile, imbalance, microstructure, and replay views.
+- Trade tape with side/size/notional filters, follow-latest behavior, and workspace timestamp selection.
+- Order-flow, inventory, strategy, microstructure, market-regime, risk, and execution/system panels.
+- Persistent mock-data banner and simulated/not-connected status indicators.
+
+## Research Lab
+
+The Secondary Monitor includes:
+
+- Monaco-based strategy editor with local persistence, validation state, human validation gate, Research/Paper controls, and backtest launch.
+- Quote and execution parameters with presets, fee controls, latency/queue model selectors, and partial-fill setting.
+- Dataset selector, local data catalog, deterministic pipeline progress/retry, quality report, per-check red-quality overrides, justification, and audit history.
+- Backtest configuration, dataset quality gate, animated job progress, cancellation, retry, and result routing.
+- Results, P&L attribution, experiment management, reproduction, comparison selection, parameter sweeps, and walk-forward/robustness views.
+- Replay transport with speed control, event stepping, start/end range selection, event inspection, and markout context.
+- Analytics surfaces for equity, drawdown, attribution, trades, fills, adverse selection, slippage, queue, latency, imbalance, volatility, liquidity, time, and strategy comparison.
+- Risk controls with two-step stop confirmation, structured logs, alert center, research notes, event inspector, Why Investigation routing, and deterministic local AI Research responses with evidence links and experiment drafts.
+- Global workspace search, command palette, keyboard shortcuts, environment presets, report text/JSON/CSV export, and cross-window workspace synchronization.
+
+## Architecture
+
+- `src/contracts/` contains the canonical TypeScript data contracts.
+- `src/mock/runtime/` contains the seeded virtual clock, deterministic RNG, candles, trades, events, order book, and strategy state.
+- `src/mock/workbench.ts` contains persistent mock jobs, experiments, results, notes, alerts, logs, and audit records.
+- `src/state/` contains the external stores and the typed workspace synchronization bus.
+- `src/shared/design-system/` contains semantic tokens and reusable UI primitives.
+- `src-tauri/` contains the Tauri 2 desktop shell and capabilities.
+
+The current synchronization layer uses `BroadcastChannel` and local storage for same-origin windows. A real cross-device Gateway/WebSocket sync layer remains a later backend-integration task.
+
+## Intentionally deferred
+
+- Real market data, exchange connectors, and live order paths.
+- Real HftBacktest execution and financial result calculation; displayed results are mock templates.
+- Real paper/live environments; Paper/Live controls are simulated UI states only.
+- Real LLM calls; the Research Assistant uses deterministic local responses.
+- Native Tauri compilation on machines without the Rust/MSVC toolchain.

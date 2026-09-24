@@ -1,13 +1,9 @@
-import { useEffect, useState } from 'react'
-import { syncBus, WorkspaceSelection } from './syncBus'
+import { useCallback, useEffect, useState } from 'react'
+import { syncBus, WorkspacePatch, WorkspaceSelection } from './syncBus'
 
-export function useWorkspace(): [WorkspaceSelection, (p: Partial<WorkspaceSelection>) => void] {
+export function useWorkspace(): [WorkspaceSelection, (patch: WorkspacePatch) => void] {
   const [state, setState] = useState(syncBus.getState())
-  useEffect(() => {
-    const unsubscribe = syncBus.subscribe(setState)
-    return () => {
-      unsubscribe()
-    }
-  }, [])
-  return [state, (p) => syncBus.update(p)]
+  useEffect(() => syncBus.subscribe(setState), [])
+  const update = useCallback((patch: WorkspacePatch) => syncBus.update(patch), [])
+  return [state, update]
 }

@@ -69,3 +69,129 @@ a { color: var(--accent); }
   line-height: 14px;
   vertical-align: middle;
 }
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+.main-layout-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 3px 8px;
+  overflow-x: auto;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border-1);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.main-layout-toolbar button {
+  padding: 2px 5px;
+  border: 1px solid var(--border-1);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.main-layout-toolbar button[aria-pressed='true'] {
+  background: var(--bg-3);
+  color: var(--text-0);
+}
+
+.replay-badge {
+  margin-left: auto;
+  color: var(--info);
+  white-space: nowrap;
+}
+
+.monitor-content {
+
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 220px;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.monitor-primary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.monitor-strip {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.2fr) repeat(7, minmax(150px, 1fr));
+  gap: var(--space-2);
+  min-height: 0;
+  overflow-x: auto;
+}
+
+.monitor-strip > * {
+  min-width: 0;
+}
+
+@media (max-width: 1500px) {
+  .monitor-content {
+    grid-template-rows: minmax(0, 1fr) 280px;
+  }
+
+  .monitor-strip {
+    grid-template-columns: repeat(4, minmax(190px, 1fr));
+  }
+}
+
+@media (max-width: 950px) {
+  .monitor-content {
+    grid-template-rows: minmax(420px, 1fr) 420px;
+  }
+
+.density-comfortable .monitor-strip {
+  grid-auto-rows: minmax(180px, auto);
+}
+
+.density-dense .monitor-strip {
+  grid-auto-rows: minmax(150px, auto);
+}
+
+.monitor-primary-row {
+
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(280px, 1fr) 300px;
+  }
+
+  .monitor-strip {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
