@@ -210,3 +210,21 @@ Summary: Completed the mock-first frontend vertical slices across canonical cont
 Deviations from spec: Native Tauri compilation and the complete F.7.J test matrix remain unverified due the missing local native toolchain and absent approved frontend test runner. The earlier F.7.A entry was inserted before older entries rather than appended; this new entry is appended at EOF and records that process correction without rewriting history.
 Open questions for Planner: Should the release candidate remain uncommitted until Rust/MSVC and a frontend test runner are available, or should the verified browser implementation be committed and pushed with native verification explicitly marked blocked?
 Next step: Install Rust/Cargo/rustup and Visual Studio MSVC Build Tools, add the approved unit/component/E2E/native checks, run `npm run check` plus `npm run tauri:build`, inspect the final diff, append a DONE or BLOCKED release entry, and only then commit and push.
+
+---
+
+### [F.7.J] IN_PROGRESS — Native toolchain installed and Tauri build verified
+Timestamp: 2026-09-25T15:05:00Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - frontend/src-tauri/target/release/ticklab-desktop.exe (generated, uncommitted)
+  - frontend/src-tauri/target/release/bundle/msi/BTC Quant Workstation_0.1.0_x64_en-US.msi (generated, uncommitted)
+  - frontend/src-tauri/target/release/bundle/nsis/BTC Quant Workstation_0.1.0_x64-setup.exe (generated, uncommitted)
+Spec files read:
+  - docs/16-implementation-roadmap.md §F.7.J
+  - docs/03-tech-stack-and-repo-structure.md §§3.1, 3.3, 3.6
+Summary: Installed rustup stable (rustc/cargo 1.98.1) plus the VS 2022 Build Tools MSVC v144 x64/x86 tools and Windows 10 SDK (10.0.28000.0). `npm run typecheck` passes, `npm run tauri:build` completes: release exe (11.5 MB), MSI (4.0 MB), and NSIS setup (2.9 MB) all produced under frontend/src-tauri/target/release. No tracked source files were changed; generated artifacts (target/, gen/, Cargo.lock) remain uncommitted. The F.7.J browser/native test matrix still has no approved runner, so full task acceptance is not claimed.
+Deviations from spec: none in code; test-matrix coverage from §F.7.J remains unverified pending a Planner-approved test runner (not silently substituted).
+Open questions for Planner: Which frontend test runner should back the F.7.J matrix (unit/contract/component/E2E/native/a11y), and should src-tauri/Cargo.lock be committed?
+Next step: Planner approves the test runner (and Cargo.lock decision); then add the matrix checks, re-run `npm run check` plus `npm run tauri:build`, and log DONE.
