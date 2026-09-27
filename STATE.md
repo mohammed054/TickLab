@@ -228,3 +228,42 @@ Summary: Installed rustup stable (rustc/cargo 1.98.1) plus the VS 2022 Build Too
 Deviations from spec: none in code; test-matrix coverage from §F.7.J remains unverified pending a Planner-approved test runner (not silently substituted).
 Open questions for Planner: Which frontend test runner should back the F.7.J matrix (unit/contract/component/E2E/native/a11y), and should src-tauri/Cargo.lock be committed?
 Next step: Planner approves the test runner (and Cargo.lock decision); then add the matrix checks, re-run `npm run check` plus `npm run tauri:build`, and log DONE.
+
+---
+
+### [F.7.J] IN_PROGRESS — Main Monitor chart axes, crosshair, and timeframe default
+Timestamp: 2026-09-27T18:05:44Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - frontend/src/components/main/PriceChart.tsx
+  - .gitignore
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md §F.7.E, §F.7.J
+  - docs/07-main-monitor-components.md §7.2
+Summary: Owner review of the packaged app identified three visual defects in
+`PriceChart`, all fixed. (1) The default timeframe was `1m` while the mock
+runtime emits 1-second candles, so 90 seconds of data collapsed into two or
+three oversized bars; the default is now `1s` so the full window renders as
+individual candles, and `reset` matches. (2) The chart canvas had no price or
+time axis, so candles floated against unlabelled gridlines; added a 72px right
+axis with six price levels, a 24px bottom axis with eight time labels, and
+dashed gridlines derived from the same min/max/padding scale the candles use,
+with the plot area shrunk to match so nothing draws under the axes. (3) The
+crosshair rendered a ~90x40px opaque black box floating over the plot; it now
+draws only the two dashed guide lines plus a compact accent-coloured price tag
+on the right axis and time tag on the bottom axis, both clamped to their axes
+at the plot edges. `npm run typecheck` passes and `npm run tauri:build`
+produces the release exe, MSI, and NSIS installer. Also ignored
+`frontend/src-tauri/target/` and `frontend/src-tauri/gen/`, which were
+untracked but not ignored — a `git add .` would have staged the whole Rust
+build output; every other crate's `target/` was already listed.
+Deviations from spec: none. Gridline dash pattern, tag colours, and the exact
+axis pixel widths are visual choices not fixed by `docs/11`; they reuse the
+existing `--color-focus`, `--color-border-subtle`, and font tokens rather than
+introducing literal colours.
+Open questions for Planner: none new. The F.7.J test-matrix runner decision from
+the prior entry is still unanswered and still blocks marking this task DONE.
+Next step: Planner approves the test runner; then add the §F.7.J matrix checks,
+re-run `npm run check` and `npm run tauri:build`, and log DONE.

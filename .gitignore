@@ -14,5 +14,8 @@ backend/connectors/binance_futures/target/
 backend/connectors/binance_futures/Cargo.lock
 backend/market/target/
 backend/market/Cargo.lock
+# Tauri desktop build output (exe/MSI/NSIS) and generated schemas
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
 __pycache__/
 frontend/tsconfig.tsbuildinfo
