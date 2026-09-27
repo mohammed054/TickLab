@@ -31,6 +31,8 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
   const [hover, setHover] = useState<Candle | null>(null)
   const [zoom, setZoom] = useState(1)
   const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
+  const [panning, setPanning] = useState(false)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const visibleCandles = useMemo(() => aggregateCandles(candles, timeframe), [candles, timeframe])
   const displayCandles = useMemo(() => {
     const count = Math.max(30, Math.round(90 / zoom))
@@ -80,8 +82,8 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
     const canvas = canvasRef.current
     if (!canvas || displayCandles.length === 0) return
     const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    const x = event.clientX - rect.left - panOffset.x
+    const y = event.clientY - rect.top - panOffset.y
     const width = rect.width - Y_AXIS_WIDTH
     const height = rect.height - X_AXIS_HEIGHT
     if (x < 0 || x > width || y < 0 || y > height) {
@@ -107,6 +109,7 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
   const handleLeave = () => {
     setCrosshair(null)
     setHover(null)
+    setPanning(false)
   }
 
   const fit = () => { setZoom(1); setHover(null); setCrosshair(null) }
@@ -141,8 +144,36 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
               const index = Math.min(displayCandles.length - 1, Math.max(0, Math.floor(x / (width / displayCandles.length))))
               onSelectTimestamp(displayCandles[index].timestampNs)
             }}
-            onWheel={(event) => { event.preventDefault(); setZoom((current) => Math.min(3, Math.max(0.5, current + (event.deltaY > 0 ? 0.1 : -0.1)))) }}
-            style={{ width: '100%', height: '100%', display: 'block', cursor: 'crosshair' }}
+            onMouseDown={(event) => {
+    if (event.button === 2) { // middle mouse button
+      setPanning(true)
+      setPanOffset({ x: event.clientX - canvasRef.current!.getBoundingClientRect().left, y: event.clientY - canvasRef.current!.getBoundingClientRect().top })
+    }
+  }}
+  onMouseUp={() => setPanning(false)}
+  onWheel={(event) => {
+    if (panning) {
+      setPanning(false)
+      setPanOffset({ x: 0, y: 0 })
+    }
+    event.preventDefault()
+    const canvas = canvasRef.current
+    if (!canvas || displayCandles.length === 0) return
+    const rect = canvas.getBoundingClientRect()
+    const width = rect.width - Y_AXIS_WIDTH
+    const height = rect.height - X_AXIS_HEIGHT
+    // zoom toward mouse position
+    const mouseX = event.clientX - rect.left
+    const mouseY = event.clientY - rect.top
+    const beforeZoom = zoom
+    setZoom((current) => Math.min(3, Math.max(0.5, current + (event.deltaY > 0 ? 0.1 : -0.1))))
+    const afterZoom = zoom
+    // adjust pan offset to keep mouse position over the same candle
+    const dx = ((mouseX / width) * (afterZoom - beforeZoom)) 
+    const dy = ((mouseY / height) * (afterZoom - beforeZoom)) 
+    setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }))
+  }}
+            style={{ width: '100%', height: '100%', display: 'block', cursor: panning ? 'grabbing' : 'crosshair', transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}
           />
         </div>
       </Panel>
