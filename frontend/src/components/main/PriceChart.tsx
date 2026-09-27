@@ -173,7 +173,7 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
     const dy = ((mouseY / height) * (afterZoom - beforeZoom)) 
     setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }))
   }}
-            style={{ width: '100%', height: '100%', display: 'block', cursor: panning ? 'grabbing' : 'crosshair', transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}
+            style={{ width: '100%', height: '100%', display: 'block', cursor: panning ? 'grabbing' : 'grab', transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}
           />
         </div>
       </Panel>
