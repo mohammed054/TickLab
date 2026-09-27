@@ -17,10 +17,10 @@ import { SeededRandom } from './random'
 
 const TICK_INTERVAL_MS = 1_000
 const TICK_SIZE = 0.1
-const INITIAL_CANDLE_COUNT = 90
-const MAX_CANDLES = 120
-const MAX_TRADES = 120
-const MAX_EVENTS = 600
+const INITIAL_CANDLE_COUNT = 500
+const MAX_CANDLES = 2000
+const MAX_TRADES = 1000
+const MAX_EVENTS = 5000
 const SYMBOL = 'BTCUSDT'
 const EXCHANGE = 'binance-futures'
 const BASE_PRICE = 112_438.2

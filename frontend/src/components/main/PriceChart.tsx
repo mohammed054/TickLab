@@ -33,6 +33,7 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
   const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
   const [panning, setPanning] = useState(false)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [followMode, setFollowMode] = useState(true)
   const visibleCandles = useMemo(() => aggregateCandles(candles, timeframe), [candles, timeframe])
   const displayCandles = useMemo(() => {
     const count = Math.max(30, Math.round(90 / zoom))
@@ -40,6 +41,12 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
   }, [visibleCandles, zoom])
 
   const toggleOverlay = (overlay: string) => setActive((current) => { const next = new Set(current); if (next.has(overlay)) next.delete(overlay); else next.add(overlay); return next })
+
+  useEffect(() => {
+    if (followMode) {
+      setPanOffset(prev => ({ ...prev, x: 0 }))
+    }
+  }, [displayCandles, followMode])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -113,7 +120,7 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
   }
 
   const fit = () => { setZoom(1); setHover(null); setCrosshair(null) }
-  const reset = () => { setZoom(1); setMode('candles'); setTimeframe('1s'); setActive(new Set(['VWAP'])); setHover(null); setCrosshair(null) }
+  const reset = () => { setZoom(1); setMode('candles'); setTimeframe('1s'); setActive(new Set(['VWAP'])); setHover(null); setCrosshair(null); setFollowMode(true); setPanOffset({ x: 0, y: 0 }) }
   const screenshot = () => { const canvas = canvasRef.current; if (!canvas) return; const anchor = document.createElement('a'); anchor.href = canvas.toDataURL('image/png'); anchor.download = 'ticklab-chart.png'; anchor.click() }
   const fullscreen = () => { if (shellRef.current?.requestFullscreen) void shellRef.current.requestFullscreen() }
 
@@ -125,7 +132,7 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
 
   return (
     <div ref={shellRef} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
-      <Panel title="PRICE / MARKET CHART (SIMULATED)" style={{ flex: '1 1 auto', minHeight: 0 }} bodyStyle={{ display: 'flex', flexDirection: 'column', padding: 0 }} right={<div style={{ display: 'flex', gap: 3 }}><button type="button" onClick={fit} style={toolButtonStyle}>FIT</button><button type="button" onClick={reset} style={toolButtonStyle}>RESET</button><button type="button" onClick={screenshot} style={toolButtonStyle}>PNG</button><button type="button" onClick={fullscreen} style={toolButtonStyle}>FULL</button></div>}>
+      <Panel title="PRICE / MARKET CHART (SIMULATED)" style={{ flex: '1 1 auto', minHeight: 0 }} bodyStyle={{ display: 'flex', flexDirection: 'column', padding: 0 }} right={<div style={{ display: 'flex', gap: 3 }}><button type="button" onClick={fit} style={toolButtonStyle}>FIT</button><button type="button" onClick={reset} style={toolButtonStyle}>RESET</button><button type="button" onClick={screenshot} style={toolButtonStyle}>PNG</button><button type="button" onClick={fullscreen} style={toolButtonStyle}>FULL</button><button type="button" onClick={() => setFollowMode(!followMode)} style={{ ...toolButtonStyle, background: followMode ? 'var(--color-info)' : 'transparent', color: followMode ? 'var(--color-bg-base)' : 'var(--color-text-muted)' }}>{followMode ? 'FOLLOW' : 'MANUAL'}</button></div>}>
         <div style={{ display: 'flex', gap: 5, padding: '4px 8px', borderBottom: '1px solid var(--color-border-subtle)', overflowX: 'auto' }}><SegmentedControl value={mode} options={MODES.map((value) => ({ value, label: value === 'candles' ? 'CANDLES' : value.toUpperCase() }))} onChange={setMode} ariaLabel="Chart mode" /></div>
         <div style={{ display: 'flex', gap: 4, padding: '4px 8px', borderBottom: '1px solid var(--color-border-subtle)', overflowX: 'auto' }}>{TIMEFRAMES.map((value) => <button key={value} type="button" aria-pressed={timeframe === value} onClick={() => setTimeframe(value)} style={{ ...toolButtonStyle, background: timeframe === value ? 'var(--color-bg-control)' : 'transparent', color: timeframe === value ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>{value}</button>)}</div>
         <div style={{ display: 'flex', gap: 4, padding: '4px 8px', borderBottom: '1px solid var(--color-border-subtle)', flexWrap: 'wrap' }}>{OVERLAYS.map((overlay) => <button key={overlay} type="button" aria-pressed={active.has(overlay)} onClick={() => toggleOverlay(overlay)} style={{ ...toolButtonStyle, background: active.has(overlay) ? 'var(--color-info)' : 'transparent', color: active.has(overlay) ? 'var(--color-bg-base)' : 'var(--color-text-muted)' }}>{overlay}</button>)}</div>
@@ -147,6 +154,7 @@ export function PriceChart({ candles, onSelectTimestamp, onPreviewTimestamp }: {
             onMouseDown={(event) => {
     if (event.button === 2) { // middle mouse button
       setPanning(true)
+      setFollowMode(false)
       setPanOffset({ x: event.clientX - canvasRef.current!.getBoundingClientRect().left, y: event.clientY - canvasRef.current!.getBoundingClientRect().top })
     }
   }}
