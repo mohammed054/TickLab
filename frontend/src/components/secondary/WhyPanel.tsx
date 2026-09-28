@@ -4,43 +4,40 @@ import { SecondaryTabId, TAB_LABELS } from '../../state/syncBus'
 import { useWorkspace } from '../../state/useWorkspace'
 import type { AnalyticsViewId } from '../../analytics/analyticsTypes'
 
-// "Why?" Investigation navigation shell per docs/08 §8.22. Question list
-// matches docs/09 §9.14's methodology table exactly; each entry routes to the
-// evidence view via the Sync Bus (mock: switches the Secondary tab).
 const QUESTIONS: { q: string; evidence: string; tab: SecondaryTabId; view?: AnalyticsViewId }[] = [
   {
-    q: 'Why did the strategy lose (in this period)?',
-    evidence: 'P&L Attribution (§9.4) filtered to the period, sorted by magnitude of negative contribution.',
+    q: 'Why did the strategy experience a drawdown in this period?',
+    evidence: 'P&L Attribution breakdown filtered to the time horizon, sorted by largest negative component.',
     tab: 'analytics',
     view: 'attribution',
   },
   {
-    q: "Why didn't this order fill?",
-    evidence: 'Queue Analysis (§9.8) for that specific order — queue-ahead progression and what consumed it.',
+    q: "Why didn't this quote order fill at top of book?",
+    evidence: 'Queue Dynamics model analyzing queue-ahead depth, cancellation velocity, and consumed liquidity.',
     tab: 'analytics',
     view: 'queue',
   },
   {
-    q: 'Why did inventory increase?',
-    evidence: 'Inventory history (§7.13) for the period, cross-referenced with Fill Analysis (§9.5) one-sided fill run.',
+    q: 'Why did net inventory skew beyond target threshold?',
+    evidence: 'Inventory historical exposure cross-referenced with consecutive one-sided fills in Fill Analysis.',
     tab: 'analytics',
     view: 'fills',
   },
   {
-    q: 'Why did fill rate collapse?',
-    evidence: 'Queue Analysis (§9.8) aggregate view, cross-referenced with Liquidity Analysis (§9.12) for regime change.',
+    q: 'Why did passive fill rate collapse during market volatility?',
+    evidence: 'Queue progression combined with Liquidity Depth analysis during regime transition.',
     tab: 'analytics',
     view: 'liquidity',
   },
   {
-    q: 'Why did latency spike?',
-    evidence: 'Latency Analysis (§9.9) for the period, cross-referenced with the Execution/System Monitor connection log (§7.15).',
+    q: 'Why did gateway decision latency experience a tail spike?',
+    evidence: 'Hardware latency breakdown across Feed Ingress, Alpha Evaluation, and Exchange Round-Trip time.',
     tab: 'analytics',
     view: 'latency',
   },
   {
-    q: 'Why did P&L drop (at this specific instant)?',
-    evidence: 'Trade Investigation (§8.20) for the nearest fill(s) — markout / adverse-selection (§9.6).',
+    q: 'Why did P&L sharply drop at this specific millisecond tick?',
+    evidence: 'Nanosecond event replay and adverse selection post-fill markout curve analysis.',
     tab: 'replay',
   },
 ]
@@ -53,48 +50,68 @@ export function WhyPanel() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: '100%', overflow: 'auto' }}>
-      <Panel title="WHY INVESTIGATION (MOCK — NAVIGATION SHELL)">
-        <div className="dim" style={{ fontSize: 11, marginBottom: 6 }}>
-          Select a framed question — the workspace jumps to the evidence that answers it, not to a canned explanation.
+      <Panel title="QUANT FORENSICS & ROOT-CAUSE INVESTIGATION">
+        <div className="dim" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 8 }}>
+          Select a diagnostic question to trace the exact quantitative proof and evidence across the analytics suite.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {QUESTIONS.map((e) => (
-            <button
-              key={e.q}
-              onClick={() => setSelected(e.q)}
-              style={{
-                textAlign: 'left',
-                fontSize: 11,
-                padding: '6px 8px',
-                borderRadius: 3,
-                border: '1px solid var(--border-1)',
-                background: e.q === selected ? 'var(--bg-3)' : 'transparent',
-                color: e.q === selected ? 'var(--text-0)' : 'var(--text-2)',
-                fontWeight: e.q === selected ? 600 : 400,
-              }}
-            >
-              {e.q}
-            </button>
-          ))}
+          {QUESTIONS.map((e) => {
+            const isSelected = e.q === selected
+            return (
+              <button
+                key={e.q}
+                onClick={() => setSelected(e.q)}
+                style={{
+                  textAlign: 'left',
+                  fontSize: 'var(--font-size-xs)',
+                  padding: '6px 10px',
+                  borderRadius: 'var(--radius-xs)',
+                  border: '1px solid',
+                  borderColor: isSelected ? 'var(--color-border-accent)' : 'var(--color-border-subtle)',
+                  background: isSelected ? 'var(--color-bg-control-active)' : 'var(--color-bg-control)',
+                  color: isSelected ? 'var(--color-focus)' : 'var(--color-text-secondary)',
+                  fontWeight: isSelected ? 600 : 400,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <span style={{ color: isSelected ? 'var(--color-focus)' : 'var(--color-text-muted)' }}>
+                  {isSelected ? '▶' : '○'}
+                </span>
+                <span>{e.q}</span>
+              </button>
+            )
+          })}
         </div>
       </Panel>
 
-      <Panel title="EVIDENCE ROUTE (MOCK)">
-        <div style={{ fontSize: 11.5, lineHeight: 1.5, color: 'var(--text-1)' }}>{active.evidence}</div>
-        <div style={{ marginTop: 8 }}>
+      <Panel title="DIAGNOSTIC EVIDENCE ROUTE">
+        <div style={{ fontSize: 'var(--font-size-sm)', lineHeight: 1.5, color: 'var(--color-text-primary)' }}>
+          {active.evidence}
+        </div>
+        <div style={{ marginTop: 10 }}>
           <button
-            onClick={() => { updateWorkspace({ activeTab: { secondaryMonitor: active.tab } }); if (active.view) window.dispatchEvent(new CustomEvent('ticklab:analytics-view', { detail: active.view })) }}
+            onClick={() => {
+              updateWorkspace({ activeTab: { secondaryMonitor: active.tab } })
+              if (active.view) {
+                window.dispatchEvent(new CustomEvent('ticklab:analytics-view', { detail: active.view }))
+              }
+            }}
             style={{
-              fontSize: 11,
-              padding: '6px 12px',
-              background: 'var(--accent)',
-              color: '#0d0f12',
+              fontSize: 'var(--font-size-xs)',
+              padding: '6px 14px',
+              background: 'var(--color-info)',
+              color: 'var(--color-bg-base)',
               border: 'none',
-              borderRadius: 4,
-              fontWeight: 600,
+              borderRadius: 'var(--radius-xs)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
             }}
           >
-            JUMP TO EVIDENCE: {TAB_LABELS[active.tab]} (mock)
+            NAVIGATE TO EVIDENCE: {TAB_LABELS[active.tab].toUpperCase()}
           </button>
         </div>
       </Panel>

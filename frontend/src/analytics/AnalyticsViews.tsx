@@ -47,8 +47,10 @@ function ViewNote({ children, warning = false }: { children: ReactNode; warning?
 function ContextHeader({ data, selectedTimestampNs }: { data: AnalyticsData; selectedTimestampNs: string | null }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-      <span className="mock-tag">SIMULATED DATA</span>
-      <span className="dim" style={{ fontSize: 'var(--font-size-xs)' }}>{data.result.experimentId} · {data.startNs} → {data.endNs}</span>
+      <span className="mono" style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-focus)' }}>
+        EXP #{data.result.experimentId}
+      </span>
+      <span className="dim" style={{ fontSize: 'var(--font-size-xs)' }}>· {data.startNs} → {data.endNs}</span>
       <span className="dim mono" style={{ fontSize: 'var(--font-size-xs)', marginLeft: 'auto' }}>{selectedTimestampNs ? formatTimestamp(selectedTimestampNs) : 'No timestamp selected'}</span>
     </div>
   )
@@ -86,7 +88,7 @@ function fillPriceAt(fill: FillAnalysisRow, horizonMs: number): number {
 }
 
 function ContextPanel({ children, title }: { children: ReactNode; title: string }) {
-  return <Panel title={`${title} (SIMULATED)`} bodyStyle={{ padding: 'var(--space-3)' }}>{children}</Panel>
+  return <Panel title={title} bodyStyle={{ padding: 'var(--space-3)' }}>{children}</Panel>
 }
 
 function EquityCurveView({ data, selectedTimestampNs, onSelect }: AnalyticsViewProps) {

@@ -1,5 +1,4 @@
 import { mockRuntime } from '../../mock/runtime/runtime'
-import { MockBanner } from '../shared/MockBanner'
 import { StatusDot } from '../shared/Panel'
 import { StrategyPanel } from '../secondary/StrategyPanel'
 import { ParametersPanel } from '../secondary/ParametersPanel'
@@ -30,29 +29,29 @@ import { useMarketRuntime } from '../../state/appStore'
 import { useWorkbench } from '../../state/workbenchStore'
 import { useWorkspace } from '../../state/useWorkspace'
 
-const TABS: readonly { id: SecondaryTabId; label: string }[] = [
-  { id: 'strategy', label: 'Strategy' },
-  { id: 'parameters', label: 'Parameters' },
-  { id: 'data', label: 'Data' },
-  { id: 'data-center', label: 'Data Center' },
-  { id: 'realtime-monitor', label: 'Realtime Monitor' },
-  { id: 'market-overview', label: 'Market Overview' },
-  { id: 'backtest', label: 'Backtest' },
-  { id: 'results', label: 'Results' },
-  { id: 'compare', label: 'Compare' },
-  { id: 'sweeps', label: 'Sweeps' },
-  { id: 'walk-forward', label: 'Walk-Forward' },
-  { id: 'experiments', label: 'Experiments' },
-  { id: 'replay', label: 'Replay' },
-  { id: 'analytics', label: 'Analytics' },
-  { id: 'risk', label: 'Risk' },
-  { id: 'report', label: 'Report' },
-  { id: 'logs', label: 'Logs' },
-  { id: 'data-quality', label: 'Data Quality' },
-  { id: 'event-inspector', label: 'Event Inspector' },
-  { id: 'why-investigation', label: 'Why Investigation' },
-  { id: 'research-notes', label: 'Research Notes' },
-  { id: 'ai-research', label: 'AI Research' },
+const TABS: readonly { id: SecondaryTabId; label: string; group?: string }[] = [
+  { id: 'strategy', label: 'STRATEGY' },
+  { id: 'parameters', label: 'PARAMS' },
+  { id: 'data', label: 'DATASETS' },
+  { id: 'data-center', label: 'DATA CENTER' },
+  { id: 'data-quality', label: 'QUALITY' },
+  { id: 'backtest', label: 'BACKTEST' },
+  { id: 'results', label: 'RESULTS' },
+  { id: 'analytics', label: 'ANALYTICS' },
+  { id: 'compare', label: 'COMPARE' },
+  { id: 'sweeps', label: 'SWEEPS' },
+  { id: 'walk-forward', label: 'WALK-FORWARD' },
+  { id: 'experiments', label: 'RUNS' },
+  { id: 'replay', label: 'REPLAY' },
+  { id: 'event-inspector', label: 'L3 TICKS' },
+  { id: 'why-investigation', label: 'ROOT CAUSE' },
+  { id: 'ai-research', label: 'AI COPILOT' },
+  { id: 'research-notes', label: 'JOURNAL' },
+  { id: 'realtime-monitor', label: 'TELEMETRY' },
+  { id: 'market-overview', label: 'UNIVERSE' },
+  { id: 'risk', label: 'RISK' },
+  { id: 'report', label: 'REPORT' },
+  { id: 'logs', label: 'LOGS' },
 ]
 
 export function SecondaryMonitor() {
@@ -63,48 +62,92 @@ export function SecondaryMonitor() {
   const result = workspace.experiment ? experiments.find((experiment) => experiment.id === workspace.experiment?.id)?.results ?? null : null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <MockBanner />
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-1)', background: 'var(--bg-1)' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.08em', color: 'var(--text-2)', marginBottom: 4 }}>RESEARCH LAB</div>
-        <div className="mono" style={{ display: 'flex', gap: 14, fontSize: 11 }}>
-          <span>{runtime.symbol} · {runtime.exchange}</span>
-          <span>
-            <StatusDot state="ok" /> {runtime.strategy.name}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-0)' }}>
+      {/* Institutional Lab Header */}
+      <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--border-1)', background: 'var(--bg-1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--color-brand-primary)' }}>
+            RESEARCH & QUANT STUDIO
           </span>
-          <span>
-            <StatusDot state="warn" /> DATA (mock)
-          </span>
-          <span>
-            <StatusDot state="ok" /> ENGINE (mock)
-          </span>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', fontSize: 10 }}><span className="dim">ENV</span><select aria-label="Environment" value={workspace.environment} onChange={(event) => { const environment = event.target.value as 'RESEARCH' | 'PAPER' | 'LIVE'; updateWorkspace({ environment }); mockRuntime.setEnvironment(environment) }} style={{ background: 'var(--color-bg-base)', color: environmentColor(workspace.environment), border: '1px solid var(--color-border-subtle)', borderRadius: 3, padding: '3px 5px', fontSize: 10 }}><option value="RESEARCH">RESEARCH</option><option value="PAPER">PAPER</option><option value="LIVE">LIVE (SIMULATED)</option></select></label>
+          <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'var(--text-1)' }}>
+            <span style={{ color: 'var(--text-0)', fontWeight: 600 }}>{runtime.symbol} · {runtime.exchange}</span>
+            <span><StatusDot state="ok" /> {runtime.strategy.name}</span>
+            <span><StatusDot state="ok" /> SIMULATION ENGINE</span>
+            <span><StatusDot state="ok" /> DATA GATEWAY</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
+            <span className="dim mono">ENV</span>
+            <select
+              aria-label="Environment"
+              value={workspace.environment}
+              onChange={(event) => {
+                const environment = event.target.value as 'RESEARCH' | 'PAPER' | 'LIVE'
+                updateWorkspace({ environment })
+                mockRuntime.setEnvironment(environment)
+              }}
+              style={{
+                background: 'var(--bg-2)',
+                color: environmentColor(workspace.environment),
+                border: '1px solid var(--border-1)',
+                borderRadius: 3,
+                padding: '2px 6px',
+                fontSize: 10,
+                fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <option value="RESEARCH">RESEARCH</option>
+              <option value="PAPER">PAPER</option>
+              <option value="LIVE">LIVE</option>
+            </select>
+          </label>
           <PresetSwitcher />
-          <div style={{ minWidth: 190 }}><GlobalSearch /></div>
+          <div style={{ minWidth: 200 }}><GlobalSearch /></div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2, padding: '6px 8px', borderBottom: '1px solid var(--border-1)' }}>
-        {TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => updateWorkspace({ activeTab: { secondaryMonitor: id } })}
-            style={{
-              fontSize: 10.5,
-              padding: '4px 8px',
-              borderRadius: 3,
-              border: '1px solid var(--border-1)',
-              background: id === tab ? 'var(--bg-3)' : 'transparent',
-              color: id === tab ? 'var(--text-0)' : 'var(--text-2)',
-              fontWeight: id === tab ? 600 : 400,
-            }}
-          >
-            {label}
-          </button>
-        ))}
+      {/* Modern Studio Tabs */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 2,
+          padding: '4px 8px',
+          borderBottom: '1px solid var(--border-1)',
+          background: 'var(--bg-0)',
+          overflowX: 'auto',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {TABS.map(({ id, label }) => {
+          const isActive = id === tab
+          return (
+            <button
+              key={id}
+              onClick={() => updateWorkspace({ activeTab: { secondaryMonitor: id } })}
+              style={{
+                fontSize: 10,
+                fontFamily: 'var(--font-mono)',
+                padding: '4px 9px',
+                borderRadius: 3,
+                border: isActive ? '1px solid var(--border-focus)' : '1px solid transparent',
+                background: isActive ? 'var(--bg-2)' : 'transparent',
+                color: isActive ? 'var(--color-brand-primary)' : 'var(--text-2)',
+                fontWeight: isActive ? 700 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.1s ease',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
 
-      <div style={{ flex: '1 1 auto', minHeight: 0, padding: 8 }}>
+      {/* Active Panel Viewport */}
+      <div style={{ flex: '1 1 auto', minHeight: 0, padding: 8, overflow: 'hidden' }}>
         {tab === 'strategy' && <StrategyPanel />}
         {tab === 'parameters' && <ParametersPanel />}
         {tab === 'data' && <DatasetPanel />}
@@ -133,5 +176,5 @@ export function SecondaryMonitor() {
 }
 
 function environmentColor(environment: 'RESEARCH' | 'PAPER' | 'LIVE'): string {
-  return environment === 'LIVE' ? 'var(--color-warning)' : environment === 'PAPER' ? 'var(--color-info)' : 'var(--color-text-primary)'
+  return environment === 'LIVE' ? 'var(--color-negative)' : environment === 'PAPER' ? 'var(--color-brand-primary)' : 'var(--text-1)'
 }

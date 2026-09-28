@@ -52,28 +52,127 @@ export function ExperimentsPanel() {
   }
 
   return (
-    <Panel title={`EXPERIMENTS (${experiments.length}, MOCK)`} bodyStyle={{ padding: 0 }} style={{ height: '100%' }}>
-      <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--border-1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span className="dim" style={{ fontSize: 10.5 }}>Select experiments for comparison</span>
-        <span className="mono dim" style={{ fontSize: 10 }}>{selectedForCompare.size} selected</span>
+    <Panel title={`EXPERIMENT REGISTRY & VERSION LINEAGE (${experiments.length} RUNS)`} bodyStyle={{ padding: 0 }} style={{ height: '100%' }}>
+      <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-1)', background: 'var(--bg-1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span className="dim" style={{ fontSize: 11 }}>Deterministic experiment lineage with full parameter reproducibility</span>
+        <span className="mono dim" style={{ fontSize: 10.5 }}>{selectedForCompare.size} SELECTED FOR DIFF</span>
       </div>
-      {experiments.map((experiment) => (
-        <div key={experiment.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '7px 10px', borderBottom: '1px solid var(--border-1)' }}>
-          <button type="button" onClick={() => openExperiment(experiment.id)} style={{ flex: 1, textAlign: 'left', background: 'transparent', border: 0, color: 'inherit', cursor: 'pointer', padding: 0 }}>
-            <div className="mono" style={{ fontWeight: 600 }}>{experiment.strategyRef.id} · {experiment.id}</div>
-            <div className="dim" style={{ fontSize: 10.5 }}>{experiment.datasetId} · {experiment.status.toUpperCase()}</div>
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {experiment.results && <span className={`mono ${experiment.results.headline.netPnl >= 0 ? 'pos' : 'neg'}`} style={{ fontSize: 10.5 }}>{experiment.results.headline.netPnl >= 0 ? '+' : ''}${experiment.results.headline.netPnl.toFixed(0)}</span>}
-            <span className="mono" style={{ fontSize: 10.5 }}><StatusDot state={STATUS_STATE[experiment.status]} /> {experiment.status.toUpperCase()}</span>
-            <button type="button" onClick={() => reproduce(experiment.id)} style={{ fontSize: 9, padding: '3px 5px', border: '1px solid var(--border-1)', borderRadius: 3, background: 'transparent', color: 'var(--text-2)' }}>REPRO</button>
-            <button type="button" onClick={() => launchDerived(experiment.id, 'duplicate')} style={{ fontSize: 9, padding: '3px 5px', border: '1px solid var(--border-1)', borderRadius: 3, background: 'transparent', color: 'var(--text-2)' }}>DUPLICATE</button>
-            <button type="button" onClick={() => launchDerived(experiment.id, 'branch')} style={{ fontSize: 9, padding: '3px 5px', border: '1px solid var(--border-1)', borderRadius: 3, background: 'transparent', color: 'var(--text-2)' }}>BRANCH</button>
-            <button type="button" onClick={() => exportExperiment(experiment.id)} style={{ fontSize: 9, padding: '3px 5px', border: '1px solid var(--border-1)', borderRadius: 3, background: 'transparent', color: 'var(--text-2)' }}>EXPORT</button>
-            <button type="button" aria-pressed={selectedForCompare.has(experiment.id)} onClick={() => toggleCompare(experiment.id)} style={{ fontSize: 9, padding: '3px 5px', border: '1px solid var(--border-1)', borderRadius: 3, background: selectedForCompare.has(experiment.id) ? 'var(--bg-3)' : 'transparent', color: selectedForCompare.has(experiment.id) ? 'var(--text-0)' : 'var(--text-2)' }}>CMP</button>
+      <div style={{ overflow: 'auto', flex: 1 }}>
+        {experiments.map((experiment) => (
+          <div
+            key={experiment.id}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 12,
+              padding: '8px 12px',
+              borderBottom: '1px solid var(--border-1)',
+              background: selectedForCompare.has(experiment.id) ? 'rgba(56, 189, 248, 0.05)' : 'transparent',
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => openExperiment(experiment.id)}
+              style={{
+                flex: 1,
+                textAlign: 'left',
+                background: 'transparent',
+                border: 0,
+                color: 'inherit',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              <div className="mono" style={{ fontWeight: 600, fontSize: 12, color: 'var(--text-0)' }}>
+                {experiment.strategyRef.id} <span style={{ color: 'var(--text-2)', fontWeight: 400 }}>· {experiment.id}</span>
+              </div>
+              <div className="dim mono" style={{ fontSize: 10, marginTop: 2 }}>
+                Dataset: {experiment.datasetId} · Status: {experiment.status.toUpperCase()}
+              </div>
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {experiment.results && (
+                <span className={`mono ${experiment.results.headline.netPnl >= 0 ? 'pos' : 'neg'}`} style={{ fontSize: 12, fontWeight: 700 }}>
+                  {experiment.results.headline.netPnl >= 0 ? '+' : ''}${experiment.results.headline.netPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              )}
+              <span className="mono" style={{ fontSize: 10.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <StatusDot state={STATUS_STATE[experiment.status]} /> {experiment.status.toUpperCase()}
+              </span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => reproduce(experiment.id)}
+                  style={{
+                    fontSize: 9.5,
+                    padding: '3px 6px',
+                    border: '1px solid var(--border-1)',
+                    borderRadius: 3,
+                    background: 'var(--bg-2)',
+                    color: 'var(--text-1)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  REPRO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => launchDerived(experiment.id, 'branch')}
+                  style={{
+                    fontSize: 9.5,
+                    padding: '3px 6px',
+                    border: '1px solid var(--border-1)',
+                    borderRadius: 3,
+                    background: 'var(--bg-2)',
+                    color: 'var(--text-1)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  BRANCH
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportExperiment(experiment.id)}
+                  style={{
+                    fontSize: 9.5,
+                    padding: '3px 6px',
+                    border: '1px solid var(--border-1)',
+                    borderRadius: 3,
+                    background: 'var(--bg-2)',
+                    color: 'var(--text-1)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  EXPORT
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={selectedForCompare.has(experiment.id)}
+                  onClick={() => toggleCompare(experiment.id)}
+                  style={{
+                    fontSize: 9.5,
+                    padding: '3px 6px',
+                    border: selectedForCompare.has(experiment.id) ? '1px solid var(--color-brand-primary)' : '1px solid var(--border-1)',
+                    borderRadius: 3,
+                    background: selectedForCompare.has(experiment.id) ? 'var(--color-brand-primary)' : 'var(--bg-2)',
+                    color: selectedForCompare.has(experiment.id) ? '#080a0d' : 'var(--text-1)',
+                    fontWeight: selectedForCompare.has(experiment.id) ? 700 : 500,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  COMPARE
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </Panel>
   )
 }

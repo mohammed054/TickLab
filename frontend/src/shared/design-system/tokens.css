@@ -1,39 +1,80 @@
 :root {
-  --color-positive: #3ecf8e;
-  --color-positive-dim: #1f6b4c;
-  --color-negative: #ef5b5b;
-  --color-negative-dim: #7a2e2e;
-  --color-warning: #e0a942;
-  --color-info: #4d9de0;
-  --color-neutral: #7e8790;
-  --color-bg-base: #0d0f12;
-  --color-bg-panel: #14171b;
-  --color-bg-raised: #1b1f24;
-  --color-bg-control: #23282f;
-  --color-border-subtle: #2a2f37;
-  --color-border-strong: #363c45;
-  --color-text-primary: #eef1f4;
-  --color-text-secondary: #b7bec7;
-  --color-text-muted: #7e8790;
-  --color-text-disabled: #565d66;
-  --color-focus: #8dbbff;
-  --color-mock: #d97706;
-  --color-mock-bg: #2a1c0b;
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", "IBM Plex Mono", ui-monospace, monospace;
-  --font-size-xs: 10px;
-  --font-size-sm: 11px;
-  --font-size-md: 12px;
+  /* Semantic trading colors */
+  --color-positive: #10b981;
+  --color-positive-dim: rgba(16, 185, 129, 0.18);
+  --color-positive-glow: rgba(16, 185, 129, 0.35);
+  
+  --color-negative: #f43f5e;
+  --color-negative-dim: rgba(244, 63, 94, 0.18);
+  --color-negative-glow: rgba(244, 63, 94, 0.35);
+  
+  --color-warning: #f59e0b;
+  --color-warning-dim: rgba(245, 158, 11, 0.18);
+  
+  --color-info: #38bdf8;
+  --color-info-dim: rgba(56, 189, 248, 0.18);
+  --color-info-glow: rgba(56, 189, 248, 0.35);
+  
+  --color-neutral: #64748b;
+  --color-neutral-dim: rgba(100, 116, 139, 0.2);
+  
+  /* Dark terminal backgrounds */
+  --color-bg-base: #080a0d;
+  --color-bg-panel: #0d1117;
+  --color-bg-raised: #141922;
+  --color-bg-control: #1a222d;
+  --color-bg-control-hover: #222b3a;
+  --color-bg-control-active: #2a3547;
+  
+  /* Precision borders */
+  --color-border-subtle: #1c2430;
+  --color-border-strong: #2a3749;
+  --color-border-accent: #38bdf8;
+  
+  /* Crisp typography */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #475569;
+  
+  /* Focus & highlights */
+  --color-focus: #38bdf8;
+  --color-mock: #94a3b8;
+  --color-mock-bg: #141922;
+  
+  /* Typography rules */
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", "Roboto Mono", ui-monospace, monospace;
+  
+  --font-size-2xs: 9.5px;
+  --font-size-xs: 10.5px;
+  --font-size-sm: 11.5px;
+  --font-size-md: 12.5px;
   --font-size-lg: 14px;
-  --font-size-xl: 20px;
-  --space-1: 4px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  
+  /* Spacing */
+  --space-1: 3px;
   --space-2: 6px;
-  --space-3: 8px;
+  --space-3: 9px;
   --space-4: 12px;
   --space-5: 16px;
-  --radius-sm: 3px;
-  --radius-md: 5px;
+  --space-6: 20px;
+  
+  /* Radii */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  
+  /* Shadows & Elevation */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-dropdown: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--color-border-subtle);
   --focus-ring: 0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-focus);
+  
+  /* Aliases */
   --bg-0: var(--color-bg-base);
   --bg-1: var(--color-bg-panel);
   --bg-2: var(--color-bg-raised);

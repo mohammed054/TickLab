@@ -25,44 +25,132 @@ export function EventInspector() {
     return -1
   }, [orderedEvents, workspace.replay?.currentEventId, workspace.selectedTradeId, workspace.timestamp])
   const selectedEvent = selectedIndex >= 0 ? orderedEvents[selectedIndex] : null
-  const contextEvents = selectedIndex >= 0 ? orderedEvents.slice(Math.max(0, selectedIndex - 4), selectedIndex + 5) : []
+  const contextEvents =
+    selectedIndex >= 0 ? orderedEvents.slice(Math.max(0, selectedIndex - 4), selectedIndex + 5) : []
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: '100%', overflow: 'auto' }}>
-      <Panel title="EVENT INSPECTOR (MOCK)">
-        {selectedEvent ? <>
-          <MetricRow label="Timestamp" value={new Date(timestampNsToMs(selectedEvent.timestampNs)).toISOString().slice(11, 23)} />
-          <MetricRow label="Event type" value={selectedEvent.type.toUpperCase()} />
-          <MetricRow label="Price" value={selectedEvent.price?.toFixed(1) ?? '—'} />
-          <MetricRow label="Size" value={selectedEvent.size?.toFixed(3) ?? '—'} />
-          <MetricRow label="Side" value={selectedEvent.tradeSide ?? selectedEvent.side?.toUpperCase() ?? '—'} valueClass={selectedEvent.tradeSide === 'BUY' ? 'pos' : selectedEvent.tradeSide === 'SELL' ? 'neg' : undefined} />
-          <MetricRow label="Order ID" value={selectedEvent.orderId ?? selectedEvent.eventId} />
-          <MetricRow label="Sequence" value={selectedEvent.sequence.toLocaleString()} />
-           <MetricRow label="Queue ahead" value={selectedEvent.queueAhead === undefined ? '—' : `${selectedEvent.queueAhead.toFixed(2)} BTC`} />
+      <Panel title="NANOSECOND EVENT INSPECTOR">
+        {selectedEvent ? (
+          <>
+            <MetricRow
+              label="Timestamp (UTC)"
+              value={new Date(timestampNsToMs(selectedEvent.timestampNs)).toISOString().slice(11, 23)}
+            />
+            <MetricRow label="Event Classification" value={selectedEvent.type.toUpperCase()} />
+            <MetricRow label="Event Price" value={selectedEvent.price ? `$${selectedEvent.price.toFixed(1)}` : '—'} />
+            <MetricRow label="Quantity (BTC)" value={selectedEvent.size ? `${selectedEvent.size.toFixed(3)} BTC` : '—'} />
+            <MetricRow
+              label="Aggressor Side"
+              value={selectedEvent.tradeSide ?? selectedEvent.side?.toUpperCase() ?? '—'}
+              valueClass={
+                selectedEvent.tradeSide === 'BUY'
+                  ? 'pos'
+                  : selectedEvent.tradeSide === 'SELL'
+                  ? 'neg'
+                  : undefined
+              }
+            />
+            <MetricRow label="Order Trace ID" value={selectedEvent.orderId ?? selectedEvent.eventId} />
+            <MetricRow label="Feed Sequence #" value={`#${selectedEvent.sequence.toLocaleString()}`} />
+            <MetricRow
+              label="Queue Position Ahead"
+              value={selectedEvent.queueAhead === undefined ? '—' : `${selectedEvent.queueAhead.toFixed(2)} BTC`}
+            />
 
-          <div style={{ marginTop: 6 }}>
-            <button type="button" onClick={() => setShowRaw((value) => !value)} style={{ fontSize: 10.5, padding: '4px 8px', borderRadius: 3, border: '1px solid var(--border-1)', background: 'transparent', color: 'var(--text-1)' }}>{showRaw ? '[ hide raw event ]' : '[ view raw event ]'}</button>
-            {showRaw && <pre className="mono dim" style={{ marginTop: 6, fontSize: 10.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(selectedEvent, null, 2)}</pre>}
+            <div style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={() => setShowRaw((value) => !value)}
+                style={{
+                  fontSize: 'var(--font-size-2xs)',
+                  padding: '3px 8px',
+                  borderRadius: 'var(--radius-xs)',
+                  border: '1px solid var(--color-border-subtle)',
+                  background: 'var(--color-bg-control)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {showRaw ? 'HIDE RAW EVENT JSON' : 'VIEW RAW EVENT PAYLOAD'}
+              </button>
+              {showRaw && (
+                <pre
+                  className="mono"
+                  style={{
+                    marginTop: 6,
+                    padding: 8,
+                    background: 'var(--color-bg-base)',
+                    borderRadius: 'var(--radius-xs)',
+                    fontSize: '10px',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    color: 'var(--color-focus)',
+                  }}
+                >
+                  {JSON.stringify(selectedEvent, null, 2)}
+                </pre>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="dim" style={{ fontSize: 'var(--font-size-xs)' }}>
+            Select a trade from the Tape, Chart, or Replay timeline to inspect event payload.
           </div>
-        </> : <div className="dim">Commit a timestamp, trade, or replay event to inspect it here.</div>}
+        )}
       </Panel>
 
-      <Panel title="MARKET STATE AT EVENT (MOCK)">
-        <MetricRow label="Mid" value={orderBook.mid.toFixed(1)} />
-        <MetricRow label="Spread" value={orderBook.spread.toFixed(1)} />
-        <MetricRow label="Sequence" value={orderBook.sequence.toLocaleString()} />
-        <MetricRow label="Visible bid depth" value={orderBook.bids.reduce((total, level) => total + level.size, 0).toFixed(2)} />
+      <Panel title="MARKET DEPTH STATE AT TICK">
+        <MetricRow label="Mid-Market Price" value={`$${orderBook.mid.toFixed(1)}`} />
+        <MetricRow label="Bid-Ask Spread" value={`$${orderBook.spread.toFixed(1)}`} />
+        <MetricRow label="Sequence ID" value={`#${orderBook.sequence.toLocaleString()}`} />
+        <MetricRow
+          label="Top-of-Book Bid Depth"
+          value={`${orderBook.bids.reduce((total, level) => total + level.size, 0).toFixed(2)} BTC`}
+        />
       </Panel>
 
-      <Panel title="STRATEGY STATE AT EVENT (MOCK)">
-        <MetricRow label="Strategy" value={`${strategy.name} ${strategy.version}`} />
-        <MetricRow label="Inventory" value={`${strategy.inventory >= 0 ? '+' : ''}${strategy.inventory} BTC`} />
-        <MetricRow label="Open orders" value={strategy.orders.toLocaleString()} />
-        <MetricRow label="Latency" value={`${strategy.latencyMs}ms`} />
+      <Panel title="STRATEGY TELEMETRY AT TICK">
+        <MetricRow label="Strategy Engine" value={`${strategy.name} ${strategy.version}`} />
+        <MetricRow
+          label="Inventory Exposure"
+          value={`${strategy.inventory >= 0 ? '+' : ''}${strategy.inventory} BTC`}
+          valueClass={strategy.inventory >= 0 ? 'pos' : 'neg'}
+        />
+        <MetricRow label="Active Working Orders" value={strategy.orders.toLocaleString()} />
+        <MetricRow label="Execution Latency" value={`${strategy.latencyMs.toFixed(1)}ms`} />
       </Panel>
 
-      <Panel title="SURROUNDING EVENTS (MOCK CONTEXT WINDOW)">
-        {contextEvents.length > 0 ? contextEvents.map((event) => <div key={event.eventId} className="mono" style={{ display: 'flex', gap: 8, padding: '2px 0', fontSize: 10.5, borderBottom: '1px solid var(--border-1)' }}><span className="dim">{new Date(timestampNsToMs(event.timestampNs)).toISOString().slice(11, 23)}</span><span style={{ width: 100 }}>{event.type.toUpperCase()}</span><span>{event.price?.toFixed(1) ?? '—'} × {event.size?.toFixed(3) ?? '—'}</span></div>) : <div className="dim">No event context available.</div>}
+      <Panel title="SURROUNDING EVENT STREAM (±4 TICKS)">
+        {contextEvents.length > 0 ? (
+          contextEvents.map((event) => (
+            <div
+              key={event.eventId}
+              className="mono"
+              style={{
+                display: 'flex',
+                gap: 8,
+                padding: '2px 4px',
+                fontSize: '10px',
+                borderBottom: '1px solid var(--color-border-subtle)',
+                background: event.eventId === selectedEvent?.eventId ? 'var(--color-bg-control-active)' : 'transparent',
+              }}
+            >
+              <span className="dim">
+                {new Date(timestampNsToMs(event.timestampNs)).toISOString().slice(11, 23)}
+              </span>
+              <span style={{ width: 100, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                {event.type.toUpperCase()}
+              </span>
+              <span>
+                {event.price?.toFixed(1) ?? '—'} × {event.size?.toFixed(3) ?? '—'}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="dim">No event context available.</div>
+        )}
       </Panel>
     </div>
   )
