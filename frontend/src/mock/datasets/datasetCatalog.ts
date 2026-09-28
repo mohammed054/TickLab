@@ -3,15 +3,15 @@ import type { TimestampNs } from '../../contracts'
 import { useSyncExternalStore } from 'react'
 
 export const DATASET_DATA_TYPES = [
-  { value: 'trades', label: 'Trades' },
-  { value: 'l2_order_book', label: 'L2 Order Book' },
-  { value: 'l3_order_book', label: 'L3 Order Book' },
-  { value: 'snapshots', label: 'Snapshots' },
+  { value: 'trades', label: 'Trades (Time & Sales)' },
+  { value: 'l2_order_book', label: 'L2 Order Book (Depth 50)' },
+  { value: 'l3_order_book', label: 'L3 Order Book (MBO / Quotes)' },
+  { value: 'snapshots', label: 'Book Snapshots' },
   { value: 'incremental_updates', label: 'Incremental Updates' },
-  { value: 'ticker', label: 'Ticker' },
-  { value: 'mark_price', label: 'Mark Price' },
-  { value: 'funding', label: 'Funding' },
-  { value: 'liquidation', label: 'Liquidation' },
+  { value: 'ticker', label: 'Ticker & Volume' },
+  { value: 'mark_price', label: 'Mark Price & Index' },
+  { value: 'funding', label: 'Funding Rate Events' },
+  { value: 'liquidation', label: 'Liquidation Feed' },
 ] as const
 
 export type DatasetDataType = (typeof DATASET_DATA_TYPES)[number]['value']
@@ -21,53 +21,79 @@ export type PipelineStageId = 'raw' | 'validation' | 'normalization' | 'reconstr
 export type PipelineStageState = 'complete' | 'active' | 'pending' | 'failed'
 
 export const PIPELINE_STAGES: readonly { id: PipelineStageId; label: string }[] = [
-  { id: 'raw', label: 'RAW EXCHANGE DATA' },
-  { id: 'validation', label: 'VALIDATION' },
-  { id: 'normalization', label: 'NORMALIZATION' },
-  { id: 'reconstruction', label: 'ORDER BOOK RECONSTRUCTION' },
-  { id: 'alignment', label: 'TRADE ALIGNMENT' },
-  { id: 'timestamp', label: 'TIMESTAMP VALIDATION' },
-  { id: 'format', label: 'HFTBACKTEST-COMPATIBLE FORMAT' },
-  { id: 'ready', label: 'READY' },
+  { id: 'raw', label: 'RAW EXCHANGE INGESTION' },
+  { id: 'validation', label: 'INTEGRITY & CHECKSUM VALIDATION' },
+  { id: 'normalization', label: 'MICROSECOND SCHEMA NORMALIZATION' },
+  { id: 'reconstruction', label: 'L2/L3 ORDER BOOK RECONSTRUCTION' },
+  { id: 'alignment', label: 'TRADE & FILL ALIGNMENT' },
+  { id: 'timestamp', label: 'TIMESTAMP MONOTONICITY AUDIT' },
+  { id: 'format', label: 'HFTBACKTEST RUST IPC FORMATTING' },
+  { id: 'ready', label: 'READY FOR QUANT SIMULATION' },
 ]
 
 export const DATASET_EXCHANGES = [
-  { value: 'binance-futures', label: 'Binance' },
-  { value: 'bybit', label: 'Bybit' },
+  { value: 'binance-futures', label: 'Binance Futures (USD-M)' },
+  { value: 'bybit', label: 'Bybit Linear' },
+  { value: 'coinbase', label: 'Coinbase Advanced' },
+  { value: 'kraken', label: 'Kraken Futures' },
+  { value: 'okx', label: 'OKX Swap' },
+  { value: 'custom', label: 'Custom / Proprietary L3 Feed' },
 ] as const
 
 const MARKET_LABELS: Record<string, string> = {
-  'usdt-futures': 'USDT Futures',
-  'coinm-futures': 'COIN-M Futures',
-  spot: 'Spot',
+  'usdt-futures': 'USDT Perpetual Futures',
+  'coinm-futures': 'COIN-M Inverse Futures',
+  spot: 'Spot Order Book',
 }
 
 const MARKETS_BY_EXCHANGE: Record<string, readonly string[]> = {
   'binance-futures': ['usdt-futures', 'coinm-futures', 'spot'],
   bybit: ['usdt-futures', 'coinm-futures', 'spot'],
+  coinbase: ['spot', 'usdt-futures'],
+  kraken: ['spot', 'usdt-futures'],
+  okx: ['usdt-futures', 'coinm-futures', 'spot'],
+  custom: ['usdt-futures', 'spot'],
 }
 
 const SYMBOLS_BY_EXCHANGE_MARKET: Record<string, readonly string[]> = {
-  'binance-futures:usdt-futures': ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
+  'binance-futures:usdt-futures': ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'],
   'binance-futures:coinm-futures': ['BTCUSD', 'ETHUSD'],
   'binance-futures:spot': ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
-  'bybit:usdt-futures': ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
+  'bybit:usdt-futures': ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'MNTUSDT'],
   'bybit:coinm-futures': ['BTCUSD', 'ETHUSD'],
   'bybit:spot': ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
+  'coinbase:spot': ['BTC-USD', 'ETH-USD', 'SOL-USD'],
+  'coinbase:usdt-futures': ['BTC-PERP', 'ETH-PERP'],
+  'kraken:spot': ['XBT/USD', 'ETH/USD'],
+  'kraken:usdt-futures': ['PI_XBTUSD', 'PI_ETHUSD'],
+  'okx:usdt-futures': ['BTC-USDT-SWAP', 'ETH-USDT-SWAP'],
+  'okx:coinm-futures': ['BTC-USD-SWAP'],
+  'okx:spot': ['BTC-USDT', 'ETH-USDT'],
+  'custom:usdt-futures': ['BTCUSDT', 'ETHUSDT', 'CUSTOM_ASSET'],
+  'custom:spot': ['BTCUSDT', 'CUSTOM_ASSET'],
 }
 
 const SUPPORTED_DATA_TYPES: Record<string, readonly DatasetDataType[]> = {
-  'binance-futures:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
+  'binance-futures:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
   'binance-futures:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
   'binance-futures:spot': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker'],
-  'bybit:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
+  'bybit:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
   'bybit:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
   'bybit:spot': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker'],
+  'coinbase:spot': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker'],
+  'coinbase:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price'],
+  'kraken:spot': ['trades', 'l2_order_book', 'snapshots', 'ticker'],
+  'kraken:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'funding'],
+  'okx:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
+  'okx:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'funding'],
+  'okx:spot': ['trades', 'l2_order_book', 'snapshots', 'ticker'],
+  'custom:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
+  'custom:spot': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'ticker'],
 }
 
 const NS_PER_MS = 1_000_000n
-const PIPELINE_STEP_MS = 600
-const PIPELINE_PROGRESS = [0, 12, 28, 46, 64, 80, 92, 100] as const
+const PIPELINE_STEP_MS = 300
+const PIPELINE_PROGRESS = [0, 15, 30, 48, 65, 82, 94, 100] as const
 const PIPELINE_STATUS_BY_STAGE: Record<number, DatasetStatus> = {
   1: 'validating',
   2: 'normalizing',
@@ -78,7 +104,7 @@ const PIPELINE_STATUS_BY_STAGE: Record<number, DatasetStatus> = {
   7: 'ready',
 }
 const AUDIT_EPOCH_MS = 1_723_065_600_000
-const STORAGE_KEY = 'ticklab.mock-datasets.v1'
+const STORAGE_KEY = 'ticklab.mock-datasets.v2'
 
 export interface DatasetSelection {
   exchange: string
@@ -87,6 +113,8 @@ export interface DatasetSelection {
   dataTypes: DatasetDataType[]
   startDate: string
   endDate: string
+  startTime?: string
+  endTime?: string
 }
 
 export interface DatasetDateRange {
@@ -146,6 +174,8 @@ export interface DatasetOverrideRecord {
 
 export interface DatasetCatalogRecord {
   id: string
+  name?: string
+  sourceFile?: string
   selection: DatasetSelection
   dateRange: DatasetDateRange
   status: DatasetStatus
@@ -158,12 +188,32 @@ export interface DatasetCatalogRecord {
   failureMode: 'reconstruction' | null
   quality: DataQualityReport
   overrides: DatasetOverrideRecord[]
+  isCustomImport?: boolean
 }
 
 export interface MockDatasetStoreSnapshot {
   selection: DatasetSelection
   records: DatasetCatalogRecord[]
   overrides: DatasetOverrideRecord[]
+}
+
+export interface ImportDatasetConfig {
+  name: string
+  exchange: string
+  market: string
+  symbol: string
+  startDate: string
+  endDate: string
+  startTime?: string
+  endTime?: string
+  dataTypes: DatasetDataType[]
+  fileSizeBytes: number
+  eventCount: number
+  tickSize: number
+  lotSize: number
+  sourceFileName?: string
+  qualityProfile?: 'green' | 'yellow' | 'red'
+  rawSample?: string
 }
 
 interface QualityProfile {
@@ -190,6 +240,7 @@ interface SeedDefinition {
 interface PersistedDatasetState {
   selection?: unknown
   overrides?: unknown
+  customRecords?: DatasetCatalogRecord[]
 }
 
 const GREEN_PROFILE: QualityProfile = {
@@ -248,12 +299,17 @@ function isDateString(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
 }
 
-export function dateToTimestampNs(value: string): TimestampNs {
+export function dateToTimestampNs(value: string, time = '00:00:00'): TimestampNs {
   if (!isDateString(value)) {
     throw new Error('date must use YYYY-MM-DD')
   }
   const [year, month, day] = value.split('-').map(Number)
-  return (BigInt(Date.UTC(year, month - 1, day)) * NS_PER_MS).toString()
+  const timeParts = time.split(':').map(Number)
+  const hours = timeParts[0] || 0
+  const minutes = timeParts[1] || 0
+  const seconds = timeParts[2] || 0
+  const ms = Date.UTC(year, month - 1, day, hours, minutes, seconds)
+  return (BigInt(ms) * NS_PER_MS).toString()
 }
 
 export function timestampNsToDate(value: TimestampNs): string {
@@ -263,7 +319,7 @@ export function timestampNsToDate(value: TimestampNs): string {
 
 export function formatTimestampNs(value: TimestampNs): string {
   const milliseconds = Number(BigInt(value) / NS_PER_MS)
-  return new Date(milliseconds).toISOString().replace('T', ' ').replace('.000Z', 'Z')
+  return new Date(milliseconds).toISOString().replace('T', ' ').replace('.000Z', ' UTC')
 }
 
 export function formatCount(value: number): string {
@@ -271,7 +327,7 @@ export function formatCount(value: number): string {
 }
 
 export function formatBytes(value: number): string {
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} GB`
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)} GB`
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} MB`
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)} KB`
   return `${value} B`
@@ -285,11 +341,13 @@ export function getDefaultSelection(): DatasetSelection {
     dataTypes: ['trades', 'l2_order_book'],
     startDate: '2024-08-08',
     endDate: '2024-08-09',
+    startTime: '00:00:00',
+    endTime: '23:59:59',
   }
 }
 
 export function getMarkets(exchange: string): readonly { value: string; label: string }[] {
-  return (MARKETS_BY_EXCHANGE[exchange] ?? ['usdt-futures']).map((market) => ({ value: market, label: MARKET_LABELS[market] }))
+  return (MARKETS_BY_EXCHANGE[exchange] ?? ['usdt-futures']).map((market) => ({ value: market, label: MARKET_LABELS[market] ?? market }))
 }
 
 export function getSymbols(exchange: string, market: string): readonly string[] {
@@ -297,13 +355,13 @@ export function getSymbols(exchange: string, market: string): readonly string[] 
 }
 
 export function getDataTypeOptions(exchange: string, market: string): readonly { value: DatasetDataType; label: string; disabled: boolean; disabledReason: string }[] {
-  const supported = new Set(SUPPORTED_DATA_TYPES[`${exchange}:${market}`] ?? ['trades'])
+  const supported = new Set(SUPPORTED_DATA_TYPES[`${exchange}:${market}`] ?? ['trades', 'l2_order_book'])
   return DATASET_DATA_TYPES.map((item) => {
     const disabled = !supported.has(item.value)
     return {
       ...item,
       disabled,
-      disabledReason: disabled ? 'This data type is not available in the mock catalog for this exchange and market.' : '',
+      disabledReason: disabled ? 'This feed type is not indexed in the standard schema for this venue.' : '',
     }
   })
 }
@@ -319,11 +377,11 @@ function normalizeDataTypes(value: unknown, exchange: string, market: string): D
 
 export function normalizeSelection(input: DatasetSelection): DatasetSelection {
   const fallback = getDefaultSelection()
-  const exchange = DATASET_EXCHANGES.some((item) => item.value === input.exchange) ? input.exchange : fallback.exchange
+  const exchange = DATASET_EXCHANGES.some((item) => item.value === input.exchange) ? input.exchange : input.exchange || fallback.exchange
   const markets = getMarkets(exchange)
   const market = markets.some((item) => item.value === input.market) ? input.market : markets[0]?.value ?? fallback.market
   const symbols = getSymbols(exchange, market)
-  const symbol = symbols.includes(input.symbol) ? input.symbol : symbols[0] ?? fallback.symbol
+  const symbol = input.symbol || symbols[0] || fallback.symbol
   const requestedStart = isDateString(input.startDate) ? input.startDate : fallback.startDate
   const requestedEnd = isDateString(input.endDate) ? input.endDate : fallback.endDate
   const startDate = requestedStart > requestedEnd ? requestedEnd : requestedStart
@@ -335,23 +393,30 @@ export function normalizeSelection(input: DatasetSelection): DatasetSelection {
     dataTypes: normalizeDataTypes(input.dataTypes, exchange, market),
     startDate,
     endDate,
+    startTime: input.startTime || '00:00:00',
+    endTime: input.endTime || '23:59:59',
   }
 }
 
 export function selectionKey(selection: DatasetSelection): string {
   const normalized = normalizeSelection(selection)
-  return [normalized.exchange, normalized.market, normalized.symbol, normalized.dataTypes.join('+'), normalized.startDate, normalized.endDate].join('|')
+  return [normalized.exchange, normalized.market, normalized.symbol, normalized.dataTypes.join('+'), normalized.startDate, normalized.endDate, normalized.startTime || '00:00:00', normalized.endTime || '23:59:59'].join('|')
 }
 
 export function datasetIdForSelection(selection: DatasetSelection): string {
   const normalized = normalizeSelection(selection)
-  if (normalized.exchange === 'binance-futures' && normalized.market === 'usdt-futures' && normalized.symbol === 'BTCUSDT' && normalized.startDate === '2024-08-08' && normalized.endDate === '2024-08-09' && normalized.dataTypes.join('+') === 'trades+l2_order_book') return 'mock-dataset-btcusdt-2024-08-08'
-  return `mock-dataset-${normalized.exchange}-${normalized.market}-${normalized.symbol.toLowerCase()}-${normalized.startDate}-${normalized.endDate}-${normalized.dataTypes.join('+')}`
+  if (normalized.exchange === 'binance-futures' && normalized.market === 'usdt-futures' && normalized.symbol === 'BTCUSDT' && normalized.startDate === '2024-08-08' && normalized.endDate === '2024-08-09' && normalized.dataTypes.join('+') === 'trades+l2_order_book') {
+    return 'mock-dataset-btcusdt-2024-08-08'
+  }
+  return `dataset-${normalized.exchange}-${normalized.market}-${normalized.symbol.toLowerCase()}-${normalized.startDate}-${normalized.endDate}`
 }
 
 export function dateRangeForSelection(selection: DatasetSelection): DatasetDateRange {
   const normalized = normalizeSelection(selection)
-  return { start: dateToTimestampNs(normalized.startDate), end: dateToTimestampNs(normalized.endDate) }
+  return {
+    start: dateToTimestampNs(normalized.startDate, normalized.startTime),
+    end: dateToTimestampNs(normalized.endDate, normalized.endTime),
+  }
 }
 
 function createQualityProfile(selection: DatasetSelection): QualityProfile {
@@ -389,7 +454,7 @@ function createQualityReport(datasetId: string, selection: DatasetSelection, pro
     timestampRange: [dateRange.start, dateRange.end],
     fileSizeBytes: profile.fileSizeBytes,
     source: `${exchangeLabel} ${marketLabel}`,
-    normalizationVersion: 'mock-pipeline-v3',
+    normalizationVersion: 'hftbacktest-v3-ipc',
     tickSize: profile.tickSize,
     lotSize: profile.lotSize,
   }
@@ -403,6 +468,7 @@ function createRecord(selectionInput: DatasetSelection, status: DatasetStatus, f
   const progress = status === 'ready' ? 100 : status === 'failed' ? PIPELINE_PROGRESS[3] : 0
   return {
     id: datasetId,
+    name: `${selection.symbol} ${selection.startDate} (${selection.exchange})`,
     selection,
     dateRange: dateRangeForSelection(selection),
     status,
@@ -411,7 +477,7 @@ function createRecord(selectionInput: DatasetSelection, status: DatasetStatus, f
     pipelineStep: status === 'ready' ? PIPELINE_STAGES.length - 1 : status === 'failed' ? 3 : 0,
     processedEvents: Math.round(quality.totalEvents * (progress / 100)),
     totalEvents: quality.totalEvents,
-    errorMessage: status === 'failed' ? 'Mock reconstruction stopped at a non-contiguous snapshot sequence.' : null,
+    errorMessage: status === 'failed' ? 'Reconstruction stopped at a non-contiguous sequence.' : null,
     failureMode,
     quality,
     overrides: [],
@@ -458,14 +524,16 @@ function createSeedRecords(): DatasetCatalogRecord[] {
 function isOverrideRecord(value: unknown): value is DatasetOverrideRecord {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<DatasetOverrideRecord>
-  return typeof candidate.id === 'string'
-    && typeof candidate.timestampNs === 'string'
-    && candidate.action === 'DATA_QUALITY_OVERRIDE'
-    && typeof candidate.datasetId === 'string'
-    && typeof candidate.checkId === 'string'
-    && typeof candidate.checkLabel === 'string'
-    && typeof candidate.justification === 'string'
-    && candidate.value === 'RED'
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.timestampNs === 'string' &&
+    candidate.action === 'DATA_QUALITY_OVERRIDE' &&
+    typeof candidate.datasetId === 'string' &&
+    typeof candidate.checkId === 'string' &&
+    typeof candidate.checkLabel === 'string' &&
+    typeof candidate.justification === 'string' &&
+    candidate.value === 'RED'
+  )
 }
 
 function readPersistedState(): PersistedDatasetState | null {
@@ -506,9 +574,9 @@ export function getQualityChecks(record: DatasetCatalogRecord): QualityCheck[] {
   const duplicate = record.quality.duplicateEvents
   const sequence = record.quality.sequenceGaps
   const definitions: Array<Omit<QualityCheck, 'overridden' | 'justification'>> = [
-    { id: 'missing-intervals', label: 'Missing intervals', count: missing.count, status: missing.status, detail: missing.ranges.length > 0 ? `${missing.ranges.length} recorded interval${missing.ranges.length === 1 ? '' : 's'}` : 'No missing intervals detected.' },
-    { id: 'duplicate-events', label: 'Duplicate events', count: duplicate.count, status: duplicate.status, detail: duplicate.count === 0 ? 'No duplicate events detected.' : `${formatCount(duplicate.count)} duplicate rows require review.` },
-    { id: 'sequence-gaps', label: 'Sequence gaps', count: sequence.count, status: sequence.status, detail: sequence.count === 0 ? 'Sequence numbers are contiguous.' : `${formatCount(sequence.count)} sequence gaps require review.` },
+    { id: 'missing-intervals', label: 'Missing intervals', count: missing.count, status: missing.status, detail: missing.ranges.length > 0 ? `${missing.ranges.length} recorded gap${missing.ranges.length === 1 ? '' : 's'}` : 'No missing intervals detected.' },
+    { id: 'duplicate-events', label: 'Duplicate events', count: duplicate.count, status: duplicate.status, detail: duplicate.count === 0 ? 'No duplicate events detected.' : `${formatCount(duplicate.count)} duplicate events flagged.` },
+    { id: 'sequence-gaps', label: 'Sequence gaps', count: sequence.count, status: sequence.status, detail: sequence.count === 0 ? 'Sequence IDs contiguous.' : `${formatCount(sequence.count)} sequence gaps flagged.` },
   ]
   return definitions.map((definition) => {
     const override = overrides.get(definition.id)
@@ -530,11 +598,11 @@ export function canRunBacktest(record: DatasetCatalogRecord): boolean {
 export function getBacktestBlockers(record: DatasetCatalogRecord): string[] {
   const blockers: string[] = []
   if (record.status !== 'ready') {
-    blockers.push(`Pipeline is ${getPipelineStatusLabel(record.status)}; wait for READY.`)
+    blockers.push(`Pipeline is ${getPipelineStatusLabel(record.status)}; wait for validation to complete.`)
   }
   for (const check of getQualityChecks(record)) {
     if (check.status === 'red' && !check.overridden) {
-      blockers.push(`${check.label} is RED (${formatCount(check.count)}). Override individually or resolve the data.`)
+      blockers.push(`${check.label} is RED (${formatCount(check.count)}). Override individually or fix source data.`)
     }
   }
   return blockers
@@ -599,6 +667,9 @@ class MockDatasetStore {
     this.overrides = Array.isArray(persisted?.overrides) ? persisted.overrides.filter(isOverrideRecord) : []
     const seedRecords = createSeedRecords()
     seedRecords.forEach((record) => this.records.set(record.id, record))
+    if (Array.isArray(persisted?.customRecords)) {
+      persisted.customRecords.forEach((rec) => this.records.set(rec.id, rec))
+    }
     this.overrides.forEach((override) => {
       const record = this.records.get(override.datasetId)
       if (record) record.overrides = this.overrides.filter((entry) => entry.datasetId === record.id)
@@ -640,6 +711,77 @@ class MockDatasetStore {
     return this.getRecord(id) as DatasetCatalogRecord
   }
 
+  importCustomDataset(config: ImportDatasetConfig): DatasetCatalogRecord {
+    const selection: DatasetSelection = {
+      exchange: config.exchange,
+      market: config.market,
+      symbol: config.symbol,
+      dataTypes: config.dataTypes,
+      startDate: config.startDate,
+      endDate: config.endDate,
+      startTime: config.startTime || '00:00:00',
+      endTime: config.endTime || '23:59:59',
+    }
+    const id = `custom-${config.exchange}-${config.symbol.toLowerCase()}-${config.startDate}-${Date.now().toString(36)}`
+    const dateRange = dateRangeForSelection(selection)
+    const tradesCount = Math.round(config.eventCount * 0.15)
+    const orderBookUpdates = Math.round(config.eventCount * 0.82)
+    const snapshots = Math.max(10, Math.round(config.eventCount * 0.03))
+    
+    const qualityStatus: QualityStatus = config.qualityProfile || 'green'
+    const quality: DataQualityReport = {
+      datasetId: id,
+      totalEvents: config.eventCount,
+      trades: tradesCount,
+      orderBookUpdates,
+      snapshots,
+      missingIntervals: {
+        count: qualityStatus === 'green' ? 0 : qualityStatus === 'yellow' ? 2 : 5,
+        status: qualityStatus,
+        ranges: [],
+      },
+      duplicateEvents: {
+        count: qualityStatus === 'green' ? 0 : 4,
+        status: qualityStatus === 'red' ? 'yellow' : 'green',
+      },
+      sequenceGaps: {
+        count: qualityStatus === 'green' ? 0 : 1,
+        status: qualityStatus === 'red' ? 'yellow' : 'green',
+      },
+      timestampRange: [dateRange.start, dateRange.end],
+      fileSizeBytes: config.fileSizeBytes,
+      source: `${config.exchange.toUpperCase()} (${config.sourceFileName || 'Imported Stream'})`,
+      normalizationVersion: 'hftbacktest-v3-ipc',
+      tickSize: config.tickSize,
+      lotSize: config.lotSize,
+    }
+
+    const record: DatasetCatalogRecord = {
+      id,
+      name: config.name || `${config.symbol} (${config.sourceFileName || 'Imported'})`,
+      sourceFile: config.sourceFileName,
+      selection,
+      dateRange,
+      status: 'validating',
+      progress: 0,
+      activeStage: 'raw',
+      pipelineStep: 0,
+      processedEvents: 0,
+      totalEvents: config.eventCount,
+      errorMessage: null,
+      failureMode: null,
+      quality,
+      overrides: [],
+      isCustomImport: true,
+    }
+
+    this.records.set(id, record)
+    this.selection = selection
+    this.notify()
+    this.beginPipeline(id, true)
+    return record
+  }
+
   prepareDataset(datasetId: string): void {
     const record = this.records.get(datasetId)
     if (!record || record.status === 'ready') return
@@ -656,19 +798,43 @@ class MockDatasetStore {
     const nextStep = record.pipelineStep + 1
     if (record.failureMode === 'reconstruction' && nextStep >= 3) {
       this.clearTimer(datasetId)
-      this.records.set(datasetId, { ...record, status: 'failed', progress: PIPELINE_PROGRESS[3], activeStage: 'reconstruction', pipelineStep: 3, processedEvents: Math.round(record.totalEvents * 0.46), errorMessage: 'Mock reconstruction stopped at a non-contiguous snapshot sequence.' })
+      this.records.set(datasetId, {
+        ...record,
+        status: 'failed',
+        progress: PIPELINE_PROGRESS[3],
+        activeStage: 'reconstruction',
+        pipelineStep: 3,
+        processedEvents: Math.round(record.totalEvents * 0.48),
+        errorMessage: 'Reconstruction stopped at an unsynchronized sequence gap.',
+      })
       this.notify()
       return
     }
     if (nextStep >= PIPELINE_STAGES.length - 1) {
       this.clearTimer(datasetId)
-      this.records.set(datasetId, { ...record, status: 'ready', progress: 100, activeStage: 'ready', pipelineStep: PIPELINE_STAGES.length - 1, processedEvents: record.totalEvents, errorMessage: null })
+      this.records.set(datasetId, {
+        ...record,
+        status: 'ready',
+        progress: 100,
+        activeStage: 'ready',
+        pipelineStep: PIPELINE_STAGES.length - 1,
+        processedEvents: record.totalEvents,
+        errorMessage: null,
+      })
       this.notify()
       return
     }
     const stage = PIPELINE_STAGES[nextStep]
     const progress = PIPELINE_PROGRESS[nextStep] ?? 0
-    this.records.set(datasetId, { ...record, status: PIPELINE_STATUS_BY_STAGE[nextStep] ?? 'validating', progress, activeStage: stage.id, pipelineStep: nextStep, processedEvents: Math.round(record.totalEvents * (progress / 100)), errorMessage: null })
+    this.records.set(datasetId, {
+      ...record,
+      status: PIPELINE_STATUS_BY_STAGE[nextStep] ?? 'validating',
+      progress,
+      activeStage: stage.id,
+      pipelineStep: nextStep,
+      processedEvents: Math.round(record.totalEvents * (progress / 100)),
+      errorMessage: null,
+    })
     this.notify()
     this.schedule(datasetId)
   }
@@ -709,7 +875,7 @@ class MockDatasetStore {
     if (record.status === 'ready') return
     if (record.status === 'failed' && !force) return
     this.clearTimer(datasetId)
-    this.records.set(datasetId, { ...record, status: 'validating', progress: 0, activeStage: 'validation', pipelineStep: 0, processedEvents: 0, errorMessage: null })
+    this.records.set(datasetId, { ...record, status: 'validating', progress: 0, activeStage: 'raw', pipelineStep: 0, processedEvents: 0, errorMessage: null })
     this.notify()
     this.schedule(datasetId)
   }
@@ -762,7 +928,8 @@ class MockDatasetStore {
     this.snapshot = this.createSnapshot()
     if (typeof localStorage !== 'undefined') {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ selection: this.snapshot.selection, overrides: this.snapshot.overrides }))
+        const customRecords = Array.from(this.records.values()).filter((r) => r.isCustomImport)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ selection: this.snapshot.selection, overrides: this.snapshot.overrides, customRecords }))
       } catch {
       }
     }

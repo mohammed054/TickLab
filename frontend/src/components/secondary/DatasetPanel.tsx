@@ -6,6 +6,7 @@ import {
   PIPELINE_STAGES,
   canRunBacktest,
   dateRangeForSelection,
+  formatBytes,
   formatCount,
   getBacktestBlockers,
   getDataTypeOptions,
@@ -24,11 +25,13 @@ import {
 } from '../../mock/datasets/datasetCatalog'
 import type { DatasetDataType, DatasetSelection, PipelineStageState } from '../../mock/datasets/datasetCatalog'
 import { EmptyState, LoadingState, MetricRow, Panel, SelectField, StatusDot, Tooltip } from '../shared/Panel'
+import { ImportDatasetModal } from './ImportDatasetModal'
 
 export function DatasetPanel() {
   const store = useMockDatasetStore()
   const [workspace, updateWorkspace] = useWorkspace()
   const [selection, setSelection] = useState<DatasetSelection>(() => store.selection)
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const storeSelectionKey = selectionKey(store.selection)
 
   useEffect(() => {
@@ -108,6 +111,10 @@ export function DatasetPanel() {
     commitSelection(next)
   }
 
+  const updateTime = (field: 'startTime' | 'endTime', value: string) => {
+    commitSelection({ ...selection, [field]: value })
+  }
+
   const updateDataType = (dataType: DatasetDataType, checked: boolean) => {
     const dataTypes = checked
       ? Array.from(new Set([...selection.dataTypes, dataType]))
@@ -126,56 +133,84 @@ export function DatasetPanel() {
   const blockers = activeRecord ? getBacktestBlockers(activeRecord) : ['No dataset is selected.']
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', height: '100%', overflow: 'auto' }}>
-      <Panel title="HISTORICAL DATASET REPOSITORY">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'var(--space-2)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', overflow: 'auto' }}>
+      <Panel
+        title="HISTORICAL & REALTIME DATASET REPOSITORY"
+        right={
+          <button
+            type="button"
+            onClick={() => setImportModalOpen(true)}
+            style={{
+              background: 'var(--color-brand-primary)',
+              color: '#080a0d',
+              border: 'none',
+              borderRadius: 3,
+              padding: '3px 8px',
+              fontSize: 10,
+              fontWeight: 800,
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+            }}
+          >
+            + IMPORT CUSTOM DATASET
+          </button>
+        }
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
           <SelectField
-            label="Exchange"
+            label="Exchange Connector"
             value={selection.exchange}
             options={DATASET_EXCHANGES}
             onChange={updateExchange}
-            description="Target exchange connector source."
+            description="Source trading venue gateway."
           />
           <SelectField
             label="Market Instrument"
             value={selection.market}
             options={getMarkets(selection.exchange)}
             onChange={updateMarket}
-            description="Derivatives contract type or spot market."
+            description="Contract type (Perpetual, Inverse, Spot)."
           />
           <SelectField
             label="Symbol"
             value={selection.symbol}
             options={getSymbols(selection.exchange, selection.market).map((symbol) => ({ value: symbol, label: symbol }))}
             onChange={(symbol) => commitSelection({ ...selection, symbol })}
-            description="Trading asset ticker."
+            description="Target asset pair."
           />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'var(--space-2)' }}>
-            <DateInput label="Start Date" value={selection.startDate} onChange={(value) => updateDate('startDate', value)} />
-            <DateInput label="End Date" value={selection.endDate} onChange={(value) => updateDate('endDate', value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <DateTimeInput
+              label="Start Time (UTC)"
+              dateValue={selection.startDate}
+              timeValue={selection.startTime || '00:00:00'}
+              onDateChange={(v) => updateDate('startDate', v)}
+              onTimeChange={(v) => updateTime('startTime', v)}
+            />
+            <DateTimeInput
+              label="End Time (UTC)"
+              dateValue={selection.endDate}
+              timeValue={selection.endTime || '23:59:59'}
+              onDateChange={(v) => updateDate('endDate', v)}
+              onTimeChange={(v) => updateTime('endTime', v)}
+            />
           </div>
         </div>
 
         <fieldset
           style={{
-            border: '1px solid var(--color-border-subtle)',
-            borderRadius: 'var(--radius-sm)',
-            padding: 'var(--space-2)',
-            margin: '0 0 var(--space-3)',
+            border: '1px solid var(--border-1)',
+            borderRadius: 4,
+            padding: '8px 12px',
+            margin: '8px 0',
+            background: 'var(--bg-1)',
           }}
         >
-          <legend style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', padding: '0 var(--space-1)', fontWeight: 600 }}>
-            DEPTH & FEED TYPES
+          <legend style={{ color: 'var(--text-1)', fontSize: 10, padding: '0 4px', fontWeight: 700 }}>
+            DEPTH & FEED SUBSCRIPTIONS
           </legend>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-1) var(--space-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '4px 12px' }}>
             {getDataTypeOptions(selection.exchange, selection.market).map((option) => {
               const checked = selection.dataTypes.includes(option.value)
-              const label = (
-                <span style={{ color: option.disabled ? 'var(--color-text-disabled)' : 'var(--color-text-primary)' }}>
-                  {option.label}
-                  {option.disabled ? ' (N/A)' : ''}
-                </span>
-              )
               return (
                 <Tooltip
                   key={option.value}
@@ -185,10 +220,11 @@ export function DatasetPanel() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--space-1)',
+                      gap: 6,
                       minWidth: 0,
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: 10.5,
                       cursor: option.disabled ? 'not-allowed' : 'pointer',
+                      color: option.disabled ? 'var(--text-2)' : checked ? 'var(--text-0)' : 'var(--text-1)',
                     }}
                   >
                     <input
@@ -197,7 +233,7 @@ export function DatasetPanel() {
                       disabled={option.disabled}
                       onChange={(event) => updateDataType(option.value, event.target.checked)}
                     />
-                    {label}
+                    {option.label}
                   </label>
                 </Tooltip>
               )
@@ -205,22 +241,25 @@ export function DatasetPanel() {
           </div>
         </fieldset>
 
-        <MetricRow label="Included Feeds" value={selectedDataTypeLabels.join(' · ')} />
+        <MetricRow label="Included Stream Channels" value={selectedDataTypeLabels.join(' · ')} />
         <MetricRow
-          label="Timestamp Coverage"
+          label="Timestamp Boundary"
           value={
-            <span className="mono">
+            <span className="mono" style={{ fontSize: 10.5 }}>
               {selectedDateRange.start} → {selectedDateRange.end}
             </span>
           }
         />
-        <MetricRow label="Dataset Hash ID" value={activeRecord?.id ?? 'No matching record'} />
+        <MetricRow label="Active Dataset Identifier" value={activeRecord?.id ?? 'No matching dataset'} />
+        {activeRecord && (
+          <MetricRow label="Storage Footprint" value={`${formatBytes(activeRecord.quality.fileSizeBytes)} (${formatCount(activeRecord.totalEvents)} events)`} />
+        )}
       </Panel>
 
       <Panel
-        title="RAW FEED INGESTION PIPELINE"
+        title="FEED INGESTION & RECONSTRUCTION PIPELINE"
         right={
-          <span className="mono" style={{ fontSize: 'var(--font-size-xs)' }}>
+          <span className="mono" style={{ fontSize: 10.5 }}>
             <StatusDot state={getStatusVisualState(pipelineStatus)} />{' '}
             {pipelineStatus === 'no-dataset' ? 'NO DATASET' : getPipelineStatusLabel(pipelineStatus)}
           </span>
@@ -228,7 +267,7 @@ export function DatasetPanel() {
       >
         {activeRecord ? (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', marginBottom: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 10 }}>
               {PIPELINE_STAGES.map((stage, index) => {
                 const stageState = getPipelineStageState(activeRecord, stage.id)
                 return <PipelineStage key={stage.id} label={stage.label} state={stageState} last={index === PIPELINE_STAGES.length - 1} />
@@ -241,12 +280,12 @@ export function DatasetPanel() {
               progress={activeRecord.progress}
             />
             <MetricRow
-              label="Pipeline Stage"
+              label="Current Pipeline Stage"
               value={PIPELINE_STAGES.find((stage) => stage.id === activeRecord.activeStage)?.label ?? activeRecord.activeStage}
             />
             <MetricRow label="Reconstruction Progress" value={`${activeRecord.progress.toFixed(0)}%`} />
             {activeRecord.status === 'failed' && (
-              <div role="alert" style={{ color: 'var(--color-negative)', fontSize: 'var(--font-size-xs)', marginTop: 'var(--space-2)' }}>
+              <div role="alert" style={{ color: 'var(--color-negative)', fontSize: 11, marginTop: 6 }}>
                 {activeRecord.errorMessage}
               </div>
             )}
@@ -261,15 +300,15 @@ export function DatasetPanel() {
                 activeRecord.status === 'aligning'
               }
               style={{
-                marginTop: 'var(--space-3)',
+                marginTop: 10,
                 width: '100%',
                 padding: '7px 10px',
-                borderRadius: 'var(--radius-xs)',
-                border: '1px solid var(--color-info)',
-                background: 'var(--color-info)',
-                color: 'var(--color-bg-base)',
+                borderRadius: 4,
+                border: '1px solid var(--color-brand-primary)',
+                background: 'var(--color-brand-primary)',
+                color: '#080a0d',
                 fontWeight: 700,
-                fontSize: 'var(--font-size-sm)',
+                fontSize: 11,
                 cursor: 'pointer',
               }}
             >
@@ -278,25 +317,24 @@ export function DatasetPanel() {
           </>
         ) : (
           <EmptyState
-            icon="📁"
             title="NO DATASET SELECTED"
-            description="Choose an exchange, market, symbol, and date range from the catalog."
+            description="Choose an exchange, market, symbol, and date range, or import your own dataset."
           />
         )}
       </Panel>
 
-      <Panel title="QUALITY GATE STATUS">
+      <Panel title="QUALITY GATE & BACKTEST ELIGIBILITY">
         <MetricRow
-          label="Data Quality Health"
+          label="Data Quality Status"
           value={
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <StatusDot state={getQualityVisualState(qualityStatus)} /> {qualityStatus.toUpperCase()}
             </span>
           }
         />
-        <MetricRow label="Backtest Eligibility" value={canRun ? 'ELIGIBLE' : 'GATE BLOCKED'} valueClass={canRun ? 'pos' : 'neg'} />
+        <MetricRow label="Backtest Eligibility" value={canRun ? 'VERIFIED & ELIGIBLE' : 'GATE BLOCKED'} valueClass={canRun ? 'pos' : 'neg'} />
         {blockers.map((blocker) => (
-          <div key={blocker} style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', marginTop: 'var(--space-1)' }}>
+          <div key={blocker} style={{ color: 'var(--text-2)', fontSize: 10.5, marginTop: 4 }}>
             {blocker}
           </div>
         ))}
@@ -305,45 +343,90 @@ export function DatasetPanel() {
           disabled={!canRun}
           onClick={() => updateWorkspace({ activeTab: { secondaryMonitor: 'backtest' } })}
           style={{
-            marginTop: 'var(--space-3)',
+            marginTop: 10,
             width: '100%',
-            padding: '8px 10px',
-            borderRadius: 'var(--radius-xs)',
-            border: '1px solid var(--color-info)',
-            background: canRun ? 'var(--color-info)' : 'var(--color-bg-control)',
-            color: canRun ? 'var(--color-bg-base)' : 'var(--color-text-disabled)',
-            fontWeight: 700,
-            fontSize: 'var(--font-size-sm)',
+            padding: '9px 12px',
+            borderRadius: 4,
+            border: 'none',
+            background: canRun ? 'var(--color-brand-primary)' : 'var(--bg-2)',
+            color: canRun ? '#080a0d' : 'var(--text-2)',
+            fontWeight: 800,
+            fontSize: 11,
+            letterSpacing: '0.04em',
             cursor: canRun ? 'pointer' : 'not-allowed',
           }}
         >
-          {canRun ? 'PROCEED TO BACKTEST' : 'BACKTEST BLOCKED BY QUALITY GATE'}
+          {canRun ? '▶ PROCEED TO BACKTEST WITH THIS DATASET' : 'BACKTEST BLOCKED BY DATA GATE'}
         </button>
       </Panel>
+
+      <ImportDatasetModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImportSuccess={(datasetId) => {
+          const record = mockDatasetStore.getSnapshot().records.find((r) => r.id === datasetId)
+          if (record) {
+            const dataset = toDatasetRef(record)
+            updateWorkspace({ exchange: dataset.exchange, symbol: dataset.symbol, dataset })
+          }
+        }}
+      />
     </div>
   )
 }
 
-function DateInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function DateTimeInput({
+  label,
+  dateValue,
+  timeValue,
+  onDateChange,
+  onTimeChange,
+}: {
+  label: string
+  dateValue: string
+  timeValue: string
+  onDateChange: (value: string) => void
+  onTimeChange: (value: string) => void
+}) {
   return (
-    <label style={{ display: 'block', color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', marginBottom: 2 }}>
-      {label}
-      <input
-        type="date"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        style={{
-          display: 'block',
-          width: '100%',
-          marginTop: '3px',
-          background: 'var(--color-bg-base)',
-          color: 'var(--color-text-primary)',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-xs)',
-          padding: '4px 6px',
-        }}
-      />
-    </label>
+    <div>
+      <label style={{ display: 'block', color: 'var(--text-2)', fontSize: 10, marginBottom: 2 }}>
+        {label}
+      </label>
+      <div style={{ display: 'flex', gap: 4 }}>
+        <input
+          type="date"
+          value={dateValue}
+          onChange={(event) => onDateChange(event.target.value)}
+          style={{
+            flex: 2,
+            background: 'var(--bg-0)',
+            color: 'var(--text-0)',
+            border: '1px solid var(--border-1)',
+            borderRadius: 3,
+            padding: '4px 6px',
+            fontSize: 10.5,
+            fontFamily: 'var(--font-mono)',
+          }}
+        />
+        <input
+          type="time"
+          step="1"
+          value={timeValue}
+          onChange={(event) => onTimeChange(event.target.value)}
+          style={{
+            flex: 1,
+            background: 'var(--bg-0)',
+            color: 'var(--text-0)',
+            border: '1px solid var(--border-1)',
+            borderRadius: 3,
+            padding: '4px 6px',
+            fontSize: 10.5,
+            fontFamily: 'var(--font-mono)',
+          }}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -354,15 +437,15 @@ function PipelineStage({ label, state, last }: { label: string; state: PipelineS
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 'var(--space-2)',
-        color: state === 'pending' ? 'var(--color-text-disabled)' : 'var(--color-text-primary)',
-        fontSize: 'var(--font-size-xs)',
+        gap: 6,
+        color: state === 'pending' ? 'var(--text-2)' : 'var(--text-0)',
+        fontSize: 10.5,
       }}
     >
       <StatusDot state={visualState} pulse={state === 'active'} />
       <span>{label}</span>
       {!last && (
-        <span aria-hidden="true" style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>
+        <span aria-hidden="true" style={{ color: 'var(--text-2)', fontSize: 9 }}>
           →
         </span>
       )}
