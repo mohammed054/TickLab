@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Candle, timestampNsToMs } from '../../contracts'
 import { Panel } from '../shared/Panel'
 
@@ -65,13 +65,25 @@ export function PriceChart({
   const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
   const [panning, setPanning] = useState(false)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [followMode, setFollowMode] = useState(true)
 
   const visibleCandles = useMemo(() => aggregateCandles(candles, timeframe), [candles, timeframe])
   const displayCandles = useMemo(() => {
     const count = Math.max(30, Math.round(90 / zoom))
-    return visibleCandles.slice(Math.max(0, visibleCandles.length - count))
-  }, [visibleCandles, zoom])
+    const maxStart = Math.max(0, visibleCandles.length - count)
+    // Column width in pixels for each candle
+    const columnWidth = 90 / count || 1
+    // Pan bounds: max pan offset = total content width beyond visible area
+    const maxPan = Math.max(0, (visibleCandles.length - count) * columnWidth)
+    // Map panOffset.x to start index
+    // panFactor = columnWidth: each columnWidth pixels of pan = 1 candle index shift
+    const panFactor = Math.max(1, columnWidth) || 1
+    // When panOffset.x = 0, startIndex = maxStart (show latest candles)
+    # When panOffset.x = maxPan, startIndex = 0 (show earliest candles)
+    const startIndex = Math.max(0, Math.min(maxStart, Math.round((maxPan - panOffset.x) / panFactor)))
+    return visibleCandles.slice(startIndex, startIndex + count)
+  }, [visibleCandles, zoom, panOffset])
 
   const toggleOverlay = (overlay: string) =>
     setActive((current) => {
@@ -228,7 +240,19 @@ export function PriceChart({
       setCrosshair(null)
     }
     window.addEventListener('ticklab:chart-fit', onFit)
-    return () => window.removeEventListener('ticklab:chart-fit', onFit)
+    
+
+  useEffect(() => {
+    // Clamp panOffset.x to prevent panning beyond chart data bounds
+    const count = Math.max(30, Math.round(90 / zoom))
+    const maxStart = Math.max(0, visibleCandles.length - count)
+    const columnWidth = 90 / count || 1
+    const maxPan = Math.max(0, (visibleCandles.length - count) * columnWidth)
+    setPanOffset(prev => ({
+      x: Math.max(0, Math.min(maxPan, prev.x)),
+      y: prev.y,
+    }))
+  }, [zoom, visibleCandles.length])return () => window.removeEventListener('ticklab:chart-fit', onFit)
   }, [])
 
   return (
@@ -265,7 +289,7 @@ export function PriceChart({
                 fontWeight: followMode ? 700 : 400,
               }}
             >
-              {followMode ? '● AUTO-FOLLOW' : '○ MANUAL'}
+              {followMode ? 'â— AUTO-FOLLOW' : 'â—‹ MANUAL'}
             </button>
           </div>
         }
@@ -401,7 +425,7 @@ export function PriceChart({
             </div>
           ) : (
             <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-2xs)' }}>
-              Move cursor over chart for real-time OHLCV inspection · Click candle to sync dual monitors · Scroll wheel to zoom
+              Move cursor over chart for real-time OHLCV inspection Â· Click candle to sync dual monitors Â· Scroll wheel to zoom
             </div>
           )}
 
@@ -436,14 +460,28 @@ export function PriceChart({
                   x: event.clientX - canvasRef.current!.getBoundingClientRect().left,
                   y: event.clientY - canvasRef.current!.getBoundingClientRect().top,
                 })
+                setPanStart({
+                  x: event.clientX - canvasRef.current!.getBoundingClientRect().left,
+                  y: event.clientY - canvasRef.current!.getBoundingClientRect().top,
+                })
               }
             }}
             onMouseUp={() => setPanning(false)}
-            onWheel={(event) => {
+            onMouseMove={(event} => {
               if (panning) {
-                setPanning(false)
-                setPanOffset({ x: 0, y: 0 })
+                const canvas = canvasRef.current
+                if (!canvas) return
+                const rect = canvas.getBoundingClientRect()
+                const deltaX = event.clientX - panStart.x
+                const deltaY = event.clientY - panStart.y
+                setPanOffset(prev => ({
+                  x: prev.x + deltaX,
+                  y: prev.y + deltaY,
+                }))
+                setPanStart(prev => ({ x: event.clientX, y: event.clientY }))
               }
+            }}
+            onWheel={(event) => {
               event.preventDefault()
               const canvas = canvasRef.current
               if (!canvas || displayCandles.length === 0) return
@@ -708,7 +746,7 @@ function drawStrategyQuotes(
   context.setLineDash([])
   context.fillStyle = canvasColor('--color-warning')
   context.font = '10px "JetBrains Mono", monospace'
-  context.fillText('ACTIVE QUOTING BAND (±0.8)', 8, Math.max(12, yFor(latest + 0.8) - 4))
+  context.fillText('ACTIVE QUOTING BAND (Â±0.8)', 8, Math.max(12, yFor(latest + 0.8) - 4))
   context.restore()
 }
 
@@ -794,7 +832,7 @@ function drawFootprint(
 ) {
   context.fillStyle = canvasColor('--color-text-secondary')
   context.font = '10px "JetBrains Mono", monospace'
-  context.fillText(`FOOTPRINT DELTA CLUSTERS · ${candles.length} BARS`, 10, 18)
+  context.fillText(`FOOTPRINT DELTA CLUSTERS Â· ${candles.length} BARS`, 10, 18)
 }
 
 function vwapAt(candles: Candle[], index: number) {
