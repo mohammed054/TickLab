@@ -150,6 +150,7 @@ pub struct ExtendedEvent {
     pub event_type: ExtendedEventType,
     pub order_id: u64,
     pub side: Option<Side>,
+    pub expected_price: Option<f64>,
     pub price: Option<f64>,
     pub size: Option<f64>,
     /// Modeled queue-ahead estimate at this instant — an estimate, not ground

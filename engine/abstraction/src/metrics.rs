@@ -67,6 +67,7 @@ pub struct RecorderSample {
     pub num_trades: i64,
     pub trading_volume: f64,
     pub trading_value: f64,
+    pub slippage: Option<f64>,
 }
 
 /// Net equity of one sample, quote currency.
@@ -267,6 +268,16 @@ pub fn headline(
     } else {
         f64::NAN
     };
+    let total_slippage: f64 = samples
+        .iter()
+        .filter_map(|s| s.slippage)
+        .sum();
+    let slippage_pct = if orders_submitted > 0 && samples.iter().any(|s| s.slippage.is_some()) {
+        100.0 * total_slippage / initial_capital
+    } else {
+        f64::NAN
+    };
+
     HeadlineMetrics {
         initial_capital,
         final_capital: initial_capital + net_pnl,
@@ -278,7 +289,7 @@ pub fn headline(
         trades,
         fill_rate_pct,
         fees,
-        slippage: f64::NAN,
+        slippage: slippage_pct,
     }
 }
 
