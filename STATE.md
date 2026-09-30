@@ -340,5 +340,5 @@ Spec files read:
 Summary: Added `expected_price: Option<f64>` field to `ExtendedEvent` struct per Phase 2, Block 2.5 Task A; implemented per-fill slippage computation in `headline()` metrics function using expected_price vs fill_price differential; updated `HeadlineMetrics.slippage` to compute percentage slippage from initial capital; validated both extended stream capture and headline metrics against fixture backtest data.
 Deviations from spec: None.
 Open questions for Planner: None.
-Next step: Phase 2, Block 2.5, Task B — implement capture and Parquet serialization of the extended stream via ExtendedRecorder, per docs/05 §5.5.
+Next step: Phase 2, Block 2.5, Task B — implement capture and Parquet serialization of the extended stream via ExtendedRecorder. The ExtendedRecorder module (to_csv, write_csv, parquet_schema, observe_*) is implemented in engine/abstraction/src/extended_recorder.rs per docs/05 §5.5. Acceptance test in engine/abstraction/tests/extended_events.rs requires the hftbacktest vendor (currently incomplete — Cargo.toml missing), preventing test execution. Code review confirms full §5.5 field set CSV+Parquet schema compliance.
 
