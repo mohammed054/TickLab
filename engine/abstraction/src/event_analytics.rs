@@ -308,6 +308,7 @@ mod tests {
             event_type: ExtendedEventType::Fill,
             order_id,
             side: Some(side),
+            expected_price: None,
             price: Some(price),
             size: Some(size),
             queue_ahead_estimate: Some(0.0),

@@ -55,7 +55,7 @@ fn fixture_request() -> BacktestRequest {
             // The engine currently wires `RiskAdverseQueueModel` unconditionally
             // (the preset list finalizes in Task 2.3.B, `docs/04` §4.4), so the
             // string is honest about that rather than carried opaquely.
-            queue_model_preset: "risk_adverse".to_string(),
+            queue_model_preset: "risk-averse".to_string(),
             allow_partial_fills: true,
             order_types_allowed: vec![OrderType::Limit],
         },
@@ -284,7 +284,7 @@ async fn grpc_round_trip_runs_real_backtest() -> Result<(), Box<dyn std::error::
             lot_size: 0.001,
             latency_model: proto::LatencyModelKind::Fixed as i32,
             latency_data_file: String::new(),
-            queue_model_preset: "risk_adverse".to_string(),
+            queue_model_preset: "risk-averse".to_string(),
             allow_partial_fills: true,
             order_types_allowed: vec![proto::OrderType::Limit as i32],
         }),

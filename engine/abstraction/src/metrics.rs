@@ -268,10 +268,7 @@ pub fn headline(
     } else {
         f64::NAN
     };
-    let total_slippage: f64 = samples
-        .iter()
-        .filter_map(|s| s.slippage)
-        .sum();
+    let total_slippage: f64 = samples.iter().filter_map(|s| s.slippage).sum();
     let slippage_pct = if orders_submitted > 0 && samples.iter().any(|s| s.slippage.is_some()) {
         100.0 * total_slippage / initial_capital
     } else {
@@ -311,6 +308,9 @@ mod tests {
             num_trades: 0,
             trading_volume: 0.0,
             trading_value: 0.0,
+            // Per-fill slippage samples are attached by the Block 2.5 capture
+            // path; hand-built series carry none (docs/09 §9.7).
+            slippage: None,
         };
         vec![
             row(0, 100.0, 0.0, 0.0, 0.0),
@@ -371,6 +371,7 @@ mod tests {
             num_trades: 0,
             trading_volume: 0.0,
             trading_value: 0.0,
+            slippage: None,
         };
         // Empty: nothing observable.
         assert!(net_return(&[]).is_nan());
@@ -413,6 +414,7 @@ mod tests {
                 num_trades: 0,
                 trading_volume: 0.0,
                 trading_value: 0.0,
+                slippage: None,
             },
         );
         assert_eq!(net_return(&s), 58.0);

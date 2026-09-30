@@ -358,3 +358,26 @@ Deviations from spec: None observed — block dependent on OD-7 resource assumpt
 Open questions for Planner: Resolution of vendor/hftbacktest Cargo.toml path issue (blocking template testing); whether to proceed with template stubs that typecheck against contract signatures without full fixture backtest validation.
 Next step: Resolve engine/vendor/hftbacktest Cargo.toml issue; then implement parameter schema and 8 strategy templates; validate each template passes VALIDATE + fixture BACKTEST.
 
+### [2.5.B] DONE — Extended-stream capture wired and Block 2.5 acceptance green
+Timestamp: 2026-09-30T00:00:00Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - engine/abstraction/src/extended_events.rs
+  - engine/abstraction/src/extended_recorder.rs
+  - engine/abstraction/src/event_analytics.rs
+  - engine/abstraction/src/metrics.rs
+  - engine/abstraction/src/hftbacktest_impl.rs
+  - engine/abstraction/tests/execution_model.rs
+  - engine/abstraction/tests/extended_events.rs
+  - engine/abstraction/tests/roundtrip.rs
+Spec files read:
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.5
+  - docs/09-analytics-and-investigation-suite.md §9.5–§9.9
+  - docs/04-hftbacktest-engine-analysis.md §4.4
+  - docs/16-implementation-roadmap.md §2.5
+Summary: Repaired the [2.5.A] follow-through so the engine crate builds and the full Block 2.5 acceptance suite passes: wired `expected_price` through every `ExtendedEvent` constructor (submit/queue-update carry the limit price per docs/09 §9.7; fills, terminals, and ticks carry `None`, never fabricated) with a positivity check in `validate()`; attached `slippage: None` to all hand-built `RecorderSample` fixtures and the reference-driver `sample()` path so headline slippage stays `NaN` until real per-fill capture lands. Initialized the `engine/vendor/hftbacktest` submodule at the pinned commit and installed protoc 25.1 (outside the repo) for the prost build step. Fixed three stale test fixtures unrelated to this task: `risk_adverse` → finalized `risk-averse` preset, non-fixture dataset ids in `start_backtest` handle tests, and `Queued`/empty-stream assertions that predated the synchronous fixture driver. Verified `cargo test` in `engine/abstraction`: 53 passed, 0 failed (26 lib + 12 execution_model + 7 extended_events + 8 roundtrip). New-code lines are rustfmt-clean; pre-existing fmt diffs elsewhere were left untouched.
+Deviations from spec: `expected_price` is held in memory/API only and is NOT yet a persisted CSV/Parquet column — the recorder schema stays exactly the §5.5 field set, so the field cannot round-trip through artifacts yet. Persisting it needs a Planner decision (schema extension), flagged below rather than slipped in.
+Open questions for Planner: (1) Should `expected_price` become a persisted CSV/Parquet column (schema extension beyond §5.5) so fill rows can join submit expectations from artifacts, or stay in-memory only? (2) The [2.6.A] vendor blocker is now resolved (submodule builds, protoc available) — confirm Block 2.6 template work may proceed.
+Next step: Planner answers the `expected_price` persistence question; then proceed with Block 2.6 parameter schema + 8 strategy templates (unblocked).
+

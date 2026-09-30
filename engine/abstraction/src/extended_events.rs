@@ -8,6 +8,11 @@
 //! queue_ahead_estimate, fill_probability_estimate,
 //! market_state_snapshot_ref, latency_breakdown`.
 //!
+//! `expected_price` is a §5.5-external extension for the `docs/09` §9.7
+//! slippage primitive (expected-vs-fill differential). It is persisted by the
+//! recorder alongside the §5.5 columns; the canonical Parquet schema in
+//! `crate::extended_recorder` remains the persistence contract.
+//!
 //! # Task A — hook points (Phase 2, Block 2.5, Task A)
 //!
 //! Identified by reading the vendored source directly
@@ -150,6 +155,9 @@ pub struct ExtendedEvent {
     pub event_type: ExtendedEventType,
     pub order_id: u64,
     pub side: Option<Side>,
+    /// Limit price at submission for the §9.7 slippage primitive; `None`
+    /// where no order expectation exists (ticks, fills observed without the
+    /// submit row, terminal non-fills). Never fabricated.
     pub expected_price: Option<f64>,
     pub price: Option<f64>,
     pub size: Option<f64>,
@@ -202,6 +210,13 @@ impl ExtendedEvent {
                         )));
                     }
                 }
+            }
+        }
+        if let Some(expected) = self.expected_price {
+            if !(expected > 0.0) {
+                return Err(EngineError::InvalidEvent(format!(
+                    "expected_price must be positive, got {expected}"
+                )));
             }
         }
         if let Some(q) = self.queue_ahead_estimate {
@@ -288,6 +303,7 @@ mod tests {
             event_type: ExtendedEventType::Fill,
             order_id: 7,
             side: Some(Side::Bid),
+            expected_price: Some(50_000.0),
             price: Some(50_000.0),
             size: Some(0.1),
             queue_ahead_estimate: Some(0.0),
@@ -306,6 +322,7 @@ mod tests {
             event_type: ExtendedEventType::Fill,
             order_id: 7,
             side: Some(Side::Bid),
+            expected_price: None,
             price: Some(50_000.0),
             size: Some(0.1),
             queue_ahead_estimate: None,

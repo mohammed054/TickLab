@@ -24,7 +24,9 @@ use ticklab_engine_abstraction::execution_model::{
     ResolvedQueue, VendorAssetType, VendorOrderKind, PARAM_ASSET_TYPE, PARAM_CONTRACT_SIZE,
     PARAM_LATENCY_ENTRY_NS, PARAM_LATENCY_RESPONSE_NS, PARAM_QUEUE_POWER_N, PARAM_QUEUE_PROB_FUNC,
 };
-use ticklab_engine_abstraction::hftbacktest_impl::{HftbacktestConfig, HftbacktestEngine};
+use ticklab_engine_abstraction::hftbacktest_impl::{
+    HftbacktestConfig, HftbacktestEngine, FIXTURE_DATASET_ID,
+};
 use ticklab_engine_abstraction::types::{
     BacktestRequest, ExecutionModelConfig, LatencyModelKind, NamedParameter, OrderType,
     ParameterValue, RiskLimitsConfig, StrategyRef, TimestampRange,
@@ -651,10 +653,12 @@ fn from_request_carries_resolved_execution() {
         Err(EngineError::InvalidRequest(_))
     ));
 
-    // The valid fixture still starts (no regression on the 2.2 path).
-    let handle = engine
-        .start_backtest(fixture_request())
-        .expect("valid fixture starts");
+    // The valid fixture still starts (no regression on the 2.2 path). Only
+    // the bundled fixture dataset is executable pre-Block-2.7, so point the
+    // request at it explicitly rather than the API-shape dataset above.
+    let mut valid = fixture_request();
+    valid.dataset_id = FIXTURE_DATASET_ID.to_string();
+    let handle = engine.start_backtest(valid).expect("valid fixture starts");
     let _ = Arc::clone(&handle);
 }
 

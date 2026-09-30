@@ -466,6 +466,9 @@ where
         num_trades: state.num_trades,
         trading_volume: state.trading_volume,
         trading_value: state.trading_value,
+        // The reference driver has no per-fill expected-price capture; the
+        // Block 2.5 extended stream owns slippage (docs/09 §9.7), never faked.
+        slippage: None,
     });
     Ok(())
 }
@@ -854,7 +857,7 @@ mod tests {
                 tick_size: FIXTURE_TICK_SIZE,
                 lot_size: FIXTURE_LOT_SIZE,
                 latency_model: crate::types::LatencyModelKind::Fixed,
-                queue_model_preset: "risk_adverse".to_string(),
+                queue_model_preset: "risk-averse".to_string(),
                 allow_partial_fills: true,
                 order_types_allowed: vec![crate::types::OrderType::Limit],
             },
@@ -1024,6 +1027,7 @@ mod tests {
             num_trades,
             trading_volume: num_trades as f64,
             trading_value: 200.0 * num_trades as f64 / 2.0,
+            slippage: None,
         };
         let outcome = RunOutcome {
             samples: vec![

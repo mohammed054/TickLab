@@ -35,6 +35,7 @@ use ticklab_engine_abstraction::extended_events::{
 use ticklab_engine_abstraction::extended_recorder::{ExtendedRecorder, PARQUET_COLUMNS};
 use ticklab_engine_abstraction::hftbacktest_impl::{
     extended_event_type_of, normalize_vendor_side, HftbacktestConfig, HftbacktestEngine,
+    FIXTURE_DATASET_ID,
 };
 use ticklab_engine_abstraction::types::{
     BacktestRequest, BacktestStatus, ExecutionModelConfig, LatencyModelKind, OrderType,
@@ -429,10 +430,20 @@ fn csv_and_parquet_schema_cover_the_full_section_5_5_field_set() {
 #[test]
 fn engine_handle_captures_extended_events_alongside_the_run() {
     let engine = HftbacktestEngine::new(HftbacktestConfig::default());
-    let handle = engine
-        .start_backtest(fixture_request())
-        .expect("valid fixture");
-    assert_eq!(engine.poll_progress(&handle).status, BacktestStatus::Queued);
+    // Only the bundled fixture dataset is executable pre-Block-2.7.
+    let mut req = fixture_request();
+    req.dataset_id = FIXTURE_DATASET_ID.to_string();
+    let handle = engine.start_backtest(req).expect("valid fixture");
+    // Block 2.2 executes the fixture synchronously, so the handle is already
+    // Complete on return (the gateway/job-runner in Block 2.8 will own async).
+    assert_eq!(
+        engine.poll_progress(&handle).status,
+        BacktestStatus::Complete
+    );
+
+    // The coarse fixture market-event stream is populated by the run itself.
+    let coarse_len = engine.stream_events(&handle).len();
+    assert_eq!(coarse_len, 2);
 
     let mut rec = ExtendedRecorder::new("exp-handle-2.5").expect("valid id");
     rec.observe_decision_tick(T0, top(), 800).expect("tick");
@@ -441,12 +452,13 @@ fn engine_handle_captures_extended_events_alongside_the_run() {
     }
     assert_eq!(handle.extended_events().len(), 1);
     // The coarse event stream path is untouched by extended capture.
-    assert!(engine.stream_events(&handle).is_empty());
+    assert_eq!(engine.stream_events(&handle).len(), coarse_len);
 
+    // Complete is sticky; cancelling after completion is a no-op.
     engine.cancel(&handle).expect("cancel known handle");
     assert_eq!(
         engine.poll_progress(&handle).status,
-        BacktestStatus::Cancelled
+        BacktestStatus::Complete
     );
 }
 

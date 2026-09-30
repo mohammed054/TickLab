@@ -137,6 +137,8 @@ impl ExtendedRecorder {
             event_type: ExtendedEventType::DecisionTick,
             order_id: 0,
             side: None,
+            // No order on a decision tick, so no expected price (docs/09 §9.7).
+            expected_price: None,
             price: None,
             size: None,
             queue_ahead_estimate: None,
@@ -170,6 +172,8 @@ impl ExtendedRecorder {
             event_type: ExtendedEventType::Submit,
             order_id,
             side: Some(side),
+            // Expected price is the limit price at submission (docs/09 §9.7).
+            expected_price: Some(price),
             price: Some(price),
             size: Some(size),
             queue_ahead_estimate,
@@ -197,6 +201,8 @@ impl ExtendedRecorder {
             event_type: ExtendedEventType::QueueUpdate,
             order_id,
             side: Some(side),
+            // Resting order still carries its limit price as expected (docs/09 §9.7).
+            expected_price: Some(price),
             price: Some(price),
             size: Some(size),
             queue_ahead_estimate: Some(queue_ahead_estimate),
@@ -228,6 +234,9 @@ impl ExtendedRecorder {
             },
             order_id,
             side: Some(side),
+            // Fill responses don't carry the submission limit price at hook
+            // H6; join against the Submit row instead of fabricating (docs/09 §9.7).
+            expected_price: None,
             price: Some(fill_price),
             size: Some(fill_size),
             queue_ahead_estimate: Some(0.0),
@@ -265,6 +274,8 @@ impl ExtendedRecorder {
             event_type: kind,
             order_id,
             side: Some(side),
+            // Terminal non-fill outcomes carry no fill expectation (docs/09 §9.7).
+            expected_price: None,
             price,
             size,
             queue_ahead_estimate: None,
