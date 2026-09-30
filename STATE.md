@@ -327,3 +327,18 @@ Deviations from spec: None. All components strictly adhere to the contracts, lay
 Open questions for Planner: None.
 Next step: Stage, commit, and git push the institutional UI release to the remote repository.
 
+### [2.5.A] DONE — Extended event/fill recording: expected_price + slippage
+Timestamp: 2026-09-30T00:00:00Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - engine/abstraction/src/extended_events.rs
+  - engine/abstraction/src/metrics.rs
+Spec files read:
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.5
+  - docs/09-analytics-and-investigation-suite.md §9.1, §9.7
+Summary: Added `expected_price: Option<f64>` field to `ExtendedEvent` struct per Phase 2, Block 2.5 Task A; implemented per-fill slippage computation in `headline()` metrics function using expected_price vs fill_price differential; updated `HeadlineMetrics.slippage` to compute percentage slippage from initial capital; validated both extended stream capture and headline metrics against fixture backtest data.
+Deviations from spec: None.
+Open questions for Planner: None.
+Next step: Phase 2, Block 2.5, Task B — implement capture and Parquet serialization of the extended stream via ExtendedRecorder, per docs/05 §5.5.
+
