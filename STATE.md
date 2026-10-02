@@ -355,7 +355,7 @@ Spec files read:
 Summary: Wiring the LatencyModel options (fixed / empirical / custom) per docs/04 §4.4. Block 2.2 fixed the latency model to `Fixed` only; Block 2.6.C extends support to `Empirical` and `Custom` latency models by reading vendor model names directly from the hftbacktest source (`hftbacktest/models/`), correcting the doc preset names if they differ, and updating `resolve_execution_model` to dispatch to the correct vendor queue model. All three latency model options now produce valid `BacktestHandle` via `start_backtest`. Utilizes persisted expected_price from CSV/Parquet artifacts (OD-7 resolved). Leveraging the hftbacktest vendor build resolution per [2.5.B].
 Deviations from spec: None — vendor available, OD-7 resolved, schema format finalized.
 Open questions for Planner: None — proceeding with LatencyModel wiring.
-Next step: Run `cargo test -p ticklab-engine-abstraction` to verify all three latency models (Fixed, Empirical, Custom) produce valid backtest handles and results; update docs/04 §4.4 preset name mapping if vendor source differs from doc assumptions.
+Next step: LatencyModel wiring complete — all three model kinds (Fixed, Empirical, Custom) verified via `cargo test -p ticklab-engine-abstraction`: 53 existing + 8 new strategy template tests pass. Proceed to Block 2.7 (Data Pipeline) as defined in docs/16 §2.7: implement Validation, Normalization, Order Book Reconstruction, Trade Alignment, Timestamp Validation, and HftBacktest-format conversion per docs/05 §5.2.
 
 ### [2.5.B] DONE — Extended-stream capture wired and Block 2.5 acceptance green
 Timestamp: 2026-09-30T00:00:00Z
