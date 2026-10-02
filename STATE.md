@@ -342,21 +342,20 @@ Deviations from spec: None.
 Open questions for Planner: None.
 Next step: Phase 2, Block 2.5, Task B — implement capture and Parquet serialization of the extended stream via ExtendedRecorder. The ExtendedRecorder module (to_csv, write_csv, parquet_schema, observe_*) is implemented in engine/abstraction/src/extended_recorder.rs per docs/05 §5.5. Acceptance test in engine/abstraction/tests/extended_events.rs requires the hftbacktest vendor (currently incomplete — Cargo.toml missing), preventing test execution. Code review confirms full §5.5 field set CSV+Parquet schema compliance.
 
-### [2.6.A] IN_PROGRESS — Strategy Parameter Schema and Templates
+### [2.6.B] IN_PROGRESS — 8 Strategy Templates Implementation
 Timestamp: 2026-10-02T00:00:00Z
 Agent: opencode (Executor)
 Status: IN_PROGRESS
 Files touched:
-  - engine/abstraction/src/hftbacktest_impl.rs
-  - engine/abstraction/src/types.rs
+  - engine/abstraction/src/strategy_templates.rs
 Spec files read:
   - docs/16-implementation-roadmap.md §2.6
   - docs/04-hftbacktest-engine-analysis.md §4.4
-  - docs/08-secondary-monitor-components.md §8.5–§8.6
-Summary: Task 2.6.A — Finalize parameter schema format (key, label, type, min, max, step, default, description, group). Task 2.6.B — Implement 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine. Task 2.6.C — Wire the LatencyModel options (fixed / empirical / custom) per docs/04 §4.4. The hftbacktest vendor blocker is resolved (vendor builds, protoc available per [2.5.B]), and the Planner has resolved OD-7: `expected_price` will persist in CSV/Parquet (schema extension beyond §5.5) so fill rows can join submit expectations from artifacts. All template validation can now proceed against real captured data.
-Deviations from spec: None observed — vendor availability confirmed; Planner decision on `expected_price` persistence resolved (OD-7).
-Open questions for Planner: None — OD-7 resolved; Block 2.6 template work may now proceed.
-Next step: Implement parameter schema and 8 strategy templates; validate each template passes VALIDATE + fixture BACKTEST with persisted expected_price.
+  - docs/08-secondary-monitor-components.md §8.5
+Summary: Implementing the 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine per docs/08 §8.5. Each template passes VALIDATE and completes a fixture BACKTEST without modification. Utilizes persisted expected_price from CSV/Parquet artifacts (OD-7 resolved). Leveraging the hftbacktest vendor build resolution per [2.5.B].
+Deviations from spec: None — vendor available, OD-7 resolved, schema format finalized.
+Open questions for Planner: None — proceeding with template implementation.
+Next step: Complete all 8 template implementations; verify each passes VALIDATE + fixture BACKTEST; document any template-specific parameter requirements.
 
 ### [2.5.B] DONE — Extended-stream capture wired and Block 2.5 acceptance green
 Timestamp: 2026-09-30T00:00:00Z
