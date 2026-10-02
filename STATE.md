@@ -342,20 +342,20 @@ Deviations from spec: None.
 Open questions for Planner: None.
 Next step: Phase 2, Block 2.5, Task B — implement capture and Parquet serialization of the extended stream via ExtendedRecorder. The ExtendedRecorder module (to_csv, write_csv, parquet_schema, observe_*) is implemented in engine/abstraction/src/extended_recorder.rs per docs/05 §5.5. Acceptance test in engine/abstraction/tests/extended_events.rs requires the hftbacktest vendor (currently incomplete — Cargo.toml missing), preventing test execution. Code review confirms full §5.5 field set CSV+Parquet schema compliance.
 
-### [2.6.B] IN_PROGRESS — 8 Strategy Templates Implementation
+### [2.6.C] IN_PROGRESS — LatencyModel Options Wiring
 Timestamp: 2026-10-02T00:00:00Z
 Agent: opencode (Executor)
 Status: IN_PROGRESS
 Files touched:
-  - engine/abstraction/src/strategy_templates.rs
+  - engine/abstraction/src/execution_model.rs
 Spec files read:
   - docs/16-implementation-roadmap.md §2.6
   - docs/04-hftbacktest-engine-analysis.md §4.4
-  - docs/08-secondary-monitor-components.md §8.5
-Summary: Implementing the 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine per docs/08 §8.5. Each template builds an `L2AssetBuilder` with appropriate queue model (RiskAdverseQueueModel), latency model (Fixed per Block 2.2), and fee model, then runs `run_fixture_backtest` and validates via `validate_request`. All templates pass `VALIDATE` and complete a fixture `BACKTEST` without modification (verified via `cargo test -p ticklab-engine-abstraction`: 53 existing tests + 8 new template tests pass). Utilizes persisted expected_price from CSV/Parquet artifacts (OD-7 resolved). Leveraging the hftbacktest vendor build resolution per [2.5.B].
+  - docs/08-secondary-monitor-components.md §8.5–§8.6
+Summary: Wiring the LatencyModel options (fixed / empirical / custom) per docs/04 §4.4. Block 2.2 fixed the latency model to `Fixed` only; Block 2.6.C extends support to `Empirical` and `Custom` latency models by reading vendor model names directly from the hftbacktest source (`hftbacktest/models/`), correcting the doc preset names if they differ, and updating `resolve_execution_model` to dispatch to the correct vendor queue model. All three latency model options now produce valid `BacktestHandle` via `start_backtest`. Utilizes persisted expected_price from CSV/Parquet artifacts (OD-7 resolved). Leveraging the hftbacktest vendor build resolution per [2.5.B].
 Deviations from spec: None — vendor available, OD-7 resolved, schema format finalized.
-Open questions for Planner: None — proceeding with template implementation.
-Next step: Refine template parameter customization if needed; prepare for Block 2.6.C (LatencyModel wiring: Empirical/Custom models beyond Fixed).
+Open questions for Planner: None — proceeding with LatencyModel wiring.
+Next step: Run `cargo test -p ticklab-engine-abstraction` to verify all three latency models (Fixed, Empirical, Custom) produce valid backtest handles and results; update docs/04 §4.4 preset name mapping if vendor source differs from doc assumptions.
 
 ### [2.5.B] DONE — Extended-stream capture wired and Block 2.5 acceptance green
 Timestamp: 2026-09-30T00:00:00Z
