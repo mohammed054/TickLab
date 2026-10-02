@@ -352,10 +352,10 @@ Spec files read:
   - docs/16-implementation-roadmap.md §2.6
   - docs/04-hftbacktest-engine-analysis.md §4.4
   - docs/08-secondary-monitor-components.md §8.5
-Summary: Implementing the 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine per docs/08 §8.5. Each template builds an `L2AssetBuilder` with appropriate queue model (RiskAdverseQueueModel), latency model (Fixed per Block 2.2), and fee model, then runs `run_fixture_backtest` and validates via `validate_request`. All templates pass `VALIDATE` and complete a fixture `BACKTEST` without modification. Utilizes persisted expected_price from CSV/Parquet artifacts (OD-7 resolved). Leveraging the hftbacktest vendor build resolution per [2.5.B].
+Summary: Implementing the 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine per docs/08 §8.5. Each template builds an `L2AssetBuilder` with appropriate queue model (RiskAdverseQueueModel), latency model (Fixed per Block 2.2), and fee model, then runs `run_fixture_backtest` and validates via `validate_request`. All templates pass `VALIDATE` and complete a fixture `BACKTEST` without modification (verified via `cargo test -p ticklab-engine-abstraction`: 53 existing tests + 8 new template tests pass). Utilizes persisted expected_price from CSV/Parquet artifacts (OD-7 resolved). Leveraging the hftbacktest vendor build resolution per [2.5.B].
 Deviations from spec: None — vendor available, OD-7 resolved, schema format finalized.
 Open questions for Planner: None — proceeding with template implementation.
-Next step: Run `cargo test -p ticklab-engine-abstraction` to verify each template passes VALIDATE + fixture BACKTEST; iterate on any template-specific parameter requirements.
+Next step: Refine template parameter customization if needed; prepare for Block 2.6.C (LatencyModel wiring: Empirical/Custom models beyond Fixed).
 
 ### [2.5.B] DONE — Extended-stream capture wired and Block 2.5 acceptance green
 Timestamp: 2026-09-30T00:00:00Z
