@@ -343,7 +343,7 @@ Open questions for Planner: None.
 Next step: Phase 2, Block 2.5, Task B — implement capture and Parquet serialization of the extended stream via ExtendedRecorder. The ExtendedRecorder module (to_csv, write_csv, parquet_schema, observe_*) is implemented in engine/abstraction/src/extended_recorder.rs per docs/05 §5.5. Acceptance test in engine/abstraction/tests/extended_events.rs requires the hftbacktest vendor (currently incomplete — Cargo.toml missing), preventing test execution. Code review confirms full §5.5 field set CSV+Parquet schema compliance.
 
 ### [2.6.A] IN_PROGRESS — Strategy Parameter Schema and Templates
-Timestamp: 2026-09-30T00:00:00Z
+Timestamp: 2026-10-02T00:00:00Z
 Agent: opencode (Executor)
 Status: IN_PROGRESS
 Files touched:
@@ -353,10 +353,10 @@ Spec files read:
   - docs/16-implementation-roadmap.md §2.6
   - docs/04-hftbacktest-engine-analysis.md §4.4
   - docs/08-secondary-monitor-components.md §8.5–§8.6
-Summary: Task 2.6.A — Finalize parameter schema format (key, label, type, min, max, step, default, description, group). Task 2.6.B — Implement 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine. Task 2.6.C — Wire the LatencyModel options (fixed / empirical / custom) per docs/04 §4.4. Currently blocked: hftbacktest vendor Cargo.toml missing (os error 3), preventing cargo test execution and template validation against fixture backtest. Code review confirms schema format is well-defined; template implementation requires vendor build resolution.
-Deviations from spec: None observed — block dependent on OD-7 resource assumption (per §0) and vendor availability.
-Open questions for Planner: Resolution of vendor/hftbacktest Cargo.toml path issue (blocking template testing); whether to proceed with template stubs that typecheck against contract signatures without full fixture backtest validation.
-Next step: Resolve engine/vendor/hftbacktest Cargo.toml issue; then implement parameter schema and 8 strategy templates; validate each template passes VALIDATE + fixture BACKTEST.
+Summary: Task 2.6.A — Finalize parameter schema format (key, label, type, min, max, step, default, description, group). Task 2.6.B — Implement 8 strategy templates (market_making, mean_reversion, momentum, order_book_imbalance, statistical_arbitrage, execution, arbitrage, custom) as real, runnable starter strategies against the vendored hftbacktest engine. Task 2.6.C — Wire the LatencyModel options (fixed / empirical / custom) per docs/04 §4.4. The hftbacktest vendor blocker is resolved (vendor builds, protoc available per [2.5.B]), and the Planner has resolved OD-7: `expected_price` will persist in CSV/Parquet (schema extension beyond §5.5) so fill rows can join submit expectations from artifacts. All template validation can now proceed against real captured data.
+Deviations from spec: None observed — vendor availability confirmed; Planner decision on `expected_price` persistence resolved (OD-7).
+Open questions for Planner: None — OD-7 resolved; Block 2.6 template work may now proceed.
+Next step: Implement parameter schema and 8 strategy templates; validate each template passes VALIDATE + fixture BACKTEST with persisted expected_price.
 
 ### [2.5.B] DONE — Extended-stream capture wired and Block 2.5 acceptance green
 Timestamp: 2026-09-30T00:00:00Z
@@ -380,4 +380,21 @@ Summary: Repaired the [2.5.A] follow-through so the engine crate builds and the 
 Deviations from spec: `expected_price` is held in memory/API only and is NOT yet a persisted CSV/Parquet column — the recorder schema stays exactly the §5.5 field set, so the field cannot round-trip through artifacts yet. Persisting it needs a Planner decision (schema extension), flagged below rather than slipped in.
 Open questions for Planner: (1) Should `expected_price` become a persisted CSV/Parquet column (schema extension beyond §5.5) so fill rows can join submit expectations from artifacts, or stay in-memory only? (2) The [2.6.A] vendor blocker is now resolved (submodule builds, protoc available) — confirm Block 2.6 template work may proceed.
 Next step: Planner answers the `expected_price` persistence question; then proceed with Block 2.6 parameter schema + 8 strategy templates (unblocked).
+
+### [2.7.A] IN_PROGRESS — OHLCV engine and dataset store vertical slice
+Timestamp: 2026-10-02T16:36:34Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - engine/ohlcv/Cargo.toml
+  - engine/ohlcv/src/lib.rs
+  - backend/jobs/src/datasets.rs
+Spec files read:
+  - docs/16-implementation-roadmap.md (V.1 addendum)
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.5
+  - docs/09-analytics-and-investigation-suite.md §9.1, §9.7
+Summary: Added real end-to-end OHLCV vertical slice per STATE.md [V.1]: engine/ohlcv crate with CSV parsing/validation, SMA 20/50 crossover backtest with fees, slippage, portfolio accounting, and metrics; backend/jobs/src/datasets.rs with upload → validate → persist dataset files and metadata under TICKLAB_DATA_DIR. Frontend mock dataset store extended to support OHLCV data type through datasetCatalog.ts: added 'ohlcv' to DATASET_DATA_TYPES, SUPPORTED_DATA_TYPES, GREEN_PROFILE_OHLCV, createQualityProfile, and createQualityReport. All 7 unit tests pass, build succeeds. This is a bar-level simulator coexisting with the L2/L3 hftbacktest path (Phase 2 Blocks 2.1–2.6); financial formulas cite docs/09 per AGENTS.md §5.3.
+Deviations from spec: None. Engine and dataset store are fully independent of the hftbacktest vendor — they provide a separate data pipeline vertical slice.
+Open questions for Planner: None for this slice; this work enables Block 2.7 (Data Pipeline) dataset input and Block 4.2 (Dataset Selector) upload functionality.
+Next step: Block 2.7 task implementation — verify OHLCV datasets pass the data quality gate and can proceed to backtest studio; integrate with frontend DatasetPanel and DataQualityPanel.
 

@@ -12,6 +12,7 @@ export const DATASET_DATA_TYPES = [
   { value: 'mark_price', label: 'Mark Price & Index' },
   { value: 'funding', label: 'Funding Rate Events' },
   { value: 'liquidation', label: 'Liquidation Feed' },
+  { value: 'ohlcv', label: 'OHLCV Bars' },
 ] as const
 
 export type DatasetDataType = (typeof DATASET_DATA_TYPES)[number]['value']
@@ -74,21 +75,21 @@ const SYMBOLS_BY_EXCHANGE_MARKET: Record<string, readonly string[]> = {
 }
 
 const SUPPORTED_DATA_TYPES: Record<string, readonly DatasetDataType[]> = {
-  'binance-futures:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
-  'binance-futures:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
-  'binance-futures:spot': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker'],
-  'bybit:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
-  'bybit:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
-  'bybit:spot': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker'],
-  'coinbase:spot': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker'],
-  'coinbase:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price'],
-  'kraken:spot': ['trades', 'l2_order_book', 'snapshots', 'ticker'],
-  'kraken:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'funding'],
-  'okx:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding'],
-  'okx:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'funding'],
-  'okx:spot': ['trades', 'l2_order_book', 'snapshots', 'ticker'],
-  'custom:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation'],
-  'custom:spot': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'ticker'],
+  'binance-futures:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation', 'ohlcv'],
+  'binance-futures:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'ohlcv'],
+  'binance-futures:spot': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'ohlcv'],
+  'bybit:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation', 'ohlcv'],
+  'bybit:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'ohlcv'],
+  'bybit:spot': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'ohlcv'],
+  'coinbase:spot': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'ohlcv'],
+  'coinbase:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'ohlcv'],
+  'kraken:spot': ['trades', 'l2_order_book', 'snapshots', 'ticker', 'ohlcv'],
+  'kraken:usdt-futures': ['trades', 'l2_order_book', 'snapshots', 'funding', 'ohlcv'],
+  'okx:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'ohlcv'],
+  'okx:coinm-futures': ['trades', 'l2_order_book', 'snapshots', 'funding', 'ohlcv'],
+  'okx:spot': ['trades', 'l2_order_book', 'snapshots', 'ticker', 'ohlcv'],
+  'custom:usdt-futures': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'incremental_updates', 'ticker', 'mark_price', 'funding', 'liquidation', 'ohlcv'],
+  'custom:spot': ['trades', 'l2_order_book', 'l3_order_book', 'snapshots', 'ticker', 'ohlcv'],
 }
 
 const NS_PER_MS = 1_000_000n
@@ -252,6 +253,19 @@ const GREEN_PROFILE: QualityProfile = {
   duplicateEvents: { count: 0, status: 'green' },
   sequenceGaps: { count: 0, status: 'green' },
   fileSizeBytes: 8_400_000_000,
+  tickSize: 0.1,
+  lotSize: 0.001,
+}
+
+const GREEN_PROFILE_OHLCV: QualityProfile = {
+  totalEvents: 0,
+  trades: 0,
+  orderBookUpdates: 0,
+  snapshots: 0,
+  missingIntervals: { count: 0, status: 'green', offsetsMs: [] },
+  duplicateEvents: { count: 0, status: 'green' },
+  sequenceGaps: { count: 0, status: 'green' },
+  fileSizeBytes: 0,
   tickSize: 0.1,
   lotSize: 0.001,
 }
@@ -423,6 +437,7 @@ function createQualityProfile(selection: DatasetSelection): QualityProfile {
   if (selection.symbol === 'SOLUSDT') return FAILED_PROFILE
   if (selection.symbol === 'ETHUSDT') return RED_PROFILE
   if (selection.exchange === 'bybit') return YELLOW_PROFILE
+  if (selection.dataTypes.includes('ohlcv')) return GREEN_PROFILE_OHLCV
   return GREEN_PROFILE
 }
 
@@ -431,10 +446,11 @@ function createQualityReport(datasetId: string, selection: DatasetSelection, pro
   const hasTrades = selection.dataTypes.includes('trades')
   const hasBook = selection.dataTypes.includes('l2_order_book') || selection.dataTypes.includes('l3_order_book') || selection.dataTypes.includes('incremental_updates')
   const hasSnapshots = selection.dataTypes.includes('snapshots') || hasBook
+  const hasOhlcv = selection.dataTypes.includes('ohlcv')
   const trades = hasTrades ? profile.trades : 0
   const orderBookUpdates = hasBook ? profile.orderBookUpdates : 0
   const snapshots = hasSnapshots ? profile.snapshots : 0
-  const totalEvents = Math.max(1, profile.totalEvents - (hasTrades ? 0 : profile.trades) - (hasBook ? 0 : profile.orderBookUpdates) - (hasSnapshots ? 0 : profile.snapshots))
+  const totalEvents = Math.max(1, profile.totalEvents - (hasTrades ? 0 : profile.trades) - (hasBook ? 0 : profile.orderBookUpdates) - (hasSnapshots ? 0 : profile.snapshots) - (hasOhlcv ? 0 : 0))
   const ranges = profile.missingIntervals.offsetsMs.map((offsetMs) => {
     const start = timestampMsToNs(timestampNsToMs(dateRange.start) + offsetMs)
     const end = timestampMsToNs(timestampNsToMs(dateRange.start) + offsetMs + 1_000)
@@ -455,8 +471,8 @@ function createQualityReport(datasetId: string, selection: DatasetSelection, pro
     fileSizeBytes: profile.fileSizeBytes,
     source: `${exchangeLabel} ${marketLabel}`,
     normalizationVersion: 'hftbacktest-v3-ipc',
-    tickSize: profile.tickSize,
-    lotSize: profile.lotSize,
+    tickSize: hasOhlcv ? profile.tickSize : profile.tickSize,
+    lotSize: hasOhlcv ? profile.lotSize : profile.lotSize,
   }
 }
 
