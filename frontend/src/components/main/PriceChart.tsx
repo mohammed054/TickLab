@@ -80,7 +80,7 @@ export function PriceChart({
     // panFactor = columnWidth: each columnWidth pixels of pan = 1 candle index shift
     const panFactor = Math.max(1, columnWidth) || 1
     // When panOffset.x = 0, startIndex = maxStart (show latest candles)
-    # When panOffset.x = maxPan, startIndex = 0 (show earliest candles)
+    // When panOffset.x = maxPan, startIndex = 0 (show earliest candles)
     const startIndex = Math.max(0, Math.min(maxStart, Math.round((maxPan - panOffset.x) / panFactor)))
     return visibleCandles.slice(startIndex, startIndex + count)
   }, [visibleCandles, zoom, panOffset])
@@ -167,6 +167,16 @@ export function PriceChart({
   const handleMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas || displayCandles.length === 0) return
+    if (panning) {
+      const deltaX = event.clientX - panStart.x
+      const deltaY = event.clientY - panStart.y
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY,
+      }))
+      setPanStart(prev => ({ x: event.clientX, y: event.clientY }))
+      return
+    }
     const rect = canvas.getBoundingClientRect()
     const x = event.clientX - rect.left - panOffset.x
     const y = event.clientY - rect.top - panOffset.y
@@ -240,7 +250,8 @@ export function PriceChart({
       setCrosshair(null)
     }
     window.addEventListener('ticklab:chart-fit', onFit)
-    
+    return () => window.removeEventListener('ticklab:chart-fit', onFit)
+  }, [])
 
   useEffect(() => {
     // Clamp panOffset.x to prevent panning beyond chart data bounds
@@ -252,8 +263,7 @@ export function PriceChart({
       x: Math.max(0, Math.min(maxPan, prev.x)),
       y: prev.y,
     }))
-  }, [zoom, visibleCandles.length])return () => window.removeEventListener('ticklab:chart-fit', onFit)
-  }, [])
+  }, [zoom, visibleCandles.length])
 
   return (
     <div
@@ -466,21 +476,7 @@ export function PriceChart({
                 })
               }
             }}
-            onMouseUp={() => setPanning(false)}
-            onMouseMove={(event} => {
-              if (panning) {
-                const canvas = canvasRef.current
-                if (!canvas) return
-                const rect = canvas.getBoundingClientRect()
-                const deltaX = event.clientX - panStart.x
-                const deltaY = event.clientY - panStart.y
-                setPanOffset(prev => ({
-                  x: prev.x + deltaX,
-                  y: prev.y + deltaY,
-                }))
-                setPanStart(prev => ({ x: event.clientX, y: event.clientY }))
-              }
-            }}
+onMouseUp={() => setPanning(false)}
             onWheel={(event) => {
               event.preventDefault()
               const canvas = canvasRef.current

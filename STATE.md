@@ -514,3 +514,39 @@ Next step: Block 2.7 task implementation â€” integrate OHLCV dataset pipeline in
  O p e n   q u e s t i o n s   f o r   P l a n n e r :   N o n e      p r o c e e d i n g   w i t h   W o r k s p a c e C o n t e x t   i m p l e m e n t a t i o n . 
  N e x t   s t e p :   I m p l e m e n t   M a i n M o n i t o r S h e l l   a n d   S e c o n d a r y M o n i t o r S h e l l   s k e l e t o n s   p e r   d o c s / 0 3   § 3 . 3 ;   w i r e   w o r k s p a c e . s y n c   p a t c h e s   b e t w e e n   w i n d o w s .  
  
+### [3.2.B] DONE - PriceChart syntax repair (regression fix, committed breakage)
+Timestamp: 2026-10-03T00:00:00Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - frontend/src/components/main/PriceChart.tsx
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 3.2 (Task B)
+  - docs/07-main-monitor-components.md 7.2
+  - docs/17-frontend-first-transition-plan.md 17.2.1, 17.2.2
+Summary: Found that committed HEAD (a9f8715) did not compile: 
+pm run typecheck
+reported 20 syntax errors, all confined to PriceChart.tsx, while Blocks 3.2 and F.7
+were marked done in coordination.db. Three root causes, all pre-existing and all
+present in the committed tree before this session's work: (1) line 83 used a Python
+# comment inside TypeScript; (2) the 'ticklab:chart-fit' useEffect was never closed,
+with the pan-clamp useEffect nested inside it and its cleanup return mangled onto the
+inner deps line; (3) the canvas element carried two onMouseMove props, so the panning
+handler silently displaced crosshair tracking. Fixed all three with no behavioural
+redesign: the pan branch now runs at the top of handleMove and returns early, so both
+pan and crosshair/preview work again. 
+pm run typecheck now exits clean and
+
+pm run build completes (built in 14.06s).
+Deviations from spec: None. Repaired to the documented 7.2 interaction set (zoom, pan,
+fit, crosshair preview at<=20Hz, click-to-commit); no behaviour was invented or removed.
+Open questions for Planner: (1) coordination.db marks 3.1-6.3 and F.1-F.5 done, but
+' done' demonstrably did not imply a passing build for 3.2/F.7; other 'done' blocks are
+therefore unverified and should not be trusted without a build/test run each.
+(2) docs/17 17.3 item 1 requires Blocks 5.1-5.4 and 6.3 to be marked needs_review, but the
+live DB still shows them as done; the governance action appears unapplied.
+(3) STATE.md is mixed-encoding (older entries UTF-16, newer UTF-8), which is why it reads
+as binary and makes appends hazardous; unifying it is deferred as it touches an append-only log.
+Next step: Run the same typecheck/build gate against the remaining 'done' frontend blocks
+before accepting their markers, and resolve open question (2) with the owner before any
+further Live-trading work.
