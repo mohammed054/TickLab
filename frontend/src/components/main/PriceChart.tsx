@@ -487,7 +487,7 @@ onMouseUp={() => setPanning(false)}
               const mouseX = event.clientX - rect.left
               const mouseY = event.clientY - rect.top
               const beforeZoom = zoom
-              setZoom((current) => Math.min(3, Math.max(0.5, current + (event.deltaY > 0 ? 0.1 : -0.1))))
+              setZoom((current) => Math.min(3, Math.max(0.5, current - (event.deltaY > 0 ? 0.1 : -0.1))))
               const afterZoom = zoom
               const dx = (mouseX / width) * (afterZoom - beforeZoom)
               const dy = (mouseY / height) * (afterZoom - beforeZoom)

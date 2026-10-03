@@ -80,11 +80,7 @@ export function BacktestPanel() {
     }))
   }, [parameters])
 
-  useEffect(() => {
-    if (latestJob?.progress.status === 'complete') {
-      updateWorkspace({ experiment: { id: latestJob.experimentId }, activeTab: { secondaryMonitor: 'results' } })
-    }
-  }, [latestJob?.experimentId, latestJob?.progress.status, updateWorkspace])
+  
 
   const updateRequest = (patch: Partial<BacktestRequest>) => setRequest((current) => ({ ...current, ...patch }))
 
