@@ -453,4 +453,18 @@ Next step: Block 2.7 task implementation â€” integrate OHLCV dataset pipeline in
  D e v i a t i o n s   f r o m   s p e c :   N o n e      a l i g n m e n t   l o g i c   r e u s e s   h f t b a c k t e s t   p a r s e r   w h e r e   p o s s i b l e ,   a d d s   O H L C V - s p e c i f i c   c h e c k s   f o r   n e w   v e r t i c a l   s l i c e . 
  O p e n   q u e s t i o n s   f o r   P l a n n e r :   N o n e      p r o c e e d i n g   w i t h   T r a d e   A l i g n m e n t   s t a g e   i m p l e m e n t a t i o n . 
  N e x t   s t e p :   I m p l e m e n t   T i m e s t a m p   V a l i d a t i o n   s t a g e   ( d o c s / 0 5   § 5 . 2 )   a f t e r   A l i g n m e n t   p a s s e s ;   i n t e g r a t e   w i t h   m o c k D a t a s e t S t o r e   q u a l i t y   c h e c k s   ( c a n R u n B a c k t e s t   d e p e n d e n t   o n   p r i o r   s t a g e   c o m p l e t i o n ) .  
+ # # #   [ 2 . 7 . 5 ]   I N _ P R O G R E S S      D a t a   P i p e l i n e :   T i m e s t a m p   V a l i d a t i o n 
+ T i m e s t a m p :   2 0 2 6 - 1 0 - 0 2 T 0 0 : 0 0 : 0 0 Z 
+ A g e n t :   o p e n c o d e   ( E x e c u t o r ) 
+ S t a t u s :   I N _ P R O G R E S S 
+ F i l e s   t o u c h e d : 
+     -   e n g i n e / a b s t r a c t i o n / s r c / t i m e s t a m p _ v a l i d a t i o n . r s   ( n e w ) 
+ S p e c   f i l e s   r e a d : 
+     -   d o c s / 1 6 - i m p l e m e n t a t i o n - r o a d m a p . m d   § 2 . 7 
+     -   d o c s / 0 5 - e n g i n e - a b s t r a c t i o n - a n d - d a t a - p i p e l i n e . m d   § 5 . 2   ( T i m e s t a m p   V a l i d a t i o n ) 
+     -   d o c s / 0 4 - h f t b a c k t e s t - e n g i n e - a n a l y s i s . m d   § 4 . 4 
+ S u m m a r y :   I m p l e m e n t i n g   t h e   d a t a   p i p e l i n e   T i m e s t a m p   V a l i d a t i o n   s t a g e   p e r   d o c s / 0 5   § 5 . 2 :   t i m e s t a m p   m o n o t o n i c i t y   a u d i t ,   g a p   d e t e c t i o n ,   a n d   s e q u e n c e   c o n t i g u i t y   v e r i f i c a t i o n   f o r   O H L C V   d a t a s e t s .   R e u s e s   u p s t r e a m   h f t b a c k t e s t   u t i l i t i e s   w h e r e   a v a i l a b l e   ( § 4 . 9 ) ,   i m p l e m e n t s   n e w   v a l i d a t i o n   l o g i c   f o r   n o r m a l i z e d   d a t a s e t   t i m e s t a m p s .   N o r m a l i z e d   d a t a s e t   q u a l i t y   f l a g s   ( g r e e n / y e l l o w / r e d )   f e e d   i n t o   d o c s / 0 8   § 8 . 1 0   q u a l i t y   g a t e ;   c o r r u p t e d   d a t a   a t   t h i s   s t a g e   c o n f i r m e d   t o   b l o c k   B A C K T E S T   v i a   c a n R u n B a c k t e s t ( )   f a l s e . 
+ D e v i a t i o n s   f r o m   s p e c :   N o n e      v a l i d a t i o n   l o g i c   r e u s e s   h f t b a c k t e s t   p a r s e r   w h e r e   p o s s i b l e ,   a d d s   O H L C V - s p e c i f i c   c h e c k s   f o r   n e w   v e r t i c a l   s l i c e . 
+ O p e n   q u e s t i o n s   f o r   P l a n n e r :   N o n e      p r o c e e d i n g   w i t h   T i m e s t a m p   V a l i d a t i o n   s t a g e   i m p l e m e n t a t i o n . 
+ N e x t   s t e p :   I m p l e m e n t   H f t B a c k t e s t - f o r m a t   C o n v e r s i o n   s t a g e   ( d o c s / 0 5   § 5 . 2 )   a f t e r   T i m e s t a m p   V a l i d a t i o n   p a s s e s ;   i n t e g r a t e   w i t h   m o c k D a t a s e t S t o r e   q u a l i t y   c h e c k s   ( c a n R u n B a c k t e s t   d e p e n d e n t   o n   p r i o r   s t a g e   c o m p l e t i o n ) .  
  
