@@ -550,3 +550,36 @@ as binary and makes appends hazardous; unifying it is deferred as it touches an 
 Next step: Run the same typecheck/build gate against the remaining 'done' frontend blocks
 before accepting their markers, and resolve open question (2) with the owner before any
 further Live-trading work.
+
+---
+
+### [3.2.C] DONE — Owner-reported UI fixes: chart zoom direction + backtest tab navigation
+Timestamp: 2026-10-03T19:16:58Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - frontend/src/components/main/PriceChart.tsx
+  - frontend/src/components/secondary/BacktestPanel.tsx
+Spec files read:
+  - docs/07-main-monitor-components.md §7.2 (chart zoom/pan interaction set, per prior [3.2.B] entry)
+Summary: Fixed two owner-reported UI defects. (1) PriceChart wheel-zoom felt
+inverted: scrolling down (positive deltaY) increased zoom and scrolling up
+decreased it; flipped the sign so scroll-down zooms out and scroll-up zooms in,
+matching standard charting convention. (2) BacktestPanel auto-navigated the
+Secondary Monitor to the 'results' tab via useEffect the moment a job reached
+'complete', so the Backtest tab could not be re-accessed after a run; removed
+that effect so the user stays on the Backtest tab and reaches results
+explicitly via the existing 'VIEW RESULTS TEARSHEET' button in JobProgress.
+`npm run typecheck` exits clean and `npm run build` completes (built in ~7.6s).
+Committed as 711e74c and pushed to main.
+Deviations from spec: none. No spec section mandates auto-navigation to results
+on job completion; the removal is owner-directed and the manual results button
+is preserved.
+Open questions for Planner: none new. The F.7.J test-matrix runner decision and
+the docs/17 §17.3 governance marking from [3.2.B] remain unanswered.
+Next step: Owner verifies both fixes in the running app; then proceed per
+roadmap (remaining 'done' frontend blocks still unverified per [3.2.B]).
+Process note: first attempt to log this entry via the file-edit tool rewrote
+line endings on ~43 history lines (the mixed-encoding hazard flagged in
+[3.2.B]); that commit was reset unpushed and this entry was byte-appended
+instead so prior entries are untouched.
