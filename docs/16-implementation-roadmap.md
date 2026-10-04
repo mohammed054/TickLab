@@ -192,9 +192,24 @@ implementing that adapter; do not fabricate depth.
   progress, cancellation/error states, experiment persistence, and real result
   inspection end-to-end. UI values must come from imported data and completed engine
   output; remove or disable mock inputs in this workflow.
+- Task E: Register the owner-provided local Binance BTCUSDT Spot daily aggTrades set
+  without copying its 73 GB source files. Verify SHA-256 sidecars and the headerless
+  eight-field, microsecond-timestamp schema; write content-addressed raw catalog
+  manifests under `registered/`; expose the manifests in the desktop DATA view with
+  true Spot labeling and raw/un-normalized status. Keep all Spot records ineligible
+  for backtesting until a canonical Spot normalizer and compatible depth/engine path
+  are separately specified.
 
-**Spec files:** `docs/04` §§4.2–4.4, 4.9; `docs/05` §§5.1–5.4; `docs/08` §§8.7–8.16;
-`docs/10` §10.3; `docs/13` §13.1; `docs/15` §§15.4–15.5. **Acceptance:** using a
+**Task E spec files:** `docs/05` §5.2; `docs/08` §8.29; `docs/15` §§15.2 and 15.5.
+**Task E acceptance:** registering the supplied set creates 641 continuous daily
+manifests (2025-01-01 through 2026-10-03) without duplicating source files; every
+archive sidecar and raw row validates; the data API and desktop UI retain
+`BINANCE_SPOT` identity and mark the records raw/trades-only; backtesting remains
+blocked; rerunning registration is idempotent.
+
+**Tasks A-D spec files:** `docs/04` §§4.2–4.4, 4.9; `docs/05` §§5.1–5.4;
+`docs/08` §§8.7–8.16; `docs/10` §10.3; `docs/13` §13.1; `docs/15` §§15.4–15.5.
+**Tasks A-D acceptance:** using a
 real archived sample from the chosen market, a fresh local installation can import
 and validate it, show its truthful UTC coverage and quality report, submit a
 non-mocked strategy run through the vendored hftbacktest engine, stream job progress,

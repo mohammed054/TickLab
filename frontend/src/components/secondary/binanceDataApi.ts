@@ -20,6 +20,12 @@ export interface BinanceTradeDataset {
   book_depth_available: boolean
   historical_best_quotes_available: boolean
   data_fidelity: string
+  normalization_status?: string
+  raw_csv_path?: string
+  normalized_path?: string
+  source_order_status?: string
+  ordering_regressions?: number
+  first_ordering_regression_row?: number | null
 }
 
 export interface BinanceImportJob {
@@ -104,4 +110,10 @@ export function formatManifestDate(timestampNs: number | string): string {
 
 export function formatTradeCount(value: number): string {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)
+}
+
+export function formatMarketName(market: string): string {
+  if (market === 'BINANCE_SPOT') return 'BINANCE SPOT'
+  if (market === 'BINANCE_USDM_PERPETUAL') return 'BINANCE USDⓈ-M PERPETUAL'
+  return market.replace(/_/g, ' ')
 }

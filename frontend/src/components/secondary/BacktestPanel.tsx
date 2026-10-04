@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   formatManifestDate,
+  formatMarketName,
   formatTradeCount,
   listBinanceTradeDatasets,
   type BinanceTradeDataset,
@@ -60,7 +61,7 @@ export function BacktestPanel({ apiAvailable, selectedDatasetId, onOpenData }: {
       ) : (
         <>
           <section className="surface-card selected-dataset-summary" aria-labelledby="selected-dataset-title">
-            <div className="surface-card__header"><div><span className="section-kicker">SELECTED REAL DATASET</span><h3 id="selected-dataset-title">{dataset.symbol} <span className="summary-market">USDⓈ-M PERPETUAL</span></h3></div><span className="fidelity-badge"><span aria-hidden="true">●</span> {dataset.data_fidelity}</span></div>
+            <div className="surface-card__header"><div><span className="section-kicker">SELECTED REAL DATASET</span><h3 id="selected-dataset-title">{dataset.symbol} <span className="summary-market">{formatMarketName(dataset.market)}</span></h3></div><span className="fidelity-badge"><span aria-hidden="true">●</span> {dataset.data_fidelity}</span></div>
             <div className="summary-metrics">
               <div><span>UTC coverage</span><strong>{formatManifestDate(dataset.coverage_start_ns)} <i>→</i> {formatManifestDate(dataset.coverage_end_ns)}</strong></div>
               <div><span>Trade events</span><strong className="mono">{formatTradeCount(dataset.row_count)}</strong></div>
@@ -74,7 +75,7 @@ export function BacktestPanel({ apiAvailable, selectedDatasetId, onOpenData }: {
               <span className="gate-symbol" aria-hidden="true">!</span>
               <div><span className="section-kicker">HONEST EXECUTION FIDELITY</span><h3 id="execution-gate-title">Trade data cannot model order fills</h3></div>
             </div>
-            <p className="execution-gate__intro">This archive records executed trades only. It contains no historical bid/ask book, resting liquidity, or queue position. hftbacktest’s exchange and queue fill models consume market depth, so enabling a run here would require inventing execution state.</p>
+            <p className="execution-gate__intro">{dataset.normalization_status === 'RAW_PROVIDER_SCHEMA' ? 'This is the original Binance Spot provider CSV schema; TickLab has not normalized it into engine events. ' : 'This archive records executed trades only. '}It contains no historical bid/ask book, resting liquidity, or queue position. hftbacktest’s exchange and queue fill models consume market depth, so enabling a run here would require inventing execution state.</p>
 
             <div className="gate-requirements">
               <div className="gate-requirement">

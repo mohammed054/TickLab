@@ -59,6 +59,20 @@ field names in `docs/05` §5.2 and declares `data_capabilities:["TRADES"]`,
 `book_depth_available:false`, and `data_fidelity:"TRADES_ONLY"`. This import service
 does not make a dataset eligible for a depth-dependent hftbacktest run.
 
+The same GET response also lists verified local Spot catalog manifests from
+`{data-root}/registered/*/manifest.json`. These records retain
+`market="BINANCE_SPOT"` and add `normalization_status="RAW_PROVIDER_SCHEMA"`,
+`raw_archive_path`, and `raw_csv_path`; they do not contain `normalized_path` and are
+not considered prepared engine inputs. `data_capabilities`, fidelity, and depth/quote
+flags follow the same trades-only values as the Futures import. The one-time local
+registration procedure and headerless Spot row format are specified in docs/05 §5.2.
+They also carry `source_order_status`, `ordering_regressions`, and
+`first_ordering_regression_row`; a non-monotonic raw source is surfaced as a quality
+warning and is never repaired during registration.
+For registered raw catalog records, `retrieved_at_ns` is the source archive's UTC file
+modification timestamp because the downloaded set has no per-object retrieval-time
+metadata; `cataloged_at_ns` records when TickLab registered the manifest.
+
 ## 15.3 WebSocket API
 
 Single connection per client session (`wss://.../api/v1/ws?session={token}`),

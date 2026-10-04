@@ -545,3 +545,47 @@ mock UI remains source code only until each surface is connected to a real servi
   text that does not rely on color alone.
 - `npm run check` passes; test the screen at 1440x900 and 390x844 for clipping,
   keyboard tab use, loading, empty, error, and completed-import states.
+
+## 8.29 Local Binance Spot aggregate-trade catalog
+
+The DATA workflow may list owner-supplied local Binance BTCUSDT Spot archives beside
+the remote USD-M perpetual imports. `scripts/import_binance_spot_catalog.py` registers
+the downloaded folder into the TickLab data root; it never copies the 73 GB source set.
+Its CLI contract is:
+
+```text
+python scripts/import_binance_spot_catalog.py --source-root <archive-folder> --data-root <ticklab-data-root> --workers 4
+```
+
+The source folder must contain `manifest.csv`, `verification.json`, `archives/`, and
+`extracted/`. Registration rechecks provider SHA-256 sidecars and validates every raw
+Spot row before atomically writing one content-addressed manifest per day under
+`registered/{dataset_id}/manifest.json`. The manifest carries `market=BINANCE_SPOT`,
+`normalization_status=RAW_PROVIDER_SCHEMA`, raw archive and CSV paths, exact UTC event
+coverage, row count, archive SHA-256, `data_capabilities=["TRADES"]`,
+`data_fidelity=TRADES_ONLY`, `book_depth_available=false`, and
+`historical_best_quotes_available=false`. No canonical normalized event file is
+created by registration.
+
+`GET /binance/trades/datasets` lists verified manifests from both `prepared/` and
+`registered/`. Dataset rows and the selected-dataset header display the manifest's
+actual market; Spot records must never display “PERPETUAL” or “USDⓈ-M”. The existing
+remote import form remains explicitly labeled USDⓈ-M Futures. Dataset details state
+whether records are normalized. The BACKTEST summary uses the selected market and
+keeps `RUN BACKTEST` disabled for raw Spot or any trades-only manifest.
+
+### Acceptance checks
+
+- The registration command rejects a missing date, duplicate date, bad checksum,
+  malformed raw row, or wrong-day timestamp without writing a manifest for that
+  archive; it preserves source order and records any ID/time regressions. Repeated
+  valid registration is idempotent.
+- Registering the supplied dataset creates 641 manifests for continuous coverage
+  2025-01-01 through 2026-10-03 and creates no duplicate archive/CSV data files.
+- The data API returns all 641 records as `BINANCE_SPOT` with raw status and false
+  depth/quote flags; no record is relabeled USD-M or marked normalized.
+- The 2026-02-11 record reports its provider-order regression at source row 2,001;
+  the raw CSV remains unchanged and is not silently repaired.
+- The desktop DATA view shows Spot distinctly from USD-M, and the BACKTEST view names
+  Spot and keeps its execution gate closed.
+- Backend focused tests pass and `npm run check` passes.

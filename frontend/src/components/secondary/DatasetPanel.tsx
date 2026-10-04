@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
   formatManifestDate,
   formatManifestTimestamp,
+  formatMarketName,
   formatTradeCount,
   getBinanceImportJob,
   listBinanceTradeDatasets,
@@ -23,11 +24,13 @@ export function DatasetPanel({
   apiAvailable,
   selectedDatasetId,
   onDatasetSelect,
+  onSelectedMarketChange,
   onOpenBacktest,
 }: {
   apiAvailable: boolean
   selectedDatasetId: string
   onDatasetSelect: (datasetId: string) => void
+  onSelectedMarketChange: (market: string) => void
   onOpenBacktest: () => void
 }) {
   const latestDate = latestSelectableDate()
@@ -47,6 +50,10 @@ export function DatasetPanel({
     () => datasets.find((dataset) => dataset.dataset_id === selectedDatasetId) ?? null,
     [datasets, selectedDatasetId],
   )
+
+  useEffect(() => {
+    onSelectedMarketChange(selectedDataset?.market ?? '')
+  }, [onSelectedMarketChange, selectedDataset?.market])
   const dateError = !startDate || !endDate
     ? 'Choose both a start and end date.'
     : startDate < FIRST_SUPPORTED_DATE || endDate < FIRST_SUPPORTED_DATE
@@ -67,8 +74,10 @@ export function DatasetPanel({
       const next = await listBinanceTradeDatasets()
       setDatasets(next.sort((a, b) => Number(b.retrieved_at_ns) - Number(a.retrieved_at_ns)))
       setDatasetError('')
-      if (!next.some((item) => item.dataset_id === selectedDatasetId)) {
-        onDatasetSelect(next[0]?.dataset_id ?? '')
+      const savedSelection = next.find((item) => item.dataset_id === selectedDatasetId)
+      const latestSpot = next.find((item) => item.market === 'BINANCE_SPOT')
+      if (!savedSelection || (savedSelection.market !== 'BINANCE_SPOT' && latestSpot)) {
+        onDatasetSelect(latestSpot?.dataset_id ?? next[0]?.dataset_id ?? '')
       }
     } catch (error) {
       setDatasetError(error instanceof Error ? error.message : 'Could not load verified datasets.')
@@ -175,7 +184,7 @@ export function DatasetPanel({
           <h2>Import market data</h2>
           <p>Download original Binance trade archives, verify their checksums, and preserve a reproducible dataset.</p>
         </div>
-        <div className="instrument-chip"><span className="instrument-chip__symbol">BTCUSDT</span><span>PERPETUAL</span></div>
+        <div className="instrument-chip"><span className="instrument-chip__symbol">BTCUSDT</span><span>{selectedDataset ? formatMarketName(selectedDataset.market) : 'NO DATASET SELECTED'}</span></div>
       </div>
 
       <div className="data-grid">
@@ -283,7 +292,7 @@ export function DatasetPanel({
                       onClick={() => onDatasetSelect(dataset.dataset_id)}
                     >
                       <span className="dataset-row__icon" aria-hidden="true">◈</span>
-                      <span className="dataset-row__main"><strong>{dataset.archive_filename}</strong><small>{formatManifestDate(dataset.coverage_start_ns)} <i>→</i> {formatManifestDate(dataset.coverage_end_ns)} UTC</small></span>
+                      <span className="dataset-row__main"><strong>{dataset.archive_filename}</strong><small>{formatMarketName(dataset.market)} <i>·</i> {formatManifestDate(dataset.coverage_start_ns)} <i>→</i> {formatManifestDate(dataset.coverage_end_ns)} UTC{dataset.ordering_regressions ? ` · ${dataset.ordering_regressions} order warning(s)` : ''}</small></span>
                       <span className="dataset-row__count mono">{formatTradeCount(dataset.row_count)}<small>TRADES</small></span>
                       <span className="dataset-row__check" aria-hidden="true">{selectedDatasetId === dataset.dataset_id ? '✓' : '›'}</span>
                     </button>
@@ -312,6 +321,8 @@ function ManifestDetails({ dataset, onOpenBacktest }: { dataset: BinanceTradeDat
         <ManifestField label="Accepted events" value={formatTradeCount(dataset.row_count)} />
         <ManifestField label="Source archive" value={dataset.archive_filename} />
         <ManifestField label="Pipeline version" value={dataset.pipeline_version} />
+        <ManifestField label="Normalization" value={dataset.normalization_status ?? (dataset.normalized_path ? 'CANONICAL' : 'NOT DECLARED')} />
+        <ManifestField label="Source order" value={dataset.source_order_status ?? 'NOT RECORDED'} />
         <ManifestField label="Capabilities" value={dataset.data_capabilities.join(', ')} />
         <ManifestField label="Book depth" value={dataset.book_depth_available ? 'Available' : 'Not present'} />
         <ManifestField label="Historical best quotes" value={dataset.historical_best_quotes_available ? 'Available' : 'Not present'} />
@@ -320,6 +331,12 @@ function ManifestDetails({ dataset, onOpenBacktest }: { dataset: BinanceTradeDat
         <ManifestField label="Source URI" value={dataset.source_uri} mono />
       </div>
       <div className="manifest-source-line"><span className="verified-check" aria-hidden="true">✓</span> Provider checksum verified <span className="manifest-separator">·</span> Raw archive preserved</div>
+      {!!dataset.ordering_regressions && (
+        <div className="large-range-note" role="note">
+          <strong>Provider order warning</strong>
+          <span>{formatTradeCount(dataset.ordering_regressions)} source row(s) regress in aggregate ID or time order{dataset.first_ordering_regression_row ? `; first at row ${formatTradeCount(dataset.first_ordering_regression_row)}` : ''}. TickLab preserved the provider CSV without sorting or repairing it.</span>
+        </div>
+      )}
     </div>
   )
 }

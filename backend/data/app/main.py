@@ -21,6 +21,7 @@ import struct
 import tempfile
 import threading
 import uuid
+from pathlib import Path
 
 from .binance_import import default_data_root, import_aggtrade_archives
 
@@ -254,16 +255,23 @@ async def get_binance_trade_import(job_id: str) -> dict:
 
 @app.get("/binance/trades/datasets")
 async def list_binance_trade_datasets() -> dict:
-    """List verified, prepared real Binance aggregate-trade dataset manifests."""
-    root = default_data_root() / "prepared"
+    """List verified prepared datasets and validated raw local Spot catalog entries."""
+    data_root = default_data_root()
     manifests = []
-    if root.exists():
-        for path in sorted(root.glob("*/manifest.json")):
+    for catalog_root in (data_root / "prepared", data_root / "registered"):
+        if not catalog_root.exists():
+            continue
+        for path in sorted(catalog_root.glob("*/manifest.json")):
             try:
                 item = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
             if item.get("source") == "BINANCE_DATA_VISION" and item.get("data_type") == "AGG_TRADE":
+                if item.get("normalization_status") == "RAW_PROVIDER_SCHEMA":
+                    raw_archive = item.get("raw_archive_path")
+                    raw_csv = item.get("raw_csv_path")
+                    if not raw_archive or not raw_csv or not Path(raw_archive).is_file() or not Path(raw_csv).is_file():
+                        continue
                 manifests.append(item)
     return {"datasets": manifests}
 

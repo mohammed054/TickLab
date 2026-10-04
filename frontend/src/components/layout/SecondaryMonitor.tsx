@@ -17,6 +17,7 @@ export function SecondaryMonitor() {
       return ''
     }
   })
+  const [selectedMarket, setSelectedMarket] = useState('')
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
 
   useEffect(() => {
@@ -130,8 +131,8 @@ export function SecondaryMonitor() {
 
           <div className="workflow-rail__foot">
             <span className="workflow-rail__foot-label">ACTIVE MARKET</span>
-            <strong>BTCUSDT <span>PERPETUAL</span></strong>
-            <small>Binance USDⓈ-M Futures</small>
+            <strong>{selectedMarket ? `BTCUSDT ${selectedMarket === 'BINANCE_SPOT' ? 'SPOT' : 'PERPETUAL'}` : 'NO DATASET SELECTED'}</strong>
+            <small>{selectedMarket === 'BINANCE_SPOT' ? 'Binance Spot · raw trades' : selectedMarket === 'BINANCE_USDM_PERPETUAL' ? 'Binance USDⓈ-M Futures' : 'Select an imported dataset to see its market'}</small>
           </div>
         </aside>
 
@@ -145,6 +146,7 @@ export function SecondaryMonitor() {
               apiAvailable={health === 'connected'}
               selectedDatasetId={selectedDatasetId}
               onDatasetSelect={selectDataset}
+              onSelectedMarketChange={setSelectedMarket}
               onOpenBacktest={() => setActiveTab('backtest')}
             />
           </div>

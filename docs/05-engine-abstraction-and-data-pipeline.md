@@ -61,7 +61,7 @@ For each source archive part, persist these required fields in the dataset manif
 | Field | Type | Meaning |
 |---|---|---|
 | `source` | enum/string | `BINANCE_DATA_VISION` or another explicitly named supported source |
-| `market` | enum | `BINANCE_USDM_PERPETUAL` |
+| `market` | enum | `BINANCE_USDM_PERPETUAL` or `BINANCE_SPOT`; never infer one from the symbol alone |
 | `symbol` | string | `BTCUSDT` |
 | `data_type` | enum | `AGG_TRADE` |
 | `source_uri` | string | Exact archive URI/path used for retrieval |
@@ -73,6 +73,43 @@ For each source archive part, persist these required fields in the dataset manif
 | `row_count` | uint64 | Number of accepted aggregate trade events |
 | `pipeline_version` | string | Version identifier for parser/normalizer rules |
 | `dataset_id` | string | Content identity over instrument, type, source, archive checksum(s), coverage, and pipeline version |
+| `normalization_status` | enum/string | `NORMALIZED` for canonical prepared records or `RAW_PROVIDER_SCHEMA` for catalog-only source files |
+| `raw_archive_path` | path | Local path to the checksum-verified original archive |
+| `raw_csv_path` | path | Local path to the extracted vendor CSV; required for `RAW_PROVIDER_SCHEMA` |
+| `normalized_path` | path | Local canonical trade-file path; absent for raw catalog-only records |
+| `cataloged_at_ns` | int64 | UTC time a raw local dataset manifest was registered |
+| `source_order_status` | enum | `MONOTONIC` or `NON_MONOTONIC` in original provider row order |
+| `ordering_regressions` | uint64 | Number of rows whose aggregate ID or timestamp regresses relative to the previous raw row |
+| `first_ordering_regression_row` | uint64/null | First 1-based provider row with an ordering regression, or null when monotonic |
+
+#### Owner-requested local Binance Spot catalog
+
+The local Spot aggregate-trade set at `Z:\Binance-BTCUSDT-Spot-AggTrades-2025-2026`
+is cataloged separately from USD-M Futures imports. `scripts/import_binance_spot_catalog.py`
+accepts `--source-root` (the folder containing `archives/`, `extracted/`, and
+`manifest.csv`), `--data-root` (the TickLab data root), and optional `--workers` from
+1 through 8 (default 4). It verifies every archive
+against its Binance `.CHECKSUM`, validates the archive/CSV date mapping and each
+headerless eight-field Spot row, and records exact event count and timestamp coverage.
+Spot timestamps are provider microseconds and convert to nanoseconds by multiplying
+by 1,000. Price/quantity must be finite and positive, both boolean fields must parse
+as true or false, and timestamps must belong to the archive UTC date. ID/time ordering
+regressions are counted while preserving provider row order; raw catalog registration
+must never silently sort or repair source data. A malformed field or wrong-day timestamp
+rejects that archive and reports its source row.
+
+This operation writes immutable metadata under
+`{data-root}/registered/{dataset_id}/manifest.json` and points `raw_archive_path` and
+`raw_csv_path` at the verified source files. It does not copy data, create a canonical
+`trades.csv`, or claim normalization. Such manifests have
+`normalization_status="RAW_PROVIDER_SCHEMA"`, `data_fidelity="TRADES_ONLY"`,
+`data_capabilities=["TRADES"]`, and false book/quote availability. They may be
+inspected in TickLab, but may not be used for dataset preparation or engine runs until
+a separately specified canonical Spot normalization and compatible engine adapter
+exist. A nonzero `ordering_regressions` value is a visible source-quality warning,
+not permission to reorder the source. Keep the original Spot identity
+(`market="BINANCE_SPOT"`) throughout; never
+reinterpret these archives as USD-M perpetual data.
 
 Preserve original downloaded bytes unchanged under the configured local raw-data
 root, outside git. Download/import must be resumable and idempotent by source URI and

@@ -799,3 +799,58 @@ Summary: Downloaded the complete continuous Binance BTCUSDT Spot daily aggTrades
 Deviations from spec: This user-requested dataset is Binance Spot and is stored outside the repository; it is not the app's USD-M perpetual dataset and no engine/backtest compatibility is claimed.
 Open questions for Planner: None.
 Next step: User may reclaim space or use this external Spot archive set as desired; app backtest support remains a separate task requiring compatible USD-M depth data.
+
+### [2.0.E] IN_PROGRESS - Register local Binance Spot archives in TickLab
+Timestamp: 2026-10-04T16:41:53Z
+Agent: Codex GPT-6 (Planner/Executor)
+Status: IN_PROGRESS
+Files touched:
+  - docs/08-secondary-monitor-components.md (planned)
+  - docs/15-api-and-data-model-spec.md (planned)
+  - docs/16-implementation-roadmap.md (planned)
+  - scripts/import_binance_spot_catalog.py (planned)
+  - backend/data/app/main.py (planned)
+  - backend/data/app/tests/test_binance_spot_catalog.py (planned)
+  - frontend/src/components/secondary/binanceDataApi.ts (planned)
+  - frontend/src/components/secondary/DatasetPanel.tsx (planned)
+  - frontend/src/components/secondary/BacktestPanel.tsx (planned)
+  - frontend/src/components/layout/SecondaryMonitor.tsx (planned)
+  - STATE.md
+Spec files read:
+  - AGENTS.md Sections 1-8
+  - docs/16-implementation-roadmap.md Block 2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md Section 5.2
+  - docs/08-secondary-monitor-components.md Sections 8.28 and 8.29 (new contract to be authored)
+  - docs/15-api-and-data-model-spec.md Sections 15.2 and 15.5
+Summary: The user asked to import the downloaded Binance BTCUSDT Spot aggregate-trade archive set into TickLab. The existing app importer is Futures-only and the Spot daily CSVs are headerless with microsecond timestamps, so this task will add a separate truthful raw-Spot catalog path without copying the 73 GB source set or claiming normalized/backtest-ready data.
+Deviations from spec: This is a new owner-requested Spot data path alongside the existing USD-M Futures workflow. Spot entries must remain market=BINANCE_SPOT, normalization_status=RAW_PROVIDER_SCHEMA, TRADES_ONLY, and book_depth_available=false.
+Open questions for Planner: None; the user authorized repository changes and the importer must preserve raw Spot identity and keep the engine gate closed.
+Next step: Write the exact Spot catalog and UI contract in the Planner-owned specs, then implement and validate it.
+
+### [2.0.E] DONE - Register local Binance Spot archives in TickLab
+Timestamp: 2026-10-04T17:10:00Z
+Agent: Codex GPT-6
+Status: DONE
+Files touched:
+  - docs/05-engine-abstraction-and-data-pipeline.md
+  - docs/08-secondary-monitor-components.md
+  - docs/15-api-and-data-model-spec.md
+  - docs/16-implementation-roadmap.md
+  - backend/data/app/main.py
+  - backend/data/app/spot_catalog.py
+  - backend/data/app/tests/test_binance_spot_catalog.py
+  - scripts/import_binance_spot_catalog.py
+  - frontend/src/components/layout/SecondaryMonitor.tsx
+  - frontend/src/components/secondary/BacktestPanel.tsx
+  - frontend/src/components/secondary/DatasetPanel.tsx
+  - frontend/src/components/secondary/binanceDataApi.ts
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.0 Task E
+  - docs/05-engine-abstraction-and-data-pipeline.md Sections 5.2 and 5.4
+  - docs/08-secondary-monitor-components.md Section 8.29
+  - docs/15-api-and-data-model-spec.md Sections 15.2 and 15.5
+Summary: Registered the owner's existing Binance BTCUSDT Spot archive set as 641 content-addressed raw catalog manifests under the ignored local data directory, without copying the source archives or CSVs. The running API reports all 641 Spot days continuously from 2025-01-01 through 2026-10-03 and validates 721,440,454 rows. Updated the desktop DATA and Backtest surfaces to show Spot identity, raw normalization, and the honest trades-only/depth gate; the existing Futures selection migrates to the latest Spot day once, while existing Spot choices persist. One checksum-valid provider CSV has two source-order regressions at row 2001; TickLab preserves it unchanged and surfaces its warning. Rebuilt and relaunched the native desktop app and regenerated the MSI/NSIS installers.
+Deviations from spec: None. Spot remains ineligible for backtests because this is raw trades-only data with no historical depth or canonical normalizer.
+Open questions for Planner: None.
+Next step: User can open TickLab DATA to browse the registered days; future work needs a separately specified Spot normalizer and compatible depth/engine path before Spot backtesting.
