@@ -1,4 +1,10 @@
-# 17 — Frontend-First Transition Plan (supersedes parts of docs 02/03/07/08)
+# 17 — Historical Frontend-First Transition Plan (superseded 2026-10-04)
+
+> **SUPERSEDED.** The owner-directed real-data-first directive in
+> `docs/16-implementation-roadmap.md` (2026-10-04) replaces this document's
+> mock-first sequencing and all instructions here that defer real backend/data/AI
+> integration. This document is retained as an audit record of the prior pivot; it is
+> not an active implementation plan and must not be used to block real-data work.
 
 This document records a deliberate, owner-approved pivot away from the original
 backend-first roadmap (`docs/16`), captures the **actual current state of the

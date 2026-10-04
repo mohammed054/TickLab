@@ -135,6 +135,23 @@ never a background process that acts on its own.
 - Model-agnostic client (`backend/ai/app/llm_client.py`) — no vendor lock-in baked
   into the rest of the system; the model/provider is a configuration value.
 
+#### Initial provider: OpenRouter
+
+The first provider adapter uses the OpenRouter chat completions API. Configure the
+base URL, model ID, request timeout, and server-side API key through backend runtime
+configuration. The project owner prefers a free model where available, but the model
+ID is not hardcoded: free-model availability, rate limits, and routing can change.
+Do not silently substitute a model. Record the provider and exact model ID on every
+AI request and generated artifact so results can be audited. If the configured model
+is unavailable, return an actionable provider error and let the user select another
+model.
+
+The OpenRouter key is a backend secret only: it must never appear in frontend
+JavaScript, API responses, logs, repository files, test fixtures, or experiment
+exports. Configure it using the deployment's secret/environment mechanism. No model
+call may submit a backtest directly; generated code/config remains a human-reviewed
+draft and normal validation/job-submit flow remains the only way to execute it.
+
 ### 10.5.3 AI Strategy Generation
 A specific, higher-stakes capability: given a natural-language description (e.g.,
 "create a market-making strategy that adjusts quote width based on volatility and

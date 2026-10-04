@@ -41,6 +41,89 @@ pub trait SimulatorContract {
 
 ## 5.2 Data pipeline stages
 
+### Owner-directed first release: Binance USDⓈ-M BTCUSDT trades
+
+The first real-data release imports Binance USDⓈ-M BTCUSDT perpetual aggregate
+trade archives and runs a supported strategy through the vendored hftbacktest engine.
+This is a trades-only historical dataset: it does **not** contain historical resting
+book depth, best bid/ask quotes, or queue position. The product must label the run
+`TRADES_ONLY`; it must not infer/fabricate a book, claim observed queue position, or
+present an engine fill model as historically validated depth execution. Before
+enabling this path, an Executor must verify in vendored hftbacktest source and a
+fixture that trade-only events can be used with the selected asset/exchange/queue
+models. If not, the backtest must remain blocked until suitable real depth data is
+available. Candles alone do not satisfy this trade-event release.
+
+#### Archive import record
+
+For each source archive part, persist these required fields in the dataset manifest:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `source` | enum/string | `BINANCE_DATA_VISION` or another explicitly named supported source |
+| `market` | enum | `BINANCE_USDM_PERPETUAL` |
+| `symbol` | string | `BTCUSDT` |
+| `data_type` | enum | `AGG_TRADE` |
+| `source_uri` | string | Exact archive URI/path used for retrieval |
+| `archive_filename` | string | Original provider filename |
+| `archive_sha256` | hex string | SHA-256 of untouched archive bytes |
+| `retrieved_at_ns` | int64 | UTC retrieval time |
+| `coverage_start_ns` | int64 | Minimum normalized event timestamp, inclusive |
+| `coverage_end_ns` | int64 | Maximum normalized event timestamp, inclusive |
+| `row_count` | uint64 | Number of accepted aggregate trade events |
+| `pipeline_version` | string | Version identifier for parser/normalizer rules |
+| `dataset_id` | string | Content identity over instrument, type, source, archive checksum(s), coverage, and pipeline version |
+
+Preserve original downloaded bytes unchanged under the configured local raw-data
+root, outside git. Download/import must be resumable and idempotent by source URI and
+checksum. The user chooses UTC start/end dates; retrieval must inspect provider
+coverage and report unavailable periods instead of assuming all of 2024–2026 exists.
+Do not access authenticated trading endpoints for public historical archives.
+
+#### Canonical aggregate-trade row
+
+The normalized row is immutable and contains:
+
+| Field | Type | Mapping/meaning |
+|---|---|---|
+| `timestamp_ns` | int64 | Provider trade time converted exactly to UTC nanoseconds |
+| `symbol` | string | Canonical `BTCUSDT` |
+| `price` | decimal-preserving numeric | Provider price; conversion to engine float occurs only at engine boundary |
+| `quantity` | decimal-preserving numeric | Aggregate base quantity |
+| `buyer_is_maker` | bool | Provider maker-side flag; preserve as supplied |
+| `first_trade_id` | uint64 | Provider first trade ID in aggregate |
+| `last_trade_id` | uint64 | Provider last trade ID in aggregate |
+| `event_id` | string | Stable source-derived ID, unique within dataset |
+| `archive_part` | string | Source filename/partition for traceability |
+
+The parser must preserve source order for audit, then produce a time/ID ordered engine
+view. Duplicate archive imports are idempotent. Gaps in trade IDs are reported, not
+repaired; the quality report distinguishes provider-defined aggregate ranges from
+individual trade IDs so an aggregate range is not falsely reported as missing rows.
+Timestamps must be within the requested interval and valid UTC epoch values. Prices
+and quantities must be finite and positive. Corrupt rows are quarantined with source
+row number and reason; the configured quality gate determines whether any quarantine
+blocks the dataset, and reports exact counts.
+
+#### Fidelity and backtest contract
+
+`data_capabilities` for this release is exactly `["TRADES"]`; `book_depth_available`
+and `historical_best_quotes_available` are false. Every experiment stores
+`data_fidelity = "TRADES_ONLY"` and the strategy's required capabilities. A strategy
+requiring `L1_QUOTES`, `L2_DEPTH`, or `L3_ORDERS` is rejected before job submission.
+Trade-only engine compatibility is not presumed: acceptance requires a test showing
+that the selected vendored hftbacktest path consumes the real trades and produces an
+actual result without synthesized events or book state. If hftbacktest needs depth
+for the intended order/fill simulation, mark this path unavailable and continue
+historical L2 ingestion as the next engine-compatible route; never use candles as a
+silent replacement.
+
+L2 is the next data capability. It requires real initial depth snapshots and ordered
+incremental updates with sequence IDs, snapshot/delta continuity checks, resync
+behavior, reconstructed-book validation, and aligned real trades. Only then may the
+L2 queue-model result be described as depth-based; queue position remains a model
+estimate, not historical ground truth. L3 is not in the first or next release.
+
 ```
 RAW EXCHANGE DATA
       ↓

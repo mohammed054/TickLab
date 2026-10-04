@@ -21,9 +21,15 @@ extended later without rewriting the product.
 
 ## Status
 
-This repository is at **Phase 0**: specification complete, implementation not yet
-started. See `STATE.md` for the live progress log and
-`docs/16-implementation-roadmap.md` for the full phased plan.
+Implementation is in progress. The current owner-directed priority is a real-data
+research workflow: import Binance BTCUSDT USDⓈ-M perpetual historical trades, run a
+real backtest through the vendored `hftbacktest` engine, and inspect persisted
+results. Trade-only results have limited order-book/queue fidelity; historical L2
+depth is the next market-data milestone. OpenRouter is the planned AI provider, with
+model selection configured at runtime. Paper and live order execution are later
+goals; live execution is not part of the current milestone. See `STATE.md` for the
+progress log and `docs/16-implementation-roadmap.md` for the active plan. The
+mock-first plan in `docs/17-frontend-first-transition-plan.md` is superseded.
 
 ## Who should read what
 

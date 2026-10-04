@@ -583,3 +583,24 @@ Process note: first attempt to log this entry via the file-edit tool rewrote
 line endings on ~43 history lines (the mixed-encoding hazard flagged in
 [3.2.B]); that commit was reset unpushed and this entry was byte-appended
 instead so prior entries are untouched.
+### [2.0.P] DONE — Owner direction: real-data-first roadmap
+Timestamp: 2026-10-04T00:00:00Z
+Agent: Codex (Planner)
+Status: DONE
+Files touched:
+  - docs/16-implementation-roadmap.md
+  - docs/17-frontend-first-transition-plan.md
+  - docs/05-engine-abstraction-and-data-pipeline.md
+  - docs/10-experiment-management-and-ai-research.md
+  - README.md
+  - STATE.md
+Spec files read:
+  - AGENTS.md §§1–3, 7
+  - docs/16-implementation-roadmap.md §0, Phase 2, Phase 4, F.7 addendum
+  - docs/17-frontend-first-transition-plan.md §§17.1–17.7
+  - docs/05-engine-abstraction-and-data-pipeline.md §§5.2–5.4
+  - docs/10-experiment-management-and-ai-research.md §10.5
+Summary: Replaced the active mock-first delivery sequence with the owner-directed real-data-first priority. Defined the first target as Binance USDⓈ-M BTCUSDT perpetual historical aggregate trades, a real hftbacktest-backed workflow, and honest trades-only fidelity; real L2 depth is next, AI uses OpenRouter with runtime model selection and backend-only credentials, and paper/live remain later with live order routing out of current scope. Added archive provenance, canonical trade fields, capability/fidelity requirements, and a mandatory upstream compatibility gate; updated README status and marked docs/17 historical/superseded.
+Deviations from spec: None; this is an owner-authorized Planner revision superseding the 2026-09-24 F.7 mock-first addendum.
+Open questions for Planner: Exact Binance public archive coverage/retention and trade-only engine compatibility must be verified from provider/upstream sources during implementation; if trade-only engine semantics do not support the intended backtest, proceed to real L2 rather than fabricate depth.
+Next step: Audit existing Phase 2 implementation and verify the trade-only engine path against vendored hftbacktest source and real Binance archive fixtures; then update coordination task ordering before assigning the first real-data implementation block.
