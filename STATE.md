@@ -764,3 +764,38 @@ Summary: Restricted the running research workflow to the Tauri desktop runtime a
 Deviations from spec: The specified Tauri + React architecture still uses a bundled WebView internally; this change removes the user-facing browser launch path without replacing the documented UI architecture. The Python data service still requires a separate process, and Block 2.0 engine acceptance remains blocked on compatible historical depth data.
 Open questions for Planner: If “no web interface” means replacing the documented Tauri WebView with a pure native UI toolkit, specify the target toolkit and migration contract before that architectural rewrite.
 Next step: Bundle and lifecycle-manage the local data service for one-launch desktop use; obtain compatible historical depth before claiming a real hftbacktest result.
+
+### [2.0.D] IN_PROGRESS - Stage requested Binance BTCUSDT Spot archives
+Timestamp: 2026-10-04T14:55:27Z
+Agent: Codex GPT-6
+Status: IN_PROGRESS
+Files touched:
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/ (planned external dataset directory)
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md Section 5.2
+Summary: Starting the user's request to download Binance Spot BTCUSDT daily aggregate-trade archives for 2025 through the latest complete day of 2026, verify provider checksums, and extract the CSVs into a new Z: root directory. The dataset will preserve its Spot market identity and will not be represented as the app's USD-M perpetual backtest data.
+Deviations from spec: The requested source is Spot, while Block 2.0's app importer and engine work target Binance USD-M Futures. This is an external dataset request, and no engine compatibility claim is made.
+Open questions for Planner: None.
+Next step: Fetch the official object list, download and verify all daily archives, and extract each CSV while preserving the ZIPs.
+
+### [2.0.D] DONE - Download Binance BTCUSDT Spot aggregate trades
+Timestamp: 2026-10-04T15:18:17Z
+Agent: Codex GPT-6
+Status: DONE
+Files touched:
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/archives/ (641 ZIPs and Binance checksum sidecars)
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/extracted/ (641 daily CSVs)
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/manifest.csv
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/verification.json
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/download_binance_spot_aggtrades.py
+  - Z:/Binance-BTCUSDT-Spot-AggTrades-2025-2026/verify_dataset.py
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md Section 5.2
+Summary: Downloaded the complete continuous Binance BTCUSDT Spot daily aggTrades archive set for 2025-01-01 through 2026-10-03. Preserved all 641 ZIP archives and checksum sidecars, extracted all 641 CSVs, and independently rehashed every ZIP against Binance's SHA-256 sidecar. The final audit reports 10,639,146,166 compressed bytes, 62,618,587,945 extracted bytes, and no missing dates or failed files.
+Deviations from spec: This user-requested dataset is Binance Spot and is stored outside the repository; it is not the app's USD-M perpetual dataset and no engine/backtest compatibility is claimed.
+Open questions for Planner: None.
+Next step: User may reclaim space or use this external Spot archive set as desired; app backtest support remains a separate task requiring compatible USD-M depth data.
