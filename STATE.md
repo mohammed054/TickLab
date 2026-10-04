@@ -701,3 +701,19 @@ Summary: Replaced the running mock dashboard shell with a real-data research wor
 Deviations from spec: Block 2.0 end-to-end acceptance remains incomplete because no compatible historical L2 depth source has been approved/provided; no engine job or result is claimed. UI viewport acceptance at 1440x900 and 390x844 could not be performed because the required in-app browser Node REPL runtime is unavailable in this session. Static/build checks and backend contracts pass.
 Open questions for Planner: External blockers are approved compatible historical L2 data plus an in-app browser runtime for visual/interaction review at the specified viewports. Binance documents its historical order-book products as access-controlled; credentials must be configured server-side after approval.
 Next step: Complete visual interaction review when the in-app browser runtime is available; after compatible L2 access is approved, implement the depth adapter and real hftbacktest run before marking Block 2.0 complete.
+
+### [2.0.D] BLOCKED - Release readiness audit and real workflow verification
+Timestamp: 2026-10-04T08:53:00Z
+Agent: Codex (Executor)
+Status: BLOCKED
+Files touched:
+  - STATE.md
+  - data/ (local ignored one-day Binance dataset imported for end-to-end acceptance)
+Spec files read:
+  - docs/16-implementation-roadmap.md ?2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md ??5.2, 5.4
+  - docs/08-secondary-monitor-components.md ?8.28
+Summary: Ran `npm run check`, the full backend pytest suite (37 passed), and the vendored engine abstraction suite (53 passed). Reviewed the UI at 1440x900 and 390x844, confirmed offline and connected states, keyboard arrow navigation, and the trades-only engine gate. Completed a real Binance BTCUSDT USD-M aggregate-trade import for 2024-01-01 through the UI; the provider checksum validated, the manifest appeared, and the dataset reports 761,222 trades. The engine gate correctly prevents this trades-only dataset from entering a backtest.
+Deviations from spec: Block 2.0 acceptance is incomplete; no real imported dataset has run through the engine because compatible historical depth is not available. OpenRouter remains a placeholder and was not changed in this task.
+Open questions for Planner: Provide approved Binance T_DEPTH access or identify a permitted hftbacktest-compatible historical L2 source so the adapter and actual data-driven engine run can be completed.
+Next step: Obtain compatible real historical depth, implement and validate its adapter against the vendored engine, then run and persist a real backtest before unblocking Block 2.0.
