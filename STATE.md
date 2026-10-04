@@ -717,3 +717,32 @@ Summary: Ran `npm run check`, the full backend pytest suite (37 passed), and the
 Deviations from spec: Block 2.0 acceptance is incomplete; no real imported dataset has run through the engine because compatible historical depth is not available. OpenRouter remains a placeholder and was not changed in this task.
 Open questions for Planner: Provide approved Binance T_DEPTH access or identify a permitted hftbacktest-compatible historical L2 source so the adapter and actual data-driven engine run can be completed.
 Next step: Obtain compatible real historical depth, implement and validate its adapter against the vendored engine, then run and persist a real backtest before unblocking Block 2.0.
+
+
+### [2.0.D] BLOCKED - Native desktop launch and packaging correction
+Timestamp: 2026-10-04T10:03:58Z
+Agent: Codex (Executor)
+Status: BLOCKED
+Files touched:
+  - README.md
+  - frontend/README.md
+  - frontend/package.json
+  - frontend/package-lock.json
+  - frontend/vite.config.ts
+  - frontend/src-tauri/tauri.conf.json
+  - frontend/src-tauri/Cargo.toml
+  - frontend/src-tauri/src/lib.rs
+  - frontend/src-tauri/capabilities/main.json (removed)
+  - frontend/src-tauri/capabilities/secondary.json (removed)
+  - frontend/src-tauri/capabilities/research.json (added)
+  - STATE.md
+  - Z:/moham/Desktop/TickLab.lnk (outside repository)
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md Sections 5.2 and 5.4
+  - docs/08-secondary-monitor-components.md Section 8.28
+  - docs/03-tech-stack-and-repo-structure.md Section 3.3
+Summary: Removed the direct Vite browser-run and preview scripts and replaced the frontend instructions with the native Tauri launch/build flow. Tauri now opens one 1440x900 TickLab Research window, binds its development asset server to loopback, and permits the local data API through the app content policy. Built both Windows installers and launched the packaged executable; Windows reports the native window title as TickLab - Research. Updated the desktop shortcut to the verified executable.
+Deviations from spec: The overall real-data workflow remains blocked on compatible historical depth for real engine backtests. The data API remains a separate local Python service; this change does not package or auto-start it.
+Open questions for Planner: None for the desktop-only launch path.
+Next step: Bundle and lifecycle-manage the local data service for a single-launch desktop experience, then continue the real depth adapter and backtest work.

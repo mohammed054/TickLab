@@ -1,37 +1,26 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "BTC Quant Workstation",
+  "productName": "TickLab",
   "version": "0.1.0",
   "identifier": "com.ticklab.workstation",
   "build": {
-    "beforeDevCommand": "npm run dev:browser",
-    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run tauri:frontend-dev",
+    "devUrl": "http://127.0.0.1:5173",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost ws://localhost:5173; img-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; frame-src 'none'",
-      "capabilities": ["main", "secondary"]
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost http://127.0.0.1:8000 ws://127.0.0.1:5173; img-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; frame-src 'none'",
+      "capabilities": ["research"]
     },
     "windows": [
       {
-        "label": "main",
-        "title": "BTC Quant Workstation — Main Monitor",
-        "url": "index.html?shell=main",
-        "width": 2560,
-        "height": 1440,
-        "minWidth": 1280,
-        "minHeight": 720,
-        "resizable": true,
-        "visible": true
-      },
-      {
-        "label": "secondary",
-        "title": "BTC Quant Workstation — Research Lab",
-        "url": "index.html?shell=secondary",
-        "width": 1920,
-        "height": 1200,
+        "label": "research",
+        "title": "TickLab — Research",
+        "url": "index.html",
+        "width": 1440,
+        "height": 900,
         "minWidth": 1024,
         "minHeight": 720,
         "resizable": true,

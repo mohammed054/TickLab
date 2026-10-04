@@ -4,5 +4,5 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .run(tauri::generate_context!())
-        .expect("failed to start BTC Quant Workstation");
+        .expect("failed to start TickLab desktop app");
 }

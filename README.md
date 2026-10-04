@@ -1,11 +1,14 @@
-# BTC Quant Workstation
+# TickLab Desktop App
 
-A professional, dual-monitor **quantitative trading laboratory** for Bitcoin: live
-market observation, market-microstructure research, strategy development, backtesting,
-event-level replay, experiment management, paper trading, and (eventually) live
-execution — all as one synchronized instrument.
+A native Windows **quantitative research app** for Bitcoin: verified market-data
+ingestion, strategy research, real-engine backtesting when compatible depth data is
+available, and a desktop research workflow.
 
-This is not a dashboard. It is a research workstation built around one loop:
+Users launch the packaged TickLab application from its desktop shortcut or installer.
+The interface is bundled into the Tauri desktop app; a browser tab or hosted website is
+not part of the launch flow. React and Vite are internal UI implementation/build tools.
+
+The long-term research loop is:
 
 ```
 OBSERVE → HYPOTHESIS → STRATEGY → DATA → EXECUTION MODEL → BACKTEST → RESULT
@@ -53,7 +56,7 @@ superseded; mock surfaces are not mounted in the running app shell.
 /docs/          Full specification, numbered in reading order (see below)
 /engine/        Vendored hftbacktest (Rust) + our abstraction layer
 /backend/       Gateway API, data pipeline, job runner, live connectors
-/frontend/      The two-monitor workstation UI
+/frontend/      TickLab native desktop application and bundled UI
 /data/          Local datasets and cache (not committed — see .gitignore)
 /scripts/       Collectors, one-off tooling, migration scripts
 /tests/         Cross-cutting integration and end-to-end tests
@@ -81,36 +84,31 @@ superseded; mock surfaces are not mounted in the running app shell.
 | 15 | `15-api-and-data-model-spec.md` | REST/WebSocket contracts, core data models |
 | 16 | `16-implementation-roadmap.md` | Phases → Blocks → Tasks, acceptance criteria, current status |
 
-## Current development status
+## Run TickLab as a desktop app
 
-The data service now has a real Binance USD-M BTCUSDT aggregate-trade import API.
-Run it in a Python environment with the backend's FastAPI dependencies installed:
+For development, open a native TickLab window from `frontend`:
+
+```powershell
+cd frontend
+npm ci
+npm run tauri:dev
+```
+
+To build the Windows desktop executable and installer, run `npm run tauri:build` from
+`frontend`. Outputs are under `frontend/src-tauri/target/release/`.
+
+The data service is a separate local process. Start it from the repository root before
+using market-data import:
+
 
 ```powershell
 python -m uvicorn backend.data.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-The health endpoint is `http://127.0.0.1:8000/health`. Submit an inclusive UTC
-calendar-date range to `POST /binance/trades/import` with JSON fields
-`startDate` and `endDate`, then poll the returned job ID at
-`GET /binance/trades/jobs/{jobId}`. Set `TICKLAB_DATA_ROOT` to choose where raw
-archives and prepared datasets are stored. The import returns real trades and
-explicitly labels them `TRADES_ONLY`; it does not enable a real hftbacktest order-fill
-run. That run remains blocked until compatible historical L2 depth data is
-available.
-
-In a second terminal, start the real-data UI:
-
-```powershell
-cd frontend
-npm ci
-npm run dev
-```
-
-Open the Vite URL printed in the terminal. The UI defaults to the data importer and
-uses `http://127.0.0.1:8000` for the backend; set `VITE_DATA_API_URL` before starting
-Vite to use a different data-service URL. The backtest screen shows the exact depth
-requirements and cannot submit a simulated or mock run.
+The desktop app connects to that local service at `127.0.0.1:8000`. The DATA step
+imports real Binance BTCUSDT USD-M aggregate trades. The BACKTEST step stays disabled
+for trade-only datasets until compatible historical L2 depth data and a validated
+adapter are available; no mock backtest can be submitted.
 
 ## License
 
