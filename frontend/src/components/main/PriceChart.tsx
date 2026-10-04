@@ -1,866 +1,752 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
-import { Candle, timestampNsToMs } from '../../contracts'
-import { Panel } from '../shared/Panel'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { timestampMsToNs, timestampNsToMs } from '../../contracts'
+import type { Candle, StrategyFill } from '../../contracts'
+import { fmtBtc, fmtClock, fmtPrice, fmtSize, fmtVolume } from '../../shared/format'
+import { Seg } from './mm'
 
-const TIMEFRAMES = ['1s', '5s', '15s', '1m', '5m', '15m', '1h', '4h', '1D'] as const
-type Timeframe = (typeof TIMEFRAMES)[number]
-const MODES = ['candles', 'line', 'area', 'footprint', 'depth', 'orderflow'] as const
-type ChartMode = (typeof MODES)[number]
-const OVERLAYS = ['VWAP', 'EMA 9', 'Volume', 'CVD', 'OB Imbalance', 'Strategy Quotes'] as const
-const TIMEFRAME_MS: Record<Timeframe, number> = {
-  '1s': 1_000,
-  '5s': 5_000,
-  '15s': 15_000,
-  '1m': 60_000,
-  '5m': 300_000,
-  '15m': 900_000,
-  '1h': 3_600_000,
-  '4h': 14_400_000,
-  '1D': 86_400_000,
+/* ------------------------------------------------------------------ config */
+
+const TIMEFRAMES = [
+  { value: 1_000, label: '1s' },
+  { value: 5_000, label: '5s' },
+  { value: 15_000, label: '15s' },
+  { value: 60_000, label: '1m' },
+  { value: 300_000, label: '5m' },
+] as const
+const TYPES = [
+  { value: 'candles', label: 'Candles' },
+  { value: 'line', label: 'Line' },
+  { value: 'area', label: 'Area' },
+] as const
+type ChartType = (typeof TYPES)[number]['value']
+
+const INDICATORS = [
+  { id: 'vwap', label: 'VWAP', color: '#d4a72c' },
+  { id: 'ema', label: 'EMA 9', color: '#8b9cf7' },
+  { id: 'volume', label: 'Volume', color: null },
+  { id: 'cvd', label: 'Cumulative delta', color: null },
+  { id: 'fills', label: 'My fills', color: null },
+] as const
+type IndicatorId = (typeof INDICATORS)[number]['id']
+
+const C = {
+  up: '#26a69a',
+  down: '#ef5350',
+  ink: '#e6edf3',
+  muted: '#8b97a6',
+  faint: '#5b6674',
+  grid: 'rgba(255,255,255,0.045)',
+  axis: '#252f3c',
+  tag: '#2b3645',
+  accent: '#3b82f6',
+  line: '#9fb3c8',
+  fontMono: '10px "JetBrains Mono", ui-monospace, monospace',
 }
 
-const CANVAS_FALLBACKS: Record<string, string> = {
-  '--color-positive': '#10b981',
-  '--color-negative': '#f43f5e',
-  '--color-warning': '#f59e0b',
-  '--color-info': '#38bdf8',
-  '--color-text-muted': '#64748b',
-  '--color-border-subtle': '#1c2430',
-  '--color-focus': '#38bdf8',
-  '--color-bg-base': '#080a0d',
+const AXIS_W = 66
+const AXIS_H = 20
+const SUB_H = 56
+const GAP = 6
+const RIGHT_SLOTS = 4 // empty bar slots kept free on the right edge
+const MIN_VISIBLE = 20
+const MAX_VISIBLE = 500
+const DEFAULT_VISIBLE = 120
+const TIME_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600].map((s) => s * 1000)
+
+/* ------------------------------------------------------------------- data */
+
+interface Bar {
+  t: number
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+  buyVolume: number
+  sellVolume: number
+  trades: number
 }
 
-type CrosshairState = { x: number; y: number; price: number; time: string }
-
-function canvasColor(variable: string): string {
-  if (typeof document === 'undefined') return CANVAS_FALLBACKS[variable] ?? '#64748b'
-  return (
-    getComputedStyle(document.documentElement).getPropertyValue(variable).trim() ||
-    CANVAS_FALLBACKS[variable] ||
-    '#64748b'
-  )
+function aggregate(candles: Candle[], interval: number): Bar[] {
+  const bars: Bar[] = []
+  for (const c of candles) {
+    const t = Math.floor(timestampNsToMs(c.timestampNs) / interval) * interval
+    const last = bars[bars.length - 1]
+    if (last && last.t === t) {
+      last.high = Math.max(last.high, c.high)
+      last.low = Math.min(last.low, c.low)
+      last.close = c.close
+      last.volume += c.volume
+      last.buyVolume += c.buyVolume
+      last.sellVolume += c.sellVolume
+      last.trades += c.trades
+    } else {
+      bars.push({ t, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume, buyVolume: c.buyVolume, sellVolume: c.sellVolume, trades: c.trades })
+    }
+  }
+  return bars
 }
 
-const Y_AXIS_WIDTH = 75
-const X_AXIS_HEIGHT = 24
-const CROSSHAIR_LABEL_PADDING = 6
+interface Series {
+  vwap: number[]
+  ema: number[]
+  cvd: number[]
+}
+
+/** Indicators are computed over the full history, then sliced for display, so values do not change when you pan or zoom. */
+function computeSeries(bars: Bar[]): Series {
+  const vwap: number[] = []
+  const ema: number[] = []
+  const cvd: number[] = []
+  const k = 2 / (9 + 1)
+  let pv = 0
+  let vol = 0
+  let e = 0
+  let cum = 0
+  bars.forEach((b, i) => {
+    pv += ((b.high + b.low + b.close) / 3) * b.volume
+    vol += b.volume
+    vwap.push(vol > 0 ? pv / vol : b.close)
+    e = i === 0 ? b.close : b.close * k + e * (1 - k)
+    ema.push(e)
+    cum += b.buyVolume - b.sellVolume
+    cvd.push(cum)
+  })
+  return { vwap, ema, cvd }
+}
+
+function groupFills(fills: StrategyFill[], interval: number): Map<number, StrategyFill[]> {
+  const map = new Map<number, StrategyFill[]>()
+  for (const fill of fills) {
+    const t = Math.floor(timestampNsToMs(fill.timestampNs) / interval) * interval
+    const list = map.get(t)
+    if (list) list.push(fill)
+    else map.set(t, [fill])
+  }
+  return map
+}
+
+function niceStep(range: number, target: number): number {
+  const raw = range / target
+  const magnitude = 10 ** Math.floor(Math.log10(raw))
+  const norm = raw / magnitude
+  return (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * magnitude
+}
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
+const timeLabel = (ms: number, withSeconds: boolean) => fmtClock(ms).slice(0, withSeconds ? 8 : 5)
+
+/* -------------------------------------------------------------- component */
+
+interface Hover {
+  x: number
+  y: number
+}
 
 export function PriceChart({
   candles,
+  fills,
   onSelectTimestamp,
   onPreviewTimestamp,
 }: {
   candles: Candle[]
+  fills: StrategyFill[]
   onSelectTimestamp: (timestampNs: string) => void
-  onPreviewTimestamp?: (timestampNs: string) => void
+  onPreviewTimestamp?: (timestampNs: string | null) => void
 }) {
+  const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const shellRef = useRef<HTMLDivElement>(null)
-  const lastPreviewRef = useRef(0)
-  const [timeframe, setTimeframe] = useState<Timeframe>('1s')
-  const [mode, setMode] = useState<ChartMode>('candles')
-  const [active, setActive] = useState<Set<string>>(new Set(['VWAP', 'Volume']))
-  const [hover, setHover] = useState<Candle | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const [crosshair, setCrosshair] = useState<CrosshairState | null>(null)
-  const [panning, setPanning] = useState(false)
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-  const [followMode, setFollowMode] = useState(true)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  const visibleCandles = useMemo(() => aggregateCandles(candles, timeframe), [candles, timeframe])
-  const displayCandles = useMemo(() => {
-    const count = Math.max(30, Math.round(90 / zoom))
-    const maxStart = Math.max(0, visibleCandles.length - count)
-    // Column width in pixels for each candle
-    const columnWidth = 90 / count || 1
-    // Pan bounds: max pan offset = total content width beyond visible area
-    const maxPan = Math.max(0, (visibleCandles.length - count) * columnWidth)
-    // Map panOffset.x to start index
-    // panFactor = columnWidth: each columnWidth pixels of pan = 1 candle index shift
-    const panFactor = Math.max(1, columnWidth) || 1
-    // When panOffset.x = 0, startIndex = maxStart (show latest candles)
-    // When panOffset.x = maxPan, startIndex = 0 (show earliest candles)
-    const startIndex = Math.max(0, Math.min(maxStart, Math.round((maxPan - panOffset.x) / panFactor)))
-    return visibleCandles.slice(startIndex, startIndex + count)
-  }, [visibleCandles, zoom, panOffset])
+  const [interval, setIntervalMs] = useState<number>(1_000)
+  const [type, setType] = useState<ChartType>('candles')
+  const [enabled, setEnabled] = useState<ReadonlySet<IndicatorId>>(new Set<IndicatorId>(['vwap', 'volume', 'fills']))
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [visible, setVisible] = useState(DEFAULT_VISIBLE)
+  const [offset, setOffset] = useState(0) // bars between the newest bar and the right edge; 0 = following live
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  const [hover, setHover] = useState<Hover | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const drag = useRef<{ x: number; offset: number; moved: boolean } | null>(null)
 
-  const toggleOverlay = (overlay: string) =>
-    setActive((current) => {
-      const next = new Set(current)
-      if (next.has(overlay)) next.delete(overlay)
-      else next.add(overlay)
-      return next
+  const bars = useMemo(() => aggregate(candles, interval), [candles, interval])
+  const series = useMemo(() => computeSeries(bars), [bars])
+  const fillMap = useMemo(() => groupFills(fills, interval), [fills, interval])
+
+  /* ---- geometry (pure function of state, shared by draw + pointer handlers) */
+  const showVol = enabled.has('volume')
+  const showCvd = enabled.has('cvd')
+  const geo = useMemo(() => {
+    const plotW = Math.max(10, size.w - AXIS_W)
+    const subs = (showVol ? 1 : 0) + (showCvd ? 1 : 0)
+    const bottom = Math.max(60, size.h - AXIS_H)
+    const priceH = Math.max(60, bottom - subs * (SUB_H + GAP))
+    let cursor = priceH + GAP
+    const vol = showVol ? { top: cursor, bottom: (cursor += SUB_H) } : null
+    if (showVol) cursor += GAP
+    const cvd = showCvd ? { top: cursor, bottom: cursor + SUB_H } : null
+    return { plotW, priceH, bottom, vol, cvd, barW: plotW / (visible + RIGHT_SLOTS) }
+  }, [size, showVol, showCvd, visible])
+
+  const endIndex = bars.length - offset
+  const startIndex = endIndex - visible
+  const idxAt = useCallback((x: number) => startIndex + Math.floor(x / geo.barW), [startIndex, geo.barW])
+  const xAt = useCallback((i: number) => (i - startIndex + 0.5) * geo.barW, [startIndex, geo.barW])
+
+  const hoverIndex = hover && hover.x >= 0 && hover.x < geo.plotW ? idxAt(hover.x) : null
+  const hoverBar = hoverIndex !== null && hoverIndex >= 0 && hoverIndex < bars.length ? bars[hoverIndex] : null
+  const maxOffset = Math.max(0, bars.length - MIN_VISIBLE)
+
+  /* ---- keep the viewed window anchored when scrolled back and new bars arrive */
+  const prevLen = useRef(bars.length)
+  useEffect(() => {
+    const added = bars.length - prevLen.current
+    prevLen.current = bars.length
+    if (added > 0 && offset > 0) setOffset((o) => clamp(o + added, 0, Math.max(0, bars.length - MIN_VISIBLE)))
+  }, [bars.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---- timeframe change: reset the view */
+  useEffect(() => {
+    setOffset(0)
+    setVisible(clamp(Math.floor(candles.length / (interval / 1_000)), 30, DEFAULT_VISIBLE))
+  }, [interval]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---- publish cursor time to the rest of the workspace */
+  const previewKey = hoverBar ? hoverBar.t : null
+  useEffect(() => {
+    onPreviewTimestamp?.(previewKey === null ? null : timestampMsToNs(previewKey))
+  }, [previewKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => onPreviewTimestamp?.(null), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---- resize */
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      setSize({ w: Math.floor(width), h: Math.floor(height) })
     })
-
-  useEffect(() => {
-    if (followMode) {
-      setPanOffset((prev) => ({ ...prev, x: 0 }))
-    }
-  }, [displayCandles, followMode])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas || displayCandles.length === 0) return
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    const context = canvas.getContext('2d')
-    if (!context) return
-    context.scale(dpr, dpr)
-    const width = rect.width - Y_AXIS_WIDTH
-    const height = rect.height - X_AXIS_HEIGHT
-    context.clearRect(0, 0, width + Y_AXIS_WIDTH, height + X_AXIS_HEIGHT)
-
-    const lows = displayCandles.map((candle) => candle.low)
-    const highs = displayCandles.map((candle) => candle.high)
-    const min = Math.min(...lows)
-    const max = Math.max(...highs)
-    const padding = Math.max((max - min) * 0.08, 0.1)
-    const yFor = (price: number) =>
-      height - ((price - (min - padding)) / (max - min + padding * 2)) * height
-    const columnWidth = width / displayCandles.length
-
-    drawGrid(context, width, height, min, max, padding, displayCandles.length, columnWidth)
-    drawYAxis(context, width, height, min, max, padding)
-    drawXAxis(context, width, height, displayCandles, columnWidth)
-    drawCandles(context, displayCandles, columnWidth, yFor, mode, height, width)
-
-    if (active.has('VWAP'))
-      drawLine(
-        context,
-        displayCandles.map((_, index) => vwapAt(displayCandles, index)),
-        columnWidth,
-        yFor,
-        canvasColor('--color-warning'),
-        width
-      )
-    if (active.has('EMA 9'))
-      drawLine(
-        context,
-        displayCandles.map((_, index) => emaAt(displayCandles, index, 9)),
-        columnWidth,
-        yFor,
-        canvasColor('--color-info'),
-        width
-      )
-    if (active.has('CVD'))
-      drawLine(context, cvdAt(displayCandles), columnWidth, yFor, canvasColor('--color-positive'), width)
-    if (active.has('OB Imbalance'))
-      drawLine(
-        context,
-        displayCandles.map((candle) => candle.close + (candle.buyVolume - candle.sellVolume) * 0.8),
-        columnWidth,
-        yFor,
-        canvasColor('--color-info'),
-        width
-      )
-    if (active.has('Strategy Quotes')) drawStrategyQuotes(context, displayCandles, width, yFor)
-    if (active.has('Volume')) drawVolume(context, displayCandles, columnWidth, height)
-    if (mode === 'depth') drawDepth(context, displayCandles, width, height)
-    if (mode === 'orderflow') drawOrderFlow(context, displayCandles, columnWidth, height)
-    if (mode === 'footprint') drawFootprint(context, displayCandles, columnWidth, height)
-    if (crosshair) drawCrosshair(context, crosshair, width, height)
-  }, [active, displayCandles, mode, crosshair, zoom])
-
-  const handleMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas || displayCandles.length === 0) return
-    if (panning) {
-      const deltaX = event.clientX - panStart.x
-      const deltaY = event.clientY - panStart.y
-      setPanOffset(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY,
-      }))
-      setPanStart(prev => ({ x: event.clientX, y: event.clientY }))
-      return
-    }
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left - panOffset.x
-    const y = event.clientY - rect.top - panOffset.y
-    const width = rect.width - Y_AXIS_WIDTH
-    const height = rect.height - X_AXIS_HEIGHT
-    if (x < 0 || x > width || y < 0 || y > height) {
-      setCrosshair(null)
-      setHover(null)
-      return
-    }
-    const index = Math.min(
-      displayCandles.length - 1,
-      Math.max(0, Math.floor(x / (width / displayCandles.length)))
-    )
-    const candle = displayCandles[index]
-    const lows = displayCandles.map((c) => c.low)
-    const highs = displayCandles.map((c) => c.high)
-    const min = Math.min(...lows)
-    const max = Math.max(...highs)
-    const padding = Math.max((max - min) * 0.08, 0.1)
-    const price = min - padding + (1 - y / height) * (max - min + padding * 2)
-    const time = new Date(Number(BigInt(candle.timestampNs) / 1_000_000n))
-      .toISOString()
-      .slice(11, 23)
-    setCrosshair({ x, y, price, time })
-    setHover(candle)
-    const now = performance.now()
-    if (onPreviewTimestamp && now - lastPreviewRef.current > 50) {
-      lastPreviewRef.current = now
-      onPreviewTimestamp(candle.timestampNs)
-    }
-  }
-
-  const handleLeave = () => {
-    setCrosshair(null)
-    setHover(null)
-    setPanning(false)
-  }
-
-  const fit = () => {
-    setZoom(1)
-    setHover(null)
-    setCrosshair(null)
-  }
-  const reset = () => {
-    setZoom(1)
-    setMode('candles')
-    setTimeframe('1s')
-    setActive(new Set(['VWAP', 'Volume']))
-    setHover(null)
-    setCrosshair(null)
-    setFollowMode(true)
-    setPanOffset({ x: 0, y: 0 })
-  }
-  const screenshot = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const anchor = document.createElement('a')
-    anchor.href = canvas.toDataURL('image/png')
-    anchor.download = 'ticklab-market-chart.png'
-    anchor.click()
-  }
-  const fullscreen = () => {
-    if (shellRef.current?.requestFullscreen) void shellRef.current.requestFullscreen()
-  }
-
-  useEffect(() => {
-    const onFit = () => {
-      setZoom(1)
-      setHover(null)
-      setCrosshair(null)
-    }
-    window.addEventListener('ticklab:chart-fit', onFit)
-    return () => window.removeEventListener('ticklab:chart-fit', onFit)
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
+  /* ---- close indicator menu on outside click */
   useEffect(() => {
-    // Clamp panOffset.x to prevent panning beyond chart data bounds
-    const count = Math.max(30, Math.round(90 / zoom))
-    const maxStart = Math.max(0, visibleCandles.length - count)
-    const columnWidth = 90 / count || 1
-    const maxPan = Math.max(0, (visibleCandles.length - count) * columnWidth)
-    setPanOffset(prev => ({
-      x: Math.max(0, Math.min(maxPan, prev.x)),
-      y: prev.y,
-    }))
-  }, [zoom, visibleCandles.length])
+    if (!menuOpen) return
+    const close = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [menuOpen])
+
+  const fit = useCallback(() => {
+    setVisible(DEFAULT_VISIBLE)
+    setOffset(0)
+    setHover(null)
+  }, [])
+  useEffect(() => {
+    window.addEventListener('ticklab:chart-fit', fit)
+    return () => window.removeEventListener('ticklab:chart-fit', fit)
+  }, [fit])
+
+  /* ---- wheel zoom around the cursor (native listener: React's is passive) */
+  const view = useRef({ visible, offset, len: bars.length, barW: geo.barW, plotW: geo.plotW })
+  view.current = { visible, offset, len: bars.length, barW: geo.barW, plotW: geo.plotW }
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      const v = view.current
+      const rect = el.getBoundingClientRect()
+      const x = clamp(event.clientX - rect.left, 0, v.plotW)
+      const next = clamp(Math.round(v.visible * (event.deltaY > 0 ? 1.12 : 1 / 1.12)), MIN_VISIBLE, MAX_VISIBLE)
+      if (next === v.visible) return
+      const anchorIndex = v.len - v.offset - v.visible + x / v.barW
+      const newStart = anchorIndex - (x / v.plotW) * (next + RIGHT_SLOTS)
+      setVisible(next)
+      setOffset(clamp(Math.round(v.len - (newStart + next)), 0, Math.max(0, v.len - MIN_VISIBLE)))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
+  /* ---- pointer handling */
+  const local = (event: React.PointerEvent) => {
+    const rect = wrapRef.current!.getBoundingClientRect()
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top }
+  }
+  const onPointerDown = (event: React.PointerEvent) => {
+    if (event.button !== 0) return
+    wrapRef.current?.setPointerCapture(event.pointerId)
+    drag.current = { x: event.clientX, offset, moved: false }
+  }
+  const onPointerMove = (event: React.PointerEvent) => {
+    const p = local(event)
+    const d = drag.current
+    if (d) {
+      const dx = event.clientX - d.x
+      if (Math.abs(dx) > 3) {
+        d.moved = true
+        setDragging(true)
+        setHover(null)
+      }
+      if (d.moved) setOffset(clamp(Math.round(d.offset + dx / geo.barW), 0, maxOffset))
+      return
+    }
+    setHover(p.x < 0 || p.y < 0 || p.y > geo.bottom ? null : p)
+  }
+  const onPointerUp = (event: React.PointerEvent) => {
+    const d = drag.current
+    drag.current = null
+    setDragging(false)
+    if (d && !d.moved) {
+      const p = local(event)
+      const i = idxAt(p.x)
+      if (p.x < geo.plotW && i >= 0 && i < bars.length) onSelectTimestamp(timestampMsToNs(bars[i].t))
+    }
+  }
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault()
+      const current = hoverIndex ?? bars.length - 1 - offset
+      const next = clamp(current + (event.key === 'ArrowLeft' ? -1 : 1), 0, bars.length - 1)
+      let newOffset = offset
+      if (next < startIndex) newOffset = clamp(bars.length - next - visible, 0, maxOffset)
+      else if (next >= endIndex) newOffset = clamp(bars.length - next - 1, 0, maxOffset)
+      setOffset(newOffset)
+      setHover({ x: (next - (bars.length - newOffset - visible) + 0.5) * geo.barW, y: hover?.y ?? geo.priceH / 2 })
+    } else if (event.key === 'End') {
+      setOffset(0)
+    } else if (event.key === 'Escape') {
+      setHover(null)
+    }
+  }
+
+  const exportPng = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const a = document.createElement('a')
+    a.href = canvas.toDataURL('image/png')
+    a.download = `chart-${fmtClock(Date.now()).replace(/:/g, '')}.png`
+    a.click()
+  }
+
+  /* ---- drawing */
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || size.w === 0 || size.h === 0) return
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = Math.round(size.w * dpr)
+    canvas.height = Math.round(size.h * dpr)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, size.w, size.h)
+    if (bars.length === 0) return
+
+    const { plotW, priceH, bottom, vol, cvd, barW } = geo
+    const i0 = Math.max(0, startIndex)
+    const i1 = Math.min(bars.length, endIndex)
+    if (i1 <= i0) return
+
+    // price scale
+    let lo = Infinity
+    let hi = -Infinity
+    for (let i = i0; i < i1; i += 1) {
+      lo = Math.min(lo, type === 'candles' ? bars[i].low : bars[i].close)
+      hi = Math.max(hi, type === 'candles' ? bars[i].high : bars[i].close)
+    }
+    const pad = Math.max((hi - lo) * 0.08, 0.5)
+    const pMin = lo - pad
+    const pMax = hi + pad
+    const yP = (p: number) => ((pMax - p) / (pMax - pMin)) * priceH
+    const priceAt = (y: number) => pMax - (y / priceH) * (pMax - pMin)
+
+    ctx.font = C.fontMono
+    ctx.textBaseline = 'middle'
+
+    // horizontal grid + price labels
+    const step = niceStep(pMax - pMin, Math.max(3, Math.floor(priceH / 54)))
+    ctx.textAlign = 'right'
+    const lastY0 = yP(bars[bars.length - 1].close)
+    for (let p = Math.ceil(pMin / step) * step; p <= pMax; p += step) {
+      const y = Math.round(yP(p)) + 0.5
+      const nearTag = Math.abs(y - lastY0) < 11
+      ctx.strokeStyle = C.grid
+      ctx.beginPath()
+      ctx.moveTo(0, y)
+      ctx.lineTo(plotW, y)
+      ctx.stroke()
+      if (nearTag) continue
+      ctx.fillStyle = C.faint
+      ctx.fillText(fmtPrice(p), size.w - 6, y)
+    }
+
+    // vertical grid + time labels
+    const minMs = (90 / barW) * interval
+    const stepMs = TIME_STEPS.find((s) => s >= minMs && s >= interval) ?? TIME_STEPS[TIME_STEPS.length - 1]
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    let lastLabelX = -Infinity
+    for (let i = i0; i < i1; i += 1) {
+      if (bars[i].t % stepMs !== 0) continue
+      const x = Math.round(xAt(i)) + 0.5
+      ctx.strokeStyle = C.grid
+      ctx.beginPath()
+      ctx.moveTo(x, 0)
+      ctx.lineTo(x, bottom)
+      ctx.stroke()
+      if (x - lastLabelX >= 64) {
+        ctx.fillStyle = C.faint
+        ctx.fillText(timeLabel(bars[i].t, stepMs < 60_000), x, bottom + 5)
+        lastLabelX = x
+      }
+    }
+
+    // axes
+    ctx.strokeStyle = C.axis
+    ctx.beginPath()
+    ctx.moveTo(plotW + 0.5, 0)
+    ctx.lineTo(plotW + 0.5, bottom)
+    ctx.moveTo(0, bottom + 0.5)
+    ctx.lineTo(size.w, bottom + 0.5)
+    ctx.stroke()
+
+    // clip series to the plot
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(0, 0, plotW, priceH)
+    ctx.clip()
+
+    if (type === 'candles') {
+      const bodyW = Math.max(1, Math.floor(barW * 0.72))
+      for (let i = i0; i < i1; i += 1) {
+        const b = bars[i]
+        const color = b.close >= b.open ? C.up : C.down
+        const cx = Math.round(xAt(i)) + 0.5
+        ctx.strokeStyle = color
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.moveTo(cx, Math.round(yP(b.high)))
+        ctx.lineTo(cx, Math.round(yP(b.low)))
+        ctx.stroke()
+        if (barW >= 3) {
+          const top = Math.round(Math.min(yP(b.open), yP(b.close)))
+          const h = Math.max(1, Math.round(Math.abs(yP(b.open) - yP(b.close))))
+          ctx.fillRect(Math.round(cx - bodyW / 2), top, bodyW, h)
+        }
+      }
+    } else {
+      ctx.beginPath()
+      for (let i = i0; i < i1; i += 1) {
+        const x = xAt(i)
+        if (i === i0) ctx.moveTo(x, yP(bars[i].close))
+        else ctx.lineTo(x, yP(bars[i].close))
+      }
+      ctx.strokeStyle = C.line
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+      ctx.lineWidth = 1
+      if (type === 'area') {
+        ctx.lineTo(xAt(i1 - 1), priceH)
+        ctx.lineTo(xAt(i0), priceH)
+        ctx.closePath()
+        const gradient = ctx.createLinearGradient(0, 0, 0, priceH)
+        gradient.addColorStop(0, 'rgba(159,179,200,0.22)')
+        gradient.addColorStop(1, 'rgba(159,179,200,0)')
+        ctx.fillStyle = gradient
+        ctx.fill()
+      }
+    }
+
+    const overlay = (values: number[], color: string) => {
+      ctx.beginPath()
+      for (let i = i0; i < i1; i += 1) {
+        const x = xAt(i)
+        if (i === i0) ctx.moveTo(x, yP(values[i]))
+        else ctx.lineTo(x, yP(values[i]))
+      }
+      ctx.strokeStyle = color
+      ctx.lineWidth = 1.2
+      ctx.stroke()
+      ctx.lineWidth = 1
+    }
+    if (enabled.has('vwap')) overlay(series.vwap, INDICATORS[0].color)
+    if (enabled.has('ema')) overlay(series.ema, INDICATORS[1].color)
+
+    // fills as arrows: buys below the bar, sells above it
+    if (enabled.has('fills')) {
+      const w = barW >= 5 ? 4 : 3
+      for (let i = i0; i < i1; i += 1) {
+        const list = fillMap.get(bars[i].t)
+        if (!list) continue
+        const cx = xAt(i)
+        const lowY = type === 'candles' ? yP(bars[i].low) : yP(bars[i].close)
+        const highY = type === 'candles' ? yP(bars[i].high) : yP(bars[i].close)
+        if (list.some((f) => f.side === 'BUY')) {
+          ctx.fillStyle = C.up
+          ctx.beginPath()
+          ctx.moveTo(cx, lowY + 3)
+          ctx.lineTo(cx - w, lowY + 3 + w * 1.8)
+          ctx.lineTo(cx + w, lowY + 3 + w * 1.8)
+          ctx.closePath()
+          ctx.fill()
+        }
+        if (list.some((f) => f.side === 'SELL')) {
+          ctx.fillStyle = C.down
+          ctx.beginPath()
+          ctx.moveTo(cx, highY - 3)
+          ctx.lineTo(cx - w, highY - 3 - w * 1.8)
+          ctx.lineTo(cx + w, highY - 3 - w * 1.8)
+          ctx.closePath()
+          ctx.fill()
+        }
+      }
+    }
+    ctx.restore()
+
+    // last price line + axis tag
+    const lastBar = bars[bars.length - 1]
+    const lastY = yP(lastBar.close)
+    if (lastY >= 0 && lastY <= priceH) {
+      const color = lastBar.close >= lastBar.open ? C.up : C.down
+      ctx.strokeStyle = color
+      ctx.setLineDash([2, 3])
+      ctx.beginPath()
+      ctx.moveTo(0, Math.round(lastY) + 0.5)
+      ctx.lineTo(plotW, Math.round(lastY) + 0.5)
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = color
+      ctx.fillRect(plotW + 1, Math.round(lastY) - 8, AXIS_W - 2, 16)
+      ctx.fillStyle = '#0b0e12'
+      ctx.textAlign = 'right'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(fmtPrice(lastBar.close), size.w - 6, Math.round(lastY))
+    }
+
+    // sub panes
+    const pane = (box: { top: number; bottom: number }, title: string, max: string, min?: string) => {
+      ctx.strokeStyle = C.axis
+      ctx.beginPath()
+      ctx.moveTo(0, box.top - 0.5)
+      ctx.lineTo(size.w, box.top - 0.5)
+      ctx.stroke()
+      ctx.fillStyle = C.faint
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'top'
+      ctx.fillText(title, 6, box.top + 3)
+      ctx.textAlign = 'right'
+      ctx.fillText(max, size.w - 6, box.top + 2)
+      if (min) {
+        ctx.textBaseline = 'bottom'
+        ctx.fillText(min, size.w - 6, box.bottom - 2)
+      }
+    }
+    if (vol) {
+      let maxVol = 0
+      for (let i = i0; i < i1; i += 1) maxVol = Math.max(maxVol, bars[i].volume)
+      maxVol = maxVol || 1
+      const h = vol.bottom - vol.top
+      const bw = Math.max(1, Math.floor(barW * 0.72))
+      for (let i = i0; i < i1; i += 1) {
+        const b = bars[i]
+        const bh = Math.max(1, (b.volume / maxVol) * (h - 14))
+        ctx.fillStyle = b.close >= b.open ? 'rgba(38,166,154,0.55)' : 'rgba(239,83,80,0.55)'
+        ctx.fillRect(Math.round(xAt(i) - bw / 2), vol.bottom - bh, bw, bh)
+      }
+      pane(vol, 'Volume (BTC)', fmtVolume(maxVol))
+    }
+    if (cvd) {
+      let lowC = Infinity
+      let highC = -Infinity
+      for (let i = i0; i < i1; i += 1) {
+        lowC = Math.min(lowC, series.cvd[i])
+        highC = Math.max(highC, series.cvd[i])
+      }
+      const span = highC - lowC || 1
+      const yC = (v: number) => cvd.bottom - 4 - ((v - lowC) / span) * (cvd.bottom - cvd.top - 20)
+      if (lowC < 0 && highC > 0) {
+        ctx.strokeStyle = C.axis
+        ctx.setLineDash([2, 3])
+        ctx.beginPath()
+        ctx.moveTo(0, Math.round(yC(0)) + 0.5)
+        ctx.lineTo(plotW, Math.round(yC(0)) + 0.5)
+        ctx.stroke()
+        ctx.setLineDash([])
+      }
+      ctx.beginPath()
+      for (let i = i0; i < i1; i += 1) {
+        if (i === i0) ctx.moveTo(xAt(i), yC(series.cvd[i]))
+        else ctx.lineTo(xAt(i), yC(series.cvd[i]))
+      }
+      ctx.strokeStyle = C.line
+      ctx.stroke()
+      const sv = (v: number) => `${v < 0 ? '\u2212' : v > 0 ? '+' : ''}${fmtVolume(v)}`
+      pane(cvd, 'Cumulative delta (BTC)', sv(highC), sv(lowC))
+    }
+
+    // crosshair
+    if (hover && hoverBar && hoverIndex !== null && !dragging) {
+      const cx = Math.round(xAt(hoverIndex)) + 0.5
+      ctx.fillStyle = 'rgba(255,255,255,0.045)'
+      ctx.fillRect(Math.round(xAt(hoverIndex) - barW / 2), 0, Math.max(1, Math.round(barW)), bottom)
+      ctx.strokeStyle = 'rgba(139,151,166,0.55)'
+      ctx.setLineDash([3, 3])
+      ctx.beginPath()
+      ctx.moveTo(cx, 0)
+      ctx.lineTo(cx, bottom)
+      if (hover.y <= priceH) {
+        ctx.moveTo(0, Math.round(hover.y) + 0.5)
+        ctx.lineTo(plotW, Math.round(hover.y) + 0.5)
+      }
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.textBaseline = 'middle'
+      if (hover.y <= priceH) {
+        ctx.fillStyle = C.tag
+        ctx.fillRect(plotW + 1, Math.round(hover.y) - 8, AXIS_W - 2, 16)
+        ctx.fillStyle = C.ink
+        ctx.textAlign = 'right'
+        ctx.fillText(fmtPrice(priceAt(hover.y)), size.w - 6, Math.round(hover.y))
+      }
+      const label = timeLabel(hoverBar.t, true)
+      const tw = ctx.measureText(label).width + 12
+      const tx = clamp(cx - tw / 2, 0, plotW - tw)
+      ctx.fillStyle = C.tag
+      ctx.fillRect(tx, bottom + 1, tw, AXIS_H - 2)
+      ctx.fillStyle = C.ink
+      ctx.textAlign = 'center'
+      ctx.fillText(label, tx + tw / 2, bottom + AXIS_H / 2)
+    }
+  }, [bars, series, fillMap, geo, size, type, enabled, hover, hoverBar, hoverIndex, startIndex, endIndex, interval, dragging, xAt])
+
+  /* ---- legend + tooltip content */
+  const legendIndex = hoverBar ? hoverIndex! : bars.length - 1
+  const legendBar = bars[legendIndex]
+  const prevClose = legendIndex > 0 ? bars[legendIndex - 1].close : legendBar?.open
+  const change = legendBar && prevClose !== undefined ? legendBar.close - prevClose : 0
+  const changePct = prevClose ? (change / prevClose) * 100 : 0
+  const pct = (v: number) => `${v > 0 ? '+' : v < 0 ? '\u2212' : ''}${Math.abs(v).toFixed(3)}%`
+  const tone = change > 0 ? 'pos' : change < 0 ? 'neg' : ''
+  const intervalLabel = TIMEFRAMES.find((t) => t.value === interval)?.label ?? ''
+  const barFills = hoverBar ? fillMap.get(hoverBar.t) : undefined
+
+  const TIP_W = 214
+  const tipH = 178 + (barFills ? 24 + Math.min(barFills.length, 6) * 17 : 0)
+  const tipStyle = hover
+    ? {
+        left: hover.x + 18 + TIP_W > geo.plotW ? hover.x - 18 - TIP_W : hover.x + 18,
+        top: clamp(hover.y + 14 + tipH > size.h ? hover.y - 14 - tipH : hover.y + 14, 4, Math.max(4, size.h - tipH - 4)),
+      }
+    : undefined
 
   return (
-    <div
-      ref={shellRef}
-      style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', width: '100%' }}
-    >
-      <Panel
-        title="PRICE & MARKET DEPTH CHART"
-        style={{ flex: '1 1 auto', minHeight: 0 }}
-        bodyStyle={{ display: 'flex', flexDirection: 'column', padding: 0 }}
-        right={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button type="button" onClick={fit} style={toolButtonStyle} title="Fit to current viewport">
-              FIT
-            </button>
-            <button type="button" onClick={reset} style={toolButtonStyle} title="Reset chart view">
-              RESET
-            </button>
-            <button type="button" onClick={screenshot} style={toolButtonStyle} title="Export chart as PNG image">
-              PNG
-            </button>
-            <button type="button" onClick={fullscreen} style={toolButtonStyle} title="Toggle fullscreen view">
-              FULL
-            </button>
-            <button
-              type="button"
-              onClick={() => setFollowMode(!followMode)}
-              style={{
-                ...toolButtonStyle,
-                background: followMode ? 'var(--color-bg-control-active)' : 'transparent',
-                borderColor: followMode ? 'var(--color-border-accent)' : 'var(--color-border-subtle)',
-                color: followMode ? 'var(--color-focus)' : 'var(--color-text-muted)',
-                fontWeight: followMode ? 700 : 400,
-              }}
-            >
-              {followMode ? 'â— AUTO-FOLLOW' : 'â—‹ MANUAL'}
-            </button>
-          </div>
-        }
-      >
-        {/* Trading Toolbar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '4px 8px',
-            background: 'var(--color-bg-raised)',
-            borderBottom: '1px solid var(--color-border-subtle)',
-            gap: 8,
-            overflowX: 'auto',
-          }}
-        >
-          {/* Timeframes */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--color-text-muted)', marginRight: 4 }}>
-              INTERVAL
-            </span>
-            {TIMEFRAMES.map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={timeframe === value}
-                onClick={() => setTimeframe(value)}
-                style={{
-                  ...toolButtonStyle,
-                  background: timeframe === value ? 'var(--color-bg-control-active)' : 'transparent',
-                  color: timeframe === value ? 'var(--color-focus)' : 'var(--color-text-secondary)',
-                  borderColor: timeframe === value ? 'var(--color-border-accent)' : 'transparent',
-                  fontWeight: timeframe === value ? 700 : 400,
-                }}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-
-          {/* Modes */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--color-text-muted)', marginRight: 4 }}>
-              MODE
-            </span>
-            {MODES.map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={mode === m}
-                onClick={() => setMode(m)}
-                style={{
-                  ...toolButtonStyle,
-                  background: mode === m ? 'var(--color-bg-control-active)' : 'transparent',
-                  color: mode === m ? 'var(--color-focus)' : 'var(--color-text-secondary)',
-                  borderColor: mode === m ? 'var(--color-border-accent)' : 'transparent',
-                  fontWeight: mode === m ? 700 : 400,
-                }}
-              >
-                {m.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          {/* Overlays */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--color-text-muted)', marginRight: 4 }}>
-              OVERLAYS
-            </span>
-            {OVERLAYS.map((overlay) => {
-              const isSelected = active.has(overlay)
-              return (
-                <button
-                  key={overlay}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => toggleOverlay(overlay)}
-                  style={{
-                    ...toolButtonStyle,
-                    background: isSelected ? 'var(--color-info-dim)' : 'transparent',
-                    color: isSelected ? 'var(--color-info)' : 'var(--color-text-muted)',
-                    borderColor: isSelected ? 'rgba(56, 189, 248, 0.4)' : 'transparent',
-                    fontWeight: isSelected ? 600 : 400,
-                  }}
-                >
-                  {overlay}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* OHLCV Live HUD */}
-        <div
-          style={{
-            padding: '4px 10px',
-            fontSize: 'var(--font-size-xs)',
-            background: 'rgba(8, 10, 13, 0.6)',
-            borderBottom: '1px solid var(--color-border-subtle)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-          className="mono"
-        >
-          {hover ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span>
-                <span style={{ color: 'var(--color-text-muted)' }}>OPEN </span>
-                <span style={{ color: 'var(--color-text-primary)' }}>{hover.open.toFixed(1)}</span>
-              </span>
-              <span>
-                <span style={{ color: 'var(--color-text-muted)' }}>HIGH </span>
-                <span className="pos">{hover.high.toFixed(1)}</span>
-              </span>
-              <span>
-                <span style={{ color: 'var(--color-text-muted)' }}>LOW </span>
-                <span className="neg">{hover.low.toFixed(1)}</span>
-              </span>
-              <span>
-                <span style={{ color: 'var(--color-text-muted)' }}>CLOSE </span>
-                <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{hover.close.toFixed(1)}</span>
-              </span>
-              <span>
-                <span style={{ color: 'var(--color-text-muted)' }}>VOL </span>
-                <span style={{ color: 'var(--color-text-primary)' }}>{hover.volume.toFixed(3)} BTC</span>
-              </span>
-              <span>
-                <span style={{ color: 'var(--color-text-muted)' }}>TRADES </span>
-                <span style={{ color: 'var(--color-text-secondary)' }}>{hover.trades}</span>
-              </span>
-            </div>
-          ) : (
-            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-2xs)' }}>
-              Move cursor over chart for real-time OHLCV inspection Â· Click candle to sync dual monitors Â· Scroll wheel to zoom
+    <section className="mm-panel" aria-label="Price chart">
+      <div className="mm-chart-tools">
+        <Seg
+          options={TIMEFRAMES.map((t) => ({ value: t.value as number, label: t.label }))}
+          value={interval}
+          onChange={setIntervalMs}
+          label="Timeframe"
+          isDisabled={(v) => (candles.length * 1_000) / v < 12}
+        />
+        <Seg options={TYPES} value={type} onChange={setType} label="Chart type" />
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button type="button" className="mm-btn" aria-expanded={menuOpen} aria-haspopup="menu" onClick={() => setMenuOpen((o) => !o)}>
+            Indicators ▾
+          </button>
+          {menuOpen && (
+            <div className="mm-menu" role="menu">
+              {INDICATORS.map((ind) => (
+                <label key={ind.id}>
+                  <input
+                    type="checkbox"
+                    checked={enabled.has(ind.id)}
+                    onChange={() =>
+                      setEnabled((current) => {
+                        const next = new Set(current)
+                        if (next.has(ind.id)) next.delete(ind.id)
+                        else next.add(ind.id)
+                        return next
+                      })
+                    }
+                  />
+                  {ind.color && <span className="mm-swatch" style={{ background: ind.color }} />}
+                  {ind.label}
+                </label>
+              ))}
             </div>
           )}
+        </div>
+        <span className="grow" />
+        {offset > 0 && (
+          <button type="button" className="mm-btn" onClick={() => setOffset(0)} title="Jump to the latest bar (End)">
+            Latest ▸▸
+          </button>
+        )}
+        <button type="button" className="mm-btn" onClick={fit} title="Reset zoom and follow the latest bar (F)">Fit</button>
+        <button type="button" className="mm-btn" onClick={exportPng} title="Export the chart as PNG">PNG</button>
+      </div>
 
-          <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-2xs)' }}>
-            ZOOM: {zoom.toFixed(1)}x
+      <div
+        ref={wrapRef}
+        className="mm-chart-wrap"
+        tabIndex={0}
+        role="application"
+        aria-label="Price chart. Arrow keys move the cursor bar by bar, End jumps to the latest bar."
+        style={{ cursor: dragging ? 'grabbing' : 'crosshair', touchAction: 'none' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={() => !drag.current && setHover(null)}
+        onKeyDown={onKeyDown}
+      >
+        <canvas ref={canvasRef} />
+
+        {legendBar && (
+          <div className="mm-legend num">
+            <span className="muted">BTCUSDT · {intervalLabel}</span>
+            <span><span className="k">O</span>{fmtPrice(legendBar.open)}</span>
+            <span><span className="k">H</span>{fmtPrice(legendBar.high)}</span>
+            <span><span className="k">L</span>{fmtPrice(legendBar.low)}</span>
+            <span><span className="k">C</span>{fmtPrice(legendBar.close)}</span>
+            <span className={tone}>{change >= 0 ? '+' : '\u2212'}{fmtPrice(Math.abs(change))} ({pct(changePct)})</span>
+            {enabled.has('vwap') && <span style={{ color: INDICATORS[0].color }}><span className="k" style={{ color: 'inherit' }}>VWAP</span>{fmtPrice(series.vwap[legendIndex])}</span>}
+            {enabled.has('ema') && <span style={{ color: INDICATORS[1].color }}><span className="k" style={{ color: 'inherit' }}>EMA 9</span>{fmtPrice(series.ema[legendIndex])}</span>}
           </div>
-        </div>
+        )}
 
-        {/* Chart Canvas Area */}
-        <div style={{ flex: '1 1 auto', minHeight: 0, position: 'relative', width: '100%', height: '100%' }}>
-          <canvas
-            ref={canvasRef}
-            onMouseMove={handleMove}
-            onMouseLeave={handleLeave}
-            onClick={(event) => {
-              const canvas = canvasRef.current
-              if (!canvas || displayCandles.length === 0) return
-              const rect = canvas.getBoundingClientRect()
-              const x = event.clientX - rect.left
-              const width = rect.width - Y_AXIS_WIDTH
-              const index = Math.min(
-                displayCandles.length - 1,
-                Math.max(0, Math.floor(x / (width / displayCandles.length)))
-              )
-              onSelectTimestamp(displayCandles[index].timestampNs)
-            }}
-            onMouseDown={(event) => {
-              if (event.button === 2) {
-                setPanning(true)
-                setFollowMode(false)
-                setPanOffset({
-                  x: event.clientX - canvasRef.current!.getBoundingClientRect().left,
-                  y: event.clientY - canvasRef.current!.getBoundingClientRect().top,
-                })
-                setPanStart({
-                  x: event.clientX - canvasRef.current!.getBoundingClientRect().left,
-                  y: event.clientY - canvasRef.current!.getBoundingClientRect().top,
-                })
-              }
-            }}
-onMouseUp={() => setPanning(false)}
-            onWheel={(event) => {
-              event.preventDefault()
-              const canvas = canvasRef.current
-              if (!canvas || displayCandles.length === 0) return
-              const rect = canvas.getBoundingClientRect()
-              const width = rect.width - Y_AXIS_WIDTH
-              const height = rect.height - X_AXIS_HEIGHT
-              const mouseX = event.clientX - rect.left
-              const mouseY = event.clientY - rect.top
-              const beforeZoom = zoom
-              setZoom((current) => Math.min(3, Math.max(0.5, current - (event.deltaY > 0 ? 0.1 : -0.1))))
-              const afterZoom = zoom
-              const dx = (mouseX / width) * (afterZoom - beforeZoom)
-              const dy = (mouseY / height) * (afterZoom - beforeZoom)
-              setPanOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
-            }}
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'block',
-              cursor: panning ? 'grabbing' : 'crosshair',
-              transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
-            }}
-          />
-        </div>
-      </Panel>
-    </div>
+        {hover && hoverBar && !dragging && tipStyle && (
+          <div className="mm-tip num" style={{ ...tipStyle, width: TIP_W }}>
+            <div className="t">
+              {timeLabel(hoverBar.t, true)} – {timeLabel(hoverBar.t + interval, true)} UTC
+            </div>
+            <div className="r"><span>Open</span><span>{fmtPrice(hoverBar.open)}</span></div>
+            <div className="r"><span>High</span><span>{fmtPrice(hoverBar.high)}</span></div>
+            <div className="r"><span>Low</span><span>{fmtPrice(hoverBar.low)}</span></div>
+            <div className="r"><span>Close</span><span className={hoverBar.close >= hoverBar.open ? 'pos' : 'neg'}>{fmtPrice(hoverBar.close)}</span></div>
+            <div className="r"><span>Change</span><span className={tone}>{change >= 0 ? '+' : '\u2212'}{fmtPrice(Math.abs(change))} ({pct(changePct)})</span></div>
+            <div className="r"><span>Volume</span><span>{fmtSize(hoverBar.volume)} BTC</span></div>
+            <div className="r"><span>Buy / Sell</span><span><span className="pos">{fmtSize(hoverBar.buyVolume)}</span> / <span className="neg">{fmtSize(hoverBar.sellVolume)}</span></span></div>
+            <div className="r"><span>Trades</span><span>{hoverBar.trades}</span></div>
+            {barFills && (
+              <div className="sec">
+                <div className="r"><span>My fills</span><span>{barFills.length}</span></div>
+                {barFills.slice(0, 6).map((f) => (
+                  <div className="r" key={f.id}>
+                    <span className={f.side === 'BUY' ? 'pos' : 'neg'}>{f.side}</span>
+                    <span>{fmtSize(f.size)} @ {fmtPrice(f.price)}</span>
+                  </div>
+                ))}
+                <div className="r"><span>Position after</span><span>{fmtBtc(barFills[barFills.length - 1].positionAfter, true)}</span></div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   )
-}
-
-function aggregateCandles(candles: Candle[], timeframe: Timeframe): Candle[] {
-  if (candles.length === 0) return candles
-  const interval = TIMEFRAME_MS[timeframe]
-  const grouped = new Map<number, Candle>()
-  candles.forEach((candle) => {
-    const bucket = Math.floor(timestampNsToMs(candle.timestampNs) / interval) * interval
-    const current = grouped.get(bucket)
-    if (!current) grouped.set(bucket, { ...candle, timestampNs: candle.timestampNs })
-    else
-      grouped.set(bucket, {
-        ...current,
-        high: Math.max(current.high, candle.high),
-        low: Math.min(current.low, candle.low),
-        close: candle.close,
-        volume: current.volume + candle.volume,
-        buyVolume: current.buyVolume + candle.buyVolume,
-        sellVolume: current.sellVolume + candle.sellVolume,
-        trades: current.trades + candle.trades,
-      })
-  })
-  return Array.from(grouped.values())
-}
-
-function drawGrid(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  min: number,
-  max: number,
-  padding: number,
-  candleCount: number,
-  columnWidth: number
-) {
-  const gridColor = canvasColor('--color-border-subtle')
-  context.strokeStyle = gridColor
-  context.lineWidth = 1
-  context.setLineDash([3, 4])
-
-  const priceRange = max - min + padding * 2
-  const yStep = priceRange / 6
-  for (let i = 1; i < 6; i++) {
-    const y = height * (i / 6)
-    context.beginPath()
-    context.moveTo(0, y)
-    context.lineTo(width, y)
-    context.stroke()
-  }
-
-  for (let i = 1; i < 8; i++) {
-    const x = (i * width) / 8
-    context.beginPath()
-    context.moveTo(x, 0)
-    context.lineTo(x, height)
-    context.stroke()
-  }
-  context.setLineDash([])
-}
-
-function drawYAxis(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  min: number,
-  max: number,
-  padding: number
-) {
-  context.fillStyle = canvasColor('--color-text-muted')
-  context.font = '10px "JetBrains Mono", monospace'
-  context.textAlign = 'right'
-  context.textBaseline = 'middle'
-
-  const priceRange = max - min + padding * 2
-  const yStep = priceRange / 6
-  for (let i = 0; i <= 6; i++) {
-    const price = max + padding - i * yStep
-    const y = height * (i / 6)
-    context.fillText(price.toFixed(1), width + Y_AXIS_WIDTH - CROSSHAIR_LABEL_PADDING, y)
-  }
-
-  context.beginPath()
-  context.moveTo(width, 0)
-  context.lineTo(width, height)
-  context.strokeStyle = canvasColor('--color-border-strong')
-  context.lineWidth = 1
-  context.stroke()
-}
-
-function drawXAxis(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  candles: Candle[],
-  columnWidth: number
-) {
-  context.fillStyle = canvasColor('--color-text-muted')
-  context.font = '10px "JetBrains Mono", monospace'
-  context.textAlign = 'center'
-  context.textBaseline = 'top'
-
-  const timeStep = Math.max(1, Math.floor(candles.length / 8))
-  for (let i = 0; i < 8; i++) {
-    const idx = Math.min(candles.length - 1, i * timeStep)
-    const candle = candles[idx]
-    const x = idx * columnWidth + columnWidth / 2
-    const time = new Date(Number(BigInt(candle.timestampNs) / 1_000_000n)).toISOString().slice(11, 19)
-    context.fillText(time, x, height + 5)
-  }
-
-  context.beginPath()
-  context.moveTo(0, height)
-  context.lineTo(width, height)
-  context.strokeStyle = canvasColor('--color-border-strong')
-  context.lineWidth = 1
-  context.stroke()
-}
-
-function drawCrosshair(
-  context: CanvasRenderingContext2D,
-  crosshair: CrosshairState,
-  width: number,
-  height: number
-): void {
-  const lineX = Math.round(Math.min(Math.max(crosshair.x, 0), width)) + 0.5
-  const lineY = Math.round(Math.min(Math.max(crosshair.y, 0), height)) + 0.5
-  const accent = canvasColor('--color-focus')
-  const ink = canvasColor('--color-bg-base')
-
-  context.save()
-  context.strokeStyle = 'rgba(56, 189, 248, 0.6)'
-  context.lineWidth = 1
-  context.setLineDash([3, 3])
-  context.beginPath()
-  context.moveTo(lineX, 0)
-  context.lineTo(lineX, height)
-  context.moveTo(0, lineY)
-  context.lineTo(width, lineY)
-  context.stroke()
-  context.setLineDash([])
-
-  context.font = '10px "JetBrains Mono", monospace'
-  context.textAlign = 'center'
-  context.textBaseline = 'middle'
-
-  const priceText = crosshair.price.toFixed(1)
-  const priceWidth = Math.min(Y_AXIS_WIDTH - 4, context.measureText(priceText).width + 10)
-  const priceY = Math.min(Math.max(crosshair.y, 8), height - 8)
-  context.fillStyle = accent
-  context.fillRect(width + 1, priceY - 8, priceWidth, 16)
-  context.fillStyle = ink
-  context.fillText(priceText, width + 1 + priceWidth / 2, priceY)
-
-  const timeText = crosshair.time
-  const timeWidth = Math.min(Y_AXIS_WIDTH - 4, context.measureText(timeText).width + 10)
-  const timeX = Math.min(Math.max(lineX, timeWidth / 2), width - timeWidth / 2)
-  context.fillStyle = accent
-  context.fillRect(timeX - timeWidth / 2, height + 1, timeWidth, 15)
-  context.fillStyle = ink
-  context.fillText(timeText, timeX, height + 9)
-
-  context.restore()
-}
-
-function drawCandles(
-  context: CanvasRenderingContext2D,
-  candles: Candle[],
-  columnWidth: number,
-  yFor: (value: number) => number,
-  mode: ChartMode,
-  height: number,
-  width: number
-) {
-  const posColor = canvasColor('--color-positive')
-  const negColor = canvasColor('--color-negative')
-  const bodyWidth = Math.max(1, columnWidth * 0.75)
-
-  if (mode === 'line' || mode === 'area') {
-    context.beginPath()
-    candles.forEach((candle, index) => {
-      const x = index * columnWidth + columnWidth / 2
-      if (index === 0) context.moveTo(x, yFor(candle.close))
-      else context.lineTo(x, yFor(candle.close))
-    })
-    context.strokeStyle = canvasColor('--color-info')
-    context.lineWidth = 1.5
-    context.stroke()
-    if (mode === 'area') {
-      context.lineTo(width, height)
-      context.lineTo(0, height)
-      context.closePath()
-      context.fillStyle = 'rgba(56, 189, 248, 0.12)'
-      context.fill()
-    }
-    return
-  }
-
-  candles.forEach((candle, index) => {
-    const x = index * columnWidth + columnWidth / 2
-    const up = candle.close >= candle.open
-    const candleColor = up ? posColor : negColor
-    context.strokeStyle = candleColor
-    context.fillStyle = candleColor
-    context.lineWidth = 1.2
-
-    context.beginPath()
-    context.moveTo(x, yFor(candle.high))
-    context.lineTo(x, yFor(candle.low))
-    context.stroke()
-
-    const bodyTop = Math.min(yFor(candle.open), yFor(candle.close))
-    const bodyHeight = Math.max(1, Math.abs(yFor(candle.open) - yFor(candle.close)))
-    context.fillRect(x - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight)
-  })
-}
-
-function drawStrategyQuotes(
-  context: CanvasRenderingContext2D,
-  candles: Candle[],
-  width: number,
-  yFor: (value: number) => number
-): void {
-  const latest = candles[candles.length - 1]?.close
-  if (latest === undefined) return
-  context.save()
-  context.setLineDash([4, 4])
-  context.strokeStyle = canvasColor('--color-warning')
-  context.lineWidth = 1
-  context.beginPath()
-  context.moveTo(0, yFor(latest - 0.8))
-  context.lineTo(width, yFor(latest - 0.8))
-  context.moveTo(0, yFor(latest + 0.8))
-  context.lineTo(width, yFor(latest + 0.8))
-  context.stroke()
-  context.setLineDash([])
-  context.fillStyle = canvasColor('--color-warning')
-  context.font = '10px "JetBrains Mono", monospace'
-  context.fillText('ACTIVE QUOTING BAND (Â±0.8)', 8, Math.max(12, yFor(latest + 0.8) - 4))
-  context.restore()
-}
-
-function drawLine(
-  context: CanvasRenderingContext2D,
-  values: number[],
-  columnWidth: number,
-  yFor: (value: number) => number,
-  color: string,
-  width: number
-) {
-  context.beginPath()
-  values.forEach((value, index) => {
-    const x = index * columnWidth + columnWidth / 2
-    const y = yFor(value)
-    if (index === 0) context.moveTo(x, y)
-    else context.lineTo(x, y)
-  })
-  context.strokeStyle = color
-  context.lineWidth = 1.4
-  context.stroke()
-}
-
-function drawVolume(
-  context: CanvasRenderingContext2D,
-  candles: Candle[],
-  columnWidth: number,
-  height: number
-) {
-  const max = Math.max(...candles.map((candle) => candle.volume), 1)
-  const volumeHeight = Math.min(70, height * 0.22)
-  candles.forEach((candle, index) => {
-    const barHeight = (candle.volume / max) * volumeHeight
-    const x = index * columnWidth + columnWidth * 0.15
-    const w = columnWidth * 0.7
-    context.fillStyle =
-      candle.close >= candle.open ? 'rgba(16, 185, 129, 0.35)' : 'rgba(244, 63, 94, 0.35)'
-    context.fillRect(x, height - barHeight, w, barHeight)
-  })
-}
-
-function drawDepth(
-  context: CanvasRenderingContext2D,
-  candles: Candle[],
-  width: number,
-  height: number
-) {
-  context.fillStyle = 'rgba(56, 189, 248, 0.12)'
-  context.fillRect(0, height * 0.35, width, height * 0.3)
-  context.fillStyle = canvasColor('--color-focus')
-  context.font = '10px "JetBrains Mono", monospace'
-  context.fillText('L2/L3 DEPTH DISTRIBUTION OVERLAY', 10, height * 0.35 - 6)
-}
-
-function drawOrderFlow(
-  context: CanvasRenderingContext2D,
-  candles: Candle[],
-  columnWidth: number,
-  height: number
-) {
-  const max = Math.max(...candles.map((candle) => candle.buyVolume + candle.sellVolume), 1)
-  const ofHeight = Math.min(80, height * 0.3)
-  candles.forEach((candle, index) => {
-    const totalHeight = (candle.volume / max) * ofHeight
-    const buyHeight = candle.volume === 0 ? 0 : (candle.buyVolume / candle.volume) * totalHeight
-    context.fillStyle = canvasColor('--color-positive')
-    context.fillRect(index * columnWidth + columnWidth * 0.15, height - buyHeight, columnWidth * 0.3, buyHeight)
-    context.fillStyle = canvasColor('--color-negative')
-    context.fillRect(
-      index * columnWidth + columnWidth * 0.55,
-      height - (totalHeight - buyHeight),
-      columnWidth * 0.3,
-      totalHeight - buyHeight
-    )
-  })
-}
-
-function drawFootprint(
-  context: CanvasRenderingContext2D,
-  candles: Candle[],
-  columnWidth: number,
-  height: number
-) {
-  context.fillStyle = canvasColor('--color-text-secondary')
-  context.font = '10px "JetBrains Mono", monospace'
-  context.fillText(`FOOTPRINT DELTA CLUSTERS Â· ${candles.length} BARS`, 10, 18)
-}
-
-function vwapAt(candles: Candle[], index: number) {
-  let pv = 0
-  let volume = 0
-  candles.slice(0, index + 1).forEach((candle) => {
-    pv += candle.close * candle.volume
-    volume += candle.volume
-  })
-  return volume ? pv / volume : candles[index]?.close ?? 0
-}
-
-function emaAt(candles: Candle[], index: number, period: number) {
-  const start = Math.max(0, index - period + 1)
-  const values = candles.slice(start, index + 1).map((candle) => candle.close)
-  return values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1)
-}
-
-function cvdAt(candles: Candle[]) {
-  let cumulative = 0
-  return candles.map((candle) => {
-    cumulative += candle.buyVolume - candle.sellVolume
-    return cumulative
-  })
-}
-
-const toolButtonStyle: React.CSSProperties = {
-  fontSize: '9.5px',
-  padding: '2px 7px',
-  borderRadius: 'var(--radius-xs)',
-  border: '1px solid var(--color-border-subtle)',
-  background: 'var(--color-bg-control)',
-  color: 'var(--color-text-secondary)',
-  whiteSpace: 'nowrap',
 }

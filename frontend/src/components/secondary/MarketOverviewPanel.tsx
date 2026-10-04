@@ -19,10 +19,10 @@ export function MarketOverviewPanel() {
   const base = runtime.candles[runtime.candles.length - 1]?.close ?? 0
 
   const rows: MarketRow[] = [
-    { symbol: 'BTCUSDT', price: base, change: runtime.changePct24h, volume: runtime.volume24hUsd, volatility: 0.42, funding: 0.0001, basis: 14.50 },
-    { symbol: 'ETHUSDT', price: base * 0.042, change: runtime.changePct24h * 0.8, volume: runtime.volume24hUsd * 0.62, volatility: 0.56, funding: 0.00008, basis: 3.20 },
-    { symbol: 'SOLUSDT', price: base * 0.0017, change: runtime.changePct24h * 1.4, volume: runtime.volume24hUsd * 0.21, volatility: 0.78, funding: 0.00012, basis: 0.45 },
-    { symbol: 'BNBUSDT', price: base * 0.0089, change: runtime.changePct24h * 0.5, volume: runtime.volume24hUsd * 0.15, volatility: 0.38, funding: 0.00005, basis: 0.85 },
+    { symbol: 'BTCUSDT', price: base, change: runtime.changePctSession, volume: runtime.volumeSessionUsd, volatility: 0.42, funding: 0.0001, basis: 14.50 },
+    { symbol: 'ETHUSDT', price: base * 0.042, change: runtime.changePctSession * 0.8, volume: runtime.volumeSessionUsd * 0.62, volatility: 0.56, funding: 0.00008, basis: 3.20 },
+    { symbol: 'SOLUSDT', price: base * 0.0017, change: runtime.changePctSession * 1.4, volume: runtime.volumeSessionUsd * 0.21, volatility: 0.78, funding: 0.00012, basis: 0.45 },
+    { symbol: 'BNBUSDT', price: base * 0.0089, change: runtime.changePctSession * 0.5, volume: runtime.volumeSessionUsd * 0.15, volatility: 0.38, funding: 0.00005, basis: 0.85 },
     { symbol: 'XRPUSDT', price: 0.582, change: -1.24, volume: 840_000_000, volatility: 0.65, funding: 0.00009, basis: 0.002 },
   ]
 
@@ -56,7 +56,7 @@ export function MarketOverviewPanel() {
     },
     {
       key: 'change',
-      header: '24H DELTA',
+      header: 'SESSION CHG',
       align: 'right',
       render: (row) => (
         <span className={`mono ${row.change >= 0 ? 'pos' : 'neg'}`} style={{ fontWeight: 600 }}>
@@ -66,7 +66,7 @@ export function MarketOverviewPanel() {
     },
     {
       key: 'volume',
-      header: '24H TURNOVER',
+      header: 'SESSION TURNOVER',
       align: 'right',
       render: (row) => <span className="mono">${(row.volume / 1_000_000_000).toFixed(2)}B</span>,
     },

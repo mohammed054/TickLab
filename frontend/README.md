@@ -32,12 +32,23 @@ The deterministic runtime and workbench can be checked directly with the reposit
 
 ## Main Monitor
 
-- Runtime-driven header with simulated feed status, environment, latency, and logical UTC time.
-- Canvas price chart with candles, line/area/tick/trade/order-flow/footprint/depth/replay modes, timeframes, zoom, PNG export, fullscreen, VWAP, EMA, volume, CVD, imbalance, and strategy-quote overlays.
-- Order book ladder with liquidity bars, depth selection, heatmap, depth profile, imbalance, microstructure, and replay views.
-- Trade tape with side/size/notional filters, follow-latest behavior, and workspace timestamp selection.
-- Order-flow, inventory, strategy, microstructure, market-regime, risk, and execution/system panels.
-- Persistent mock-data banner and simulated/not-connected status indicators.
+One fixed layout, each fact shown once:
+
+- **Top bar:** symbol, last price, session change/high/low/volume, environment, simulation clock, alerts. "Session" means since the simulation started, not a rolling 24h window.
+- **Chart:** candles/line/area, 1s to 5m, indicators in a menu (VWAP, EMA 9, volume, cumulative delta, your fills). Hover highlights the bar and shows a tooltip (OHLC, change, volume, buy/sell split, trades, your fills and position after). Drag to pan, wheel to zoom at the cursor, arrow keys step bar by bar, End jumps to latest, F fits.
+- **Order book:** ladder with your resting orders marked, or cumulative depth. 5/10/20 levels, all real levels from the feed.
+- **Bottom strip:** Trades, Position & P&L, Risk (current / limit / usage for every limit), Execution (order lifecycle), Market (microprice, imbalance, flow delta, volatility, depth).
+- **Status bar:** the single place for health: simulated-data badge, Feed, Engine, Risk, each as words.
+
+## Data integrity
+
+`src/mock/runtime/runtime.ts` derives everything from one source: candles are aggregated from the simulated trades, the book is built around the last trade (spread = ask - bid), strategy fills only occur when the market traded through the quote, P&L uses average-cost accounting, and risk limits are enforced (a breach stops the strategy).
+
+```bash
+npm run verify:sim   # 4,000 ticks, checks every invariant, exits non-zero on violation
+```
+
+Formatting rules live in `src/shared/format.ts`; risk state is computed once in `src/shared/risk.ts`.
 
 ## Research Lab
 

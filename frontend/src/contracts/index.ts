@@ -92,6 +92,27 @@ export interface StrategyState {
   cancelled: number
   fillRate: number
   latencyMs: number
+  /** Resting orders. Invariant: orders === fills + cancelled + rejected + openOrders. */
+  openOrders: number
+  rejected: number
+  avgEntryPrice: number | null
+  /** realizedPnl + unrealizedPnl + fees (fees are signed: negative = cost). */
+  netPnl: number
+  /** Distance in USD from the session peak of netPnl (>= 0). */
+  drawdown: number
+  /** Reason the risk layer stopped the strategy, or null. */
+  halted: string | null
+}
+
+export interface StrategyFill {
+  id: string
+  timestampNs: TimestampNs
+  side: TradeSide
+  price: number
+  size: number
+  /** Signed USD, negative = cost. */
+  fee: number
+  positionAfter: number
 }
 
 export type JobStatus = 'queued' | 'running' | 'complete' | 'failed' | 'cancelled'
@@ -246,15 +267,24 @@ export interface RuntimeSnapshot {
   symbol: string
   exchange: string
   tick: number
-  changePct24h: number
-  high24h: number
-  low24h: number
-  volume24hUsd: number
+  /** Session = everything since the dataset/simulation start. Not a rolling 24h window. */
+  sessionOpen: number
+  changePctSession: number
+  highSession: number
+  lowSession: number
+  volumeSessionBtc: number
+  volumeSessionUsd: number
   candles: Candle[]
   orderBook: OrderBookSnapshot
   trades: Trade[]
   events: MarketEvent[]
   strategy: StrategyState
+  fills: StrategyFill[]
+  riskLimits: RiskLimitsConfig
+  initialCapital: number
+  latencyP50Ms: number
+  latencyP99Ms: number
+  orderRatePerSec: number
 }
 
 export function timestampNsToMs(timestampNs: TimestampNs): number {
