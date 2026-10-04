@@ -41,10 +41,23 @@ Executors build against)
 | `GET` | `/api/v1/datasets` | List datasets (Data Center, `docs/13` §13.2) |
 | `POST` | `/api/v1/datasets/prepare` | Trigger pipeline run for a selection (`docs/08` §8.8) → `{jobId}` |
 | `GET` | `/api/v1/datasets/{id}/quality` | `DataQualityReport` (§15.5) |
+| `POST` | Data service `/binance/trades/import` | `{startDate,endDate}` (inclusive UTC calendar dates) → HTTP 202 `{jobId,status:"queued"}`; real Binance USD-M BTCUSDT aggregate-trade archive import |
+| `GET` | Data service `/binance/trades/jobs/{jobId}` | Persistent import job status, archive progress, and completed dataset manifests |
+| `GET` | Data service `/binance/trades/datasets` | `{datasets:[manifest...]}` for verified prepared Binance aggregate-trade datasets |
 | `POST` | `/api/v1/ai/query` | AI Research Assistant query (`docs/10` §10.5), returns text + evidence refs + optional `DraftExperimentConfig` |
 | `POST` | `/api/v1/environment/switch` | Change session `Environment` (`docs/12` §12.1) |
 | `POST` | `/api/v1/risk/kill-switch` | Kill switch actions (`docs/12` §12.8) — always audit-logged |
 | `POST` | `/api/v1/export` | `{type, targetId, format}` → async job or direct file for small payloads |
+
+The data-service import accepts ISO dates `YYYY-MM-DD`. Both endpoints are inclusive.
+It downloads monthly Binance Data Vision archives for fully covered calendar months
+and daily archives for partial-month date selections, verifies each provider
+`.CHECKSUM` SHA-256, then returns one content-addressed manifest per archive. A job
+uses `queued`, `running`, `complete`, or `failed`; while running it reports
+`archivesCompleted`, `archivesTotal`, and `currentArchive`. Each manifest uses the
+field names in `docs/05` §5.2 and declares `data_capabilities:["TRADES"]`,
+`book_depth_available:false`, and `data_fidelity:"TRADES_ONLY"`. This import service
+does not make a dataset eligible for a depth-dependent hftbacktest run.
 
 ## 15.3 WebSocket API
 

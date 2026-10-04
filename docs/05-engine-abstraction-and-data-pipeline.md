@@ -78,7 +78,18 @@ Preserve original downloaded bytes unchanged under the configured local raw-data
 root, outside git. Download/import must be resumable and idempotent by source URI and
 checksum. The user chooses UTC start/end dates; retrieval must inspect provider
 coverage and report unavailable periods instead of assuming all of 2024–2026 exists.
-Do not access authenticated trading endpoints for public historical archives.
+The aggregate-trade archive is public and requires no trading credentials; the
+official [Binance public-data guide](https://github.com/binance/binance-public-data)
+documents USD-M futures trades, aggregate trades, archive cadence, and checksum files.
+Binance's historical USD-M L2 tick-by-tick feed (`T_DEPTH`) is a separate, access-controlled
+historical data service that requires an API key explicitly whitelisted for this
+data product; it is not the public `bookDepth` percentage-summary archive. Do not
+use `bookDepth` summary rows as exchange events or as an order book. Until approved
+T_DEPTH data or another compatible real L2 source is available, the trade archive is
+importable and inspectable but cannot be used for an order-fill hftbacktest result.
+See Binance's [historical futures order-book data API guide](https://github.com/binance/binance-public-data/tree/master/Futures_Order_Book_Download)
+for the access requirements; see hftbacktest's [order-fill model documentation](https://github.com/nkaz001/hftbacktest/blob/master/docs/order_fill.rst)
+for the market-depth and queue assumptions behind simulated fills.
 
 #### Canonical aggregate-trade row
 
@@ -101,9 +112,8 @@ view. Duplicate archive imports are idempotent. Gaps in trade IDs are reported, 
 repaired; the quality report distinguishes provider-defined aggregate ranges from
 individual trade IDs so an aggregate range is not falsely reported as missing rows.
 Timestamps must be within the requested interval and valid UTC epoch values. Prices
-and quantities must be finite and positive. Corrupt rows are quarantined with source
-row number and reason; the configured quality gate determines whether any quarantine
-blocks the dataset, and reports exact counts.
+and quantities must be finite and positive. A malformed row rejects the archive
+part and reports its exact source row and reason; no partial dataset is marked ready.
 
 #### Fidelity and backtest contract
 

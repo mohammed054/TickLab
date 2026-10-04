@@ -9,7 +9,8 @@ This module provides the data pipeline stages defined in docs/05 §5.2:
 - HftBacktest-format conversion: Convert to/from hftbacktest format
 """
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from datetime import date
+from fastapi import BackgroundTasks, FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -18,12 +19,73 @@ import json
 import os
 import struct
 import tempfile
+import threading
+import uuid
+
+from .binance_import import default_data_root, import_aggtrade_archives
 
 app = FastAPI(
     title="TickLab Data Pipeline",
     description="Data ingestion, validation, and normalization pipeline",
     version="0.1.0",
 )
+
+_binance_import_lock = threading.Lock()
+
+
+class BinanceTradeImportRequest(BaseModel):
+    """Inclusive UTC date interval for public Binance USD-M aggTrades."""
+
+    startDate: date
+    endDate: date
+
+
+def _write_import_job(job_path: str, state: dict) -> None:
+    temp_path = job_path + ".partial"
+    with open(temp_path, "w", encoding="utf-8") as output:
+        json.dump(state, output)
+        output.flush()
+        os.fsync(output.fileno())
+    os.replace(temp_path, job_path)
+
+
+def _run_binance_trade_import(job_id: str, start: date, end: date) -> None:
+    """BackgroundTasks worker; all data remains real and checksummed."""
+    root = default_data_root()
+    jobs_dir = root / "import_jobs"
+    jobs_dir.mkdir(parents=True, exist_ok=True)
+    job_path = str(jobs_dir / f"{job_id}.json")
+    with _binance_import_lock:
+        try:
+            _write_import_job(job_path, {
+                "jobId": job_id, "status": "running", "source": "BINANCE_DATA_VISION",
+                "market": "BINANCE_USDM_PERPETUAL", "symbol": "BTCUSDT",
+                "dataType": "AGG_TRADE", "startDate": start.isoformat(),
+                "endDate": end.isoformat(), "datasets": [],
+            })
+            def update_progress(completed: int, total: int, archive: str) -> None:
+                _write_import_job(job_path, {
+                    "jobId": job_id, "status": "running", "source": "BINANCE_DATA_VISION",
+                    "market": "BINANCE_USDM_PERPETUAL", "symbol": "BTCUSDT",
+                    "dataType": "AGG_TRADE", "startDate": start.isoformat(),
+                    "endDate": end.isoformat(), "archivesCompleted": completed,
+                    "archivesTotal": total, "currentArchive": archive, "datasets": [],
+                })
+
+            records = import_aggtrade_archives(start, end, root, update_progress)
+            _write_import_job(job_path, {
+                "jobId": job_id, "status": "complete", "source": "BINANCE_DATA_VISION",
+                "market": "BINANCE_USDM_PERPETUAL", "symbol": "BTCUSDT",
+                "dataType": "AGG_TRADE", "startDate": start.isoformat(),
+                "endDate": end.isoformat(), "datasets": [record.__dict__ for record in records],
+            })
+        except Exception as exc:
+            _write_import_job(job_path, {
+                "jobId": job_id, "status": "failed", "source": "BINANCE_DATA_VISION",
+                "market": "BINANCE_USDM_PERPETUAL", "symbol": "BTCUSDT",
+                "dataType": "AGG_TRADE", "startDate": start.isoformat(),
+                "endDate": end.isoformat(), "datasets": [], "error": str(exc),
+            })
 
 # Allow all origins for development; restrict in production
 app.add_middleware(
@@ -150,6 +212,60 @@ async def root() -> dict:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "healthy"}
+
+
+@app.post("/binance/trades/import", status_code=202)
+async def import_binance_trades(
+    request: BinanceTradeImportRequest,
+    background_tasks: BackgroundTasks,
+) -> dict:
+    """Import official Binance USD-M BTCUSDT aggregate-trade archives.
+
+    The importer chooses monthly archives for complete months and daily archives
+    for partial date boundaries.
+    """
+    if request.startDate > request.endDate:
+        raise HTTPException(status_code=422, detail="startDate must be on or before endDate")
+    job_id = f"binance-trades-{uuid.uuid4().hex}"
+    root = default_data_root()
+    jobs_dir = root / "import_jobs"
+    jobs_dir.mkdir(parents=True, exist_ok=True)
+    _write_import_job(str(jobs_dir / f"{job_id}.json"), {
+        "jobId": job_id, "status": "queued", "source": "BINANCE_DATA_VISION",
+        "market": "BINANCE_USDM_PERPETUAL", "symbol": "BTCUSDT",
+        "dataType": "AGG_TRADE", "startDate": request.startDate.isoformat(),
+        "endDate": request.endDate.isoformat(), "datasets": [],
+    })
+    background_tasks.add_task(_run_binance_trade_import, job_id, request.startDate, request.endDate)
+    return {"jobId": job_id, "status": "queued"}
+
+
+@app.get("/binance/trades/jobs/{job_id}")
+async def get_binance_trade_import(job_id: str) -> dict:
+    """Read persistent status/result for an archive-import job."""
+    if not job_id.startswith("binance-trades-") or "/" in job_id or "\\" in job_id:
+        raise HTTPException(status_code=400, detail="Invalid import job ID")
+    job_path = default_data_root() / "import_jobs" / f"{job_id}.json"
+    try:
+        return json.loads(job_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Unknown import job: {job_id}") from exc
+
+
+@app.get("/binance/trades/datasets")
+async def list_binance_trade_datasets() -> dict:
+    """List verified, prepared real Binance aggregate-trade dataset manifests."""
+    root = default_data_root() / "prepared"
+    manifests = []
+    if root.exists():
+        for path in sorted(root.glob("*/manifest.json")):
+            try:
+                item = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if item.get("source") == "BINANCE_DATA_VISION" and item.get("data_type") == "AGG_TRADE":
+                manifests.append(item)
+    return {"datasets": manifests}
 
 
 @app.post("/validate")
@@ -770,7 +886,7 @@ async def order_book_reconstruction(file: UploadFile = File(...)) -> dict:
             "total_reconstructed": len(reconstructed_states),
             "missing_intervals": missing_intervals,
             "quality_report": quality_report.model_dump(),
-            "message": f"Reconstructed {len(reconstructed_states)} order book states from {snapshot_count} snapshots and {update_count} updates" + (f" (L3: {l3_add_count add}, {l3_modify_count modify}, {l3_cancel_count cancel})" if is_l3 else ""),
+            "message": f"Reconstructed {len(reconstructed_states)} order book states from {snapshot_count} snapshots and {update_count} updates" + (f" (L3: {l3_add_count} adds, {l3_modify_count} modifications, {l3_cancel_count} cancellations)" if is_l3 else ""),
             "dataType": "L3" if is_l3 else ("L2" if updates else "unknown"),
         }
 

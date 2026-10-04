@@ -604,3 +604,45 @@ Summary: Replaced the active mock-first delivery sequence with the owner-directe
 Deviations from spec: None; this is an owner-authorized Planner revision superseding the 2026-09-24 F.7 mock-first addendum.
 Open questions for Planner: Exact Binance public archive coverage/retention and trade-only engine compatibility must be verified from provider/upstream sources during implementation; if trade-only engine semantics do not support the intended backtest, proceed to real L2 rather than fabricate depth.
 Next step: Audit existing Phase 2 implementation and verify the trade-only engine path against vendored hftbacktest source and real Binance archive fixtures; then update coordination task ordering before assigning the first real-data implementation block.
+### [2.0.A] IN_PROGRESS — Binance BTCUSDT perpetual archive import and engine audit
+Timestamp: 2026-10-04T08:00:00Z
+Agent: Codex (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - backend/data/app/binance_import.py (planned)
+  - backend/data/app/main.py (planned)
+  - backend/data/app/tests/test_binance_import.py (planned)
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md §2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2 (owner-directed first release)
+  - docs/04-hftbacktest-engine-analysis.md §§4.3, 4.9
+  - docs/13-data-management-and-monitoring.md §13.1
+  - docs/15-api-and-data-model-spec.md §§15.2, 15.5
+Summary: Began the real BTCUSDT perpetual data milestone. Official Binance public-data documentation confirms USD-M Futures trade and aggregate-trade archives; vendored hftbacktest uses L2/L3 assets and its documented fill logic requires book depth, so trade-only does not yet justify realistic fills. Implementing truthful archive ingestion while checking a minimal compatible engine path; no synthetic depth will be introduced.
+Deviations from spec: None; trade-only backtest acceptance remains contingent on verified upstream engine behavior.
+Open questions for Planner: Whether public aggTrades can be used for the initial archive path is consistent with docs/05; upstream converter directly supports per-trade schema, while archive includes both. No product-side choice beyond preserving source granularity.
+Next step: Implement resumable, checksum-verified Binance public archive importer and typed manifest, then verify whether any upstream HftBacktest mode can consume trades alone without fabricated market state.
+### [2.0.A] BLOCKED — Binance BTCUSDT real-data vertical slice
+Timestamp: 2026-10-04T08:45:00Z
+Agent: Codex (Executor)
+Status: BLOCKED
+Files touched:
+  - README.md
+  - backend/data/app/binance_import.py
+  - backend/data/app/main.py
+  - backend/data/app/tests/test_binance_import.py
+  - docs/05-engine-abstraction-and-data-pipeline.md
+  - docs/15-api-and-data-model-spec.md
+  - docs/16-implementation-roadmap.md
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md §2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2
+  - docs/04-hftbacktest-engine-analysis.md §§4.3, 4.9
+  - docs/13-data-management-and-monitoring.md §13.1
+  - docs/15-api-and-data-model-spec.md §§15.2, 15.5
+Summary: Implemented a background API workflow to import official Binance USD-M BTCUSDT aggregate-trade archives, verify provider SHA-256 checksums, preserve raw ZIPs, normalize trades without synthesizing events, and persist immutable content-addressed manifests. Verified against a real 2024-01-01 Binance archive containing 761,222 rows and added tests for parsing, invalid input, archive selection, idempotency, and API job lifecycle. Python compilation passed; the focused importer and pipeline acceptance suites pass (18 tests); `git diff --check` passes. Fixed a pre-existing syntax error in the data service that prevented module compilation.
+Deviations from spec: Task A/B importer is complete. Tasks C/D and Block 2.0 acceptance remain incomplete: vendored hftbacktest order execution consumes book depth, and public aggTrades do not contain L1/L2 depth or queue state. Binance historical T_DEPTH access requires an approved account/API key; the public bookDepth summary feed is not compatible. The import API is available, but no UI integration or real backtest workflow is claimed.
+Open questions for Planner: Owner must provide an approved compatible historical depth source (Binance T_DEPTH access or another permitted provider) before an honest hftbacktest execution adapter can be implemented. The user has been asked whether approved access exists or whether to keep backtests disabled pending access.
+Next step: Once a compatible depth archive is available, specify/implement its adapter and validate one real dataset through vendored hftbacktest, then connect persisted async runs and the data-driven UI. Until then, keep order-fill backtests unavailable.

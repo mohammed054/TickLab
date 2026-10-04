@@ -160,6 +160,18 @@ inventing depth/queue semantics, stop and report the exact blocker rather than
 fabricating a book or claiming HFT fill realism. L2 data is the next required data
 slice, as specified in `docs/05` §5.4.
 
+**Verified source constraint (2026-10-04):** the vendored simulator builds
+`L2AssetBuilder`/`L3AssetBuilder` assets and its exchange/queue fill behavior reads
+market depth. Binance Data Vision's public trade/aggTrade downloads therefore do
+not by themselves permit an honest strategy order/fill backtest. Binance documents
+a separate historical USD-M `T_DEPTH` feed, but that retrieval product requires an
+API key whitelisted for historical futures data. Its public `bookDepth` percentage
+summary files are not an order-book event feed and must not be substituted. The
+public-trade importer may be delivered independently; Block 2.0 is not DONE until a
+real, compatible depth dataset is available and runs through the engine. If the owner
+does not have T_DEPTH access, select a permitted compatible source or provider before
+implementing that adapter; do not fabricate depth.
+
 ### Block 2.0 — Real historical trade-data vertical slice (owner priority)
 
 - Task A: Verify the supported Binance USDⓈ-M BTCUSDT historical trade archive

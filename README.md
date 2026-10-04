@@ -80,11 +80,24 @@ mock-first plan in `docs/17-frontend-first-transition-plan.md` is superseded.
 | 15 | `15-api-and-data-model-spec.md` | REST/WebSocket contracts, core data models |
 | 16 | `16-implementation-roadmap.md` | Phases → Blocks → Tasks, acceptance criteria, current status |
 
-## Quick start (once implementation begins)
+## Current development status
 
-Implementation has not started yet — this section will be filled in during
-Phase 1 (`docs/16-implementation-roadmap.md`) once the repo actually has a
-buildable `frontend/` and `backend/`. Until then, there is nothing to run.
+The data service now has a real Binance USD-M BTCUSDT aggregate-trade import API.
+Run it in a Python environment with the backend's FastAPI dependencies installed:
+
+```powershell
+python -m uvicorn backend.data.app.main:app --host 127.0.0.1 --port 8000
+```
+
+The health endpoint is `http://127.0.0.1:8000/health`. Submit an inclusive UTC
+calendar-date range to `POST /binance/trades/import` with JSON fields
+`startDate` and `endDate`, then poll the returned job ID at
+`GET /binance/trades/jobs/{jobId}`. Set `TICKLAB_DATA_ROOT` to choose where raw
+archives and prepared datasets are stored. The import returns real trades and
+explicitly labels them `TRADES_ONLY`; it does not enable a real hftbacktest order-fill
+run. That run remains blocked until compatible historical L2 depth data is
+available. The existing frontend is still a mock implementation and is not the real
+research workflow.
 
 ## License
 
