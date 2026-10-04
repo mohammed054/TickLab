@@ -746,3 +746,21 @@ Summary: Removed the direct Vite browser-run and preview scripts and replaced th
 Deviations from spec: The overall real-data workflow remains blocked on compatible historical depth for real engine backtests. The data API remains a separate local Python service; this change does not package or auto-start it.
 Open questions for Planner: None for the desktop-only launch path.
 Next step: Bundle and lifecycle-manage the local data service for a single-launch desktop experience, then continue the real depth adapter and backtest work.
+
+### [2.0.D] BLOCKED — Enforce desktop-only TickLab launch surface
+Timestamp: 2026-10-04T14:45:37Z
+Agent: Codex GPT-6
+Status: BLOCKED
+Files touched:
+  - frontend/src/App.tsx
+  - frontend/src/platform/nativeBridge.ts
+  - frontend/src/components/secondary/ReportPanel.tsx
+  - Z:/moham/Desktop/TickLab.lnk (outside repository)
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md Block 2.0
+  - docs/03-tech-stack-and-repo-structure.md §3.3
+Summary: Restricted the running research workflow to the Tauri desktop runtime and replaced browser access with a launch-the-desktop-app message. Removed browser-window and browser-download fallbacks so native window creation and native file export are the only supported paths. Built the Windows executable and both installers in an isolated Cargo target directory, updated the desktop shortcut to that executable, and launched it successfully with the native window title “TickLab — Research.”
+Deviations from spec: The specified Tauri + React architecture still uses a bundled WebView internally; this change removes the user-facing browser launch path without replacing the documented UI architecture. The Python data service still requires a separate process, and Block 2.0 engine acceptance remains blocked on compatible historical depth data.
+Open questions for Planner: If “no web interface” means replacing the documented Tauri WebView with a pure native UI toolkit, specify the target toolkit and migration contract before that architectural rewrite.
+Next step: Bundle and lifecycle-manage the local data service for one-launch desktop use; obtain compatible historical depth before claiming a real hftbacktest result.

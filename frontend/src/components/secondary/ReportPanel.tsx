@@ -54,17 +54,12 @@ export function ReportPanel({ result }: { result: BacktestResult | null }) {
     if (!result) return
     const text = format === 'json' ? JSON.stringify(result, null, 2) : format === 'csv' ? buildCsv(result) : buildReportText(result)
     const suggestedName = `${result.experimentId}-performance-report.${format}`
-    const nativeResult = await saveTextFile(text, suggestedName, format)
-    if (nativeResult === 'saved') {
-      setExportStatus(`Saved ${suggestedName} through the native export dialog.`)
-      return
+    try {
+      const nativeResult = await saveTextFile(text, suggestedName, format)
+      setExportStatus(nativeResult === 'saved' ? `Saved ${suggestedName}.` : 'Export cancelled.')
+    } catch (error) {
+      setExportStatus(error instanceof Error ? error.message : 'Could not save the report.')
     }
-    if (nativeResult === 'cancelled') {
-      setExportStatus('Export cancelled.')
-      return
-    }
-    downloadInBrowser(text, suggestedName, format)
-    setExportStatus(`Downloaded ${suggestedName} through browser export.`)
   }
 
   return (
@@ -118,17 +113,6 @@ export function ReportPanel({ result }: { result: BacktestResult | null }) {
       </Panel>
     </div>
   )
-}
-
-function downloadInBrowser(text: string, suggestedName: string, format: 'txt' | 'json' | 'csv'): void {
-  const mime = format === 'json' ? 'application/json' : format === 'csv' ? 'text/csv' : 'text/plain'
-  const blob = new Blob([text], { type: mime })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = suggestedName
-  anchor.click()
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 function buildCsv(result: BacktestResult): string {
