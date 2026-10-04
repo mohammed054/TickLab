@@ -21,15 +21,16 @@ extended later without rewriting the product.
 
 ## Status
 
-Implementation is in progress. The current owner-directed priority is a real-data
-research workflow: import Binance BTCUSDT USDⓈ-M perpetual historical trades, run a
-real backtest through the vendored `hftbacktest` engine, and inspect persisted
-results. Trade-only results have limited order-book/queue fidelity; historical L2
-depth is the next market-data milestone. OpenRouter is the planned AI provider, with
-model selection configured at runtime. Paper and live order execution are later
-goals; live execution is not part of the current milestone. See `STATE.md` for the
-progress log and `docs/16-implementation-roadmap.md` for the active plan. The
-mock-first plan in `docs/17-frontend-first-transition-plan.md` is superseded.
+Implementation is in progress. The current application shell contains the real
+Binance BTCUSDT USDⓈ-M aggregate-trade importer and a provenance view for verified
+datasets. Its backtest step is deliberately disabled: hftbacktest fill behavior needs
+compatible historical order-book depth, which the public trade archives do not
+include. Obtain approved Binance historical L2 data or choose another compatible
+source before enabling engine runs. Strategy generation, OpenRouter integration,
+experiment persistence, and paper/live execution are not available in this shell yet.
+See `STATE.md` for the progress log and `docs/16-implementation-roadmap.md` for the
+active plan. The mock-first plan in `docs/17-frontend-first-transition-plan.md` is
+superseded; mock surfaces are not mounted in the running app shell.
 
 ## Who should read what
 
@@ -96,8 +97,20 @@ calendar-date range to `POST /binance/trades/import` with JSON fields
 archives and prepared datasets are stored. The import returns real trades and
 explicitly labels them `TRADES_ONLY`; it does not enable a real hftbacktest order-fill
 run. That run remains blocked until compatible historical L2 depth data is
-available. The existing frontend is still a mock implementation and is not the real
-research workflow.
+available.
+
+In a second terminal, start the real-data UI:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Open the Vite URL printed in the terminal. The UI defaults to the data importer and
+uses `http://127.0.0.1:8000` for the backend; set `VITE_DATA_API_URL` before starting
+Vite to use a different data-service URL. The backtest screen shows the exact depth
+requirements and cannot submit a simulated or mock run.
 
 ## License
 

@@ -166,19 +166,8 @@ function createInitialContext(): WorkspaceContext {
     symbol: 'BTCUSDT',
     exchange: 'binance-futures',
     environment: 'RESEARCH',
-    dataset: {
-      id: 'mock-dataset-btcusdt-2024-08-08',
-      exchange: 'binance-futures',
-      symbol: 'BTCUSDT',
-      market: 'usdt-futures',
-      startNs: '1723065600000000000',
-      endNs: '1723152000000000000',
-    },
-    strategy: {
-      id: 'MM_V18',
-      version: 'v18.4',
-      codeHash: 'mock:mm-v18',
-    },
+    dataset: null,
+    strategy: null,
     experiment: null,
     timestamp: null,
     previewTimestampNs: null,
@@ -187,9 +176,9 @@ function createInitialContext(): WorkspaceContext {
     selectedTradeId: null,
     replay: null,
     activeTab: {
-      secondaryMonitor: 'strategy',
+      secondaryMonitor: 'data',
     },
-    preset: 'MARKET',
+    preset: 'RESEARCH',
   }
 }
 
@@ -243,7 +232,10 @@ function loadPersistedContext(): WorkspaceContext | null {
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object') return null
-    return applyContextPatch(createInitialContext(), parsed as Partial<WorkspaceContext>)
+    const restored = applyContextPatch(createInitialContext(), parsed as Partial<WorkspaceContext>)
+    if (restored.dataset?.id.startsWith('mock-')) restored.dataset = null
+    if (restored.strategy?.codeHash.startsWith('mock:')) restored.strategy = null
+    return restored
   } catch {
     return null
   }

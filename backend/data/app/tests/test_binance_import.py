@@ -68,6 +68,7 @@ def test_parse_archive_rejects_duplicate_or_malformed_source_rows(tmp_path: Path
 
 
 def test_import_month_creates_verified_manifest_and_is_idempotent(tmp_path: Path) -> None:
+    progress: list[tuple[int, int, str]] = []
     def fake_download(url: str, target: Path) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.name.endswith(".CHECKSUM"):
@@ -78,11 +79,18 @@ def test_import_month_creates_verified_manifest_and_is_idempotent(tmp_path: Path
     with patch("backend.data.app.binance_import._download", side_effect=fake_download), patch(
         "backend.data.app.binance_import._verify_checksum", return_value="a" * 64
     ):
-        first = import_aggtrade_archives(date(2024, 1, 1), date(2024, 1, 31), tmp_path)
+        first = import_aggtrade_archives(
+            date(2024, 1, 1), date(2024, 1, 31), tmp_path,
+            lambda completed, total, archive: progress.append((completed, total, archive)),
+        )
         second = import_aggtrade_archives(date(2024, 1, 1), date(2024, 1, 31), tmp_path)
 
     assert first[0].dataset_id == second[0].dataset_id
     assert first[0].retrieved_at_ns == second[0].retrieved_at_ns
+    assert progress == [
+        (0, 1, "BTCUSDT-aggTrades-2024-01.zip"),
+        (1, 1, "BTCUSDT-aggTrades-2024-01.zip"),
+    ]
     manifest_path = tmp_path / "prepared" / first[0].dataset_id / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["data_capabilities"] == ["TRADES"]

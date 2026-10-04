@@ -228,6 +228,8 @@ def import_aggtrade_archives(
     records: list[ArchiveRecord] = []
     specs = list(_archive_specs(start, end))
     for index, (period, archive_date, url, filename) in enumerate(specs, start=1):
+        if progress:
+            progress(index - 1, len(specs), filename)
         archive = raw_root / f"{archive_date:%Y}" / f"{archive_date:%m}" / filename
         _download(url, archive)
         archive_hash = _verify_checksum(url, archive)

@@ -1,454 +1,349 @@
-import { useEffect, useState } from 'react'
-import { useWorkspace } from '../../state/useWorkspace'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
-  DATASET_DATA_TYPES,
-  DATASET_EXCHANGES,
-  PIPELINE_STAGES,
-  canRunBacktest,
-  dateRangeForSelection,
-  formatBytes,
-  formatCount,
-  getBacktestBlockers,
-  getDataTypeOptions,
-  getMarkets,
-  getOverallQualityStatus,
-  getPipelineStageState,
-  getPipelineStatusLabel,
-  getQualityVisualState,
-  getSelectedRecord,
-  getStatusVisualState,
-  getSymbols,
-  mockDatasetStore,
-  selectionKey,
-  toDatasetRef,
-  useMockDatasetStore,
-} from '../../mock/datasets/datasetCatalog'
-import type { DatasetDataType, DatasetSelection, PipelineStageState } from '../../mock/datasets/datasetCatalog'
-import { EmptyState, LoadingState, MetricRow, Panel, SelectField, StatusDot, Tooltip } from '../shared/Panel'
-import { ImportDatasetModal } from './ImportDatasetModal'
+  formatManifestDate,
+  formatManifestTimestamp,
+  formatTradeCount,
+  getBinanceImportJob,
+  listBinanceTradeDatasets,
+  submitBinanceTradeImport,
+  type BinanceImportJob,
+  type BinanceTradeDataset,
+} from './binanceDataApi'
 
-export function DatasetPanel() {
-  const store = useMockDatasetStore()
-  const [workspace, updateWorkspace] = useWorkspace()
-  const [selection, setSelection] = useState<DatasetSelection>(() => store.selection)
-  const [importModalOpen, setImportModalOpen] = useState(false)
-  const storeSelectionKey = selectionKey(store.selection)
+const JOB_STORAGE_KEY = 'ticklab.binance-trade-import.job'
+const FIRST_SUPPORTED_DATE = '2024-01-01'
 
-  useEffect(() => {
-    setSelection((current) => (selectionKey(current) === storeSelectionKey ? current : store.selection))
-  }, [storeSelectionKey])
-
-  const activeRecord = getSelectedRecord(store)
-  const activeId = activeRecord?.id
-  const activeStart = activeRecord?.dateRange.start
-  const activeEnd = activeRecord?.dateRange.end
-
-  useEffect(() => {
-    if (!activeRecord) return
-    const dataset = toDatasetRef(activeRecord)
-    if (
-      workspace.dataset?.id === dataset.id &&
-      workspace.dataset.exchange === dataset.exchange &&
-      workspace.dataset.market === dataset.market &&
-      workspace.dataset.symbol === dataset.symbol &&
-      workspace.dataset.startNs === dataset.startNs &&
-      workspace.dataset.endNs === dataset.endNs &&
-      workspace.exchange === dataset.exchange &&
-      workspace.symbol === dataset.symbol
-    )
-      return
-    updateWorkspace({ exchange: dataset.exchange, symbol: dataset.symbol, dataset })
-  }, [
-    activeEnd,
-    activeId,
-    activeRecord,
-    activeStart,
-    updateWorkspace,
-    workspace.dataset,
-    workspace.exchange,
-    workspace.symbol,
-  ])
-
-  const commitSelection = (next: DatasetSelection) => {
-    const record = mockDatasetStore.selectSelection(next)
-    setSelection(mockDatasetStore.getSnapshot().selection)
-    const dataset = toDatasetRef(record)
-    updateWorkspace({ exchange: dataset.exchange, symbol: dataset.symbol, dataset })
-  }
-
-  const updateExchange = (exchange: string) => {
-    const market = getMarkets(exchange)[0]?.value ?? 'usdt-futures'
-    const symbols = getSymbols(exchange, market)
-    const symbol = symbols.includes(selection.symbol) ? selection.symbol : symbols[0] ?? 'BTCUSDT'
-    const supported = new Set(
-      getDataTypeOptions(exchange, market)
-        .filter((option) => !option.disabled)
-        .map((option) => option.value)
-    )
-    const dataTypes = selection.dataTypes.filter((dataType) => supported.has(dataType))
-    commitSelection({ ...selection, exchange, market, symbol, dataTypes: dataTypes.length > 0 ? dataTypes : ['trades'] })
-  }
-
-  const updateMarket = (market: string) => {
-    const symbols = getSymbols(selection.exchange, market)
-    const symbol = symbols.includes(selection.symbol) ? selection.symbol : symbols[0] ?? 'BTCUSDT'
-    const supported = new Set(
-      getDataTypeOptions(selection.exchange, market)
-        .filter((option) => !option.disabled)
-        .map((option) => option.value)
-    )
-    const dataTypes = selection.dataTypes.filter((dataType) => supported.has(dataType))
-    commitSelection({ ...selection, market, symbol, dataTypes: dataTypes.length > 0 ? dataTypes : ['trades'] })
-  }
-
-  const updateDate = (field: 'startDate' | 'endDate', value: string) => {
-    if (!value) return
-    const next = { ...selection, [field]: value }
-    if (next.startDate > next.endDate) {
-      if (field === 'startDate') next.endDate = value
-      else next.startDate = value
-    }
-    commitSelection(next)
-  }
-
-  const updateTime = (field: 'startTime' | 'endTime', value: string) => {
-    commitSelection({ ...selection, [field]: value })
-  }
-
-  const updateDataType = (dataType: DatasetDataType, checked: boolean) => {
-    const dataTypes = checked
-      ? Array.from(new Set([...selection.dataTypes, dataType]))
-      : selection.dataTypes.filter((value) => value !== dataType)
-    if (dataTypes.length === 0) return
-    commitSelection({ ...selection, dataTypes })
-  }
-
-  const selectedDataTypeLabels = selection.dataTypes.map(
-    (dataType) => DATASET_DATA_TYPES.find((option) => option.value === dataType)?.label ?? dataType
-  )
-  const selectedDateRange = dateRangeForSelection(selection)
-  const pipelineStatus = activeRecord?.status ?? 'no-dataset'
-  const qualityStatus = activeRecord ? getOverallQualityStatus(activeRecord) : 'red'
-  const canRun = activeRecord ? canRunBacktest(activeRecord) : false
-  const blockers = activeRecord ? getBacktestBlockers(activeRecord) : ['No dataset is selected.']
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', overflow: 'auto' }}>
-      <Panel
-        title="HISTORICAL & REALTIME DATASET REPOSITORY"
-        right={
-          <button
-            type="button"
-            onClick={() => setImportModalOpen(true)}
-            style={{
-              background: 'var(--color-brand-primary)',
-              color: '#080a0d',
-              border: 'none',
-              borderRadius: 3,
-              padding: '3px 8px',
-              fontSize: 10,
-              fontWeight: 800,
-              cursor: 'pointer',
-              letterSpacing: '0.04em',
-            }}
-          >
-            + IMPORT CUSTOM DATASET
-          </button>
-        }
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-          <SelectField
-            label="Exchange Connector"
-            value={selection.exchange}
-            options={DATASET_EXCHANGES}
-            onChange={updateExchange}
-            description="Source trading venue gateway."
-          />
-          <SelectField
-            label="Market Instrument"
-            value={selection.market}
-            options={getMarkets(selection.exchange)}
-            onChange={updateMarket}
-            description="Contract type (Perpetual, Inverse, Spot)."
-          />
-          <SelectField
-            label="Symbol"
-            value={selection.symbol}
-            options={getSymbols(selection.exchange, selection.market).map((symbol) => ({ value: symbol, label: symbol }))}
-            onChange={(symbol) => commitSelection({ ...selection, symbol })}
-            description="Target asset pair."
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <DateTimeInput
-              label="Start Time (UTC)"
-              dateValue={selection.startDate}
-              timeValue={selection.startTime || '00:00:00'}
-              onDateChange={(v) => updateDate('startDate', v)}
-              onTimeChange={(v) => updateTime('startTime', v)}
-            />
-            <DateTimeInput
-              label="End Time (UTC)"
-              dateValue={selection.endDate}
-              timeValue={selection.endTime || '23:59:59'}
-              onDateChange={(v) => updateDate('endDate', v)}
-              onTimeChange={(v) => updateTime('endTime', v)}
-            />
-          </div>
-        </div>
-
-        <fieldset
-          style={{
-            border: '1px solid var(--border-1)',
-            borderRadius: 4,
-            padding: '8px 12px',
-            margin: '8px 0',
-            background: 'var(--bg-1)',
-          }}
-        >
-          <legend style={{ color: 'var(--text-1)', fontSize: 10, padding: '0 4px', fontWeight: 700 }}>
-            DEPTH & FEED SUBSCRIPTIONS
-          </legend>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '4px 12px' }}>
-            {getDataTypeOptions(selection.exchange, selection.market).map((option) => {
-              const checked = selection.dataTypes.includes(option.value)
-              return (
-                <Tooltip
-                  key={option.value}
-                  label={option.disabled ? option.disabledReason : `${option.label} stream enabled`}
-                >
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      minWidth: 0,
-                      fontSize: 10.5,
-                      cursor: option.disabled ? 'not-allowed' : 'pointer',
-                      color: option.disabled ? 'var(--text-2)' : checked ? 'var(--text-0)' : 'var(--text-1)',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={option.disabled}
-                      onChange={(event) => updateDataType(option.value, event.target.checked)}
-                    />
-                    {option.label}
-                  </label>
-                </Tooltip>
-              )
-            })}
-          </div>
-        </fieldset>
-
-        <MetricRow label="Included Stream Channels" value={selectedDataTypeLabels.join(' · ')} />
-        <MetricRow
-          label="Timestamp Boundary"
-          value={
-            <span className="mono" style={{ fontSize: 10.5 }}>
-              {selectedDateRange.start} → {selectedDateRange.end}
-            </span>
-          }
-        />
-        <MetricRow label="Active Dataset Identifier" value={activeRecord?.id ?? 'No matching dataset'} />
-        {activeRecord && (
-          <MetricRow label="Storage Footprint" value={`${formatBytes(activeRecord.quality.fileSizeBytes)} (${formatCount(activeRecord.totalEvents)} events)`} />
-        )}
-      </Panel>
-
-      <Panel
-        title="FEED INGESTION & RECONSTRUCTION PIPELINE"
-        right={
-          <span className="mono" style={{ fontSize: 10.5 }}>
-            <StatusDot state={getStatusVisualState(pipelineStatus)} />{' '}
-            {pipelineStatus === 'no-dataset' ? 'NO DATASET' : getPipelineStatusLabel(pipelineStatus)}
-          </span>
-        }
-      >
-        {activeRecord ? (
-          <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 10 }}>
-              {PIPELINE_STAGES.map((stage, index) => {
-                const stageState = getPipelineStageState(activeRecord, stage.id)
-                return <PipelineStage key={stage.id} label={stage.label} state={stageState} last={index === PIPELINE_STAGES.length - 1} />
-              })}
-            </div>
-            <LoadingState
-              label={`${getPipelineStatusLabel(activeRecord.status)} · ${formatCount(
-                activeRecord.processedEvents
-              )} / ${formatCount(activeRecord.totalEvents)} events`}
-              progress={activeRecord.progress}
-            />
-            <MetricRow
-              label="Current Pipeline Stage"
-              value={PIPELINE_STAGES.find((stage) => stage.id === activeRecord.activeStage)?.label ?? activeRecord.activeStage}
-            />
-            <MetricRow label="Reconstruction Progress" value={`${activeRecord.progress.toFixed(0)}%`} />
-            {activeRecord.status === 'failed' && (
-              <div role="alert" style={{ color: 'var(--color-negative)', fontSize: 11, marginTop: 6 }}>
-                {activeRecord.errorMessage}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => mockDatasetStore.prepareDataset(activeRecord.id)}
-              disabled={
-                activeRecord.status === 'ready' ||
-                activeRecord.status === 'validating' ||
-                activeRecord.status === 'normalizing' ||
-                activeRecord.status === 'reconstructing' ||
-                activeRecord.status === 'aligning'
-              }
-              style={{
-                marginTop: 10,
-                width: '100%',
-                padding: '7px 10px',
-                borderRadius: 4,
-                border: '1px solid var(--color-brand-primary)',
-                background: 'var(--color-brand-primary)',
-                color: '#080a0d',
-                fontWeight: 700,
-                fontSize: 11,
-                cursor: 'pointer',
-              }}
-            >
-              {activeRecord.status === 'failed' ? 'RETRY PIPELINE' : 'PREPARE DATASET'}
-            </button>
-          </>
-        ) : (
-          <EmptyState
-            title="NO DATASET SELECTED"
-            description="Choose an exchange, market, symbol, and date range, or import your own dataset."
-          />
-        )}
-      </Panel>
-
-      <Panel title="QUALITY GATE & BACKTEST ELIGIBILITY">
-        <MetricRow
-          label="Data Quality Status"
-          value={
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <StatusDot state={getQualityVisualState(qualityStatus)} /> {qualityStatus.toUpperCase()}
-            </span>
-          }
-        />
-        <MetricRow label="Backtest Eligibility" value={canRun ? 'VERIFIED & ELIGIBLE' : 'GATE BLOCKED'} valueClass={canRun ? 'pos' : 'neg'} />
-        {blockers.map((blocker) => (
-          <div key={blocker} style={{ color: 'var(--text-2)', fontSize: 10.5, marginTop: 4 }}>
-            {blocker}
-          </div>
-        ))}
-        <button
-          type="button"
-          disabled={!canRun}
-          onClick={() => updateWorkspace({ activeTab: { secondaryMonitor: 'backtest' } })}
-          style={{
-            marginTop: 10,
-            width: '100%',
-            padding: '9px 12px',
-            borderRadius: 4,
-            border: 'none',
-            background: canRun ? 'var(--color-brand-primary)' : 'var(--bg-2)',
-            color: canRun ? '#080a0d' : 'var(--text-2)',
-            fontWeight: 800,
-            fontSize: 11,
-            letterSpacing: '0.04em',
-            cursor: canRun ? 'pointer' : 'not-allowed',
-          }}
-        >
-          {canRun ? '▶ PROCEED TO BACKTEST WITH THIS DATASET' : 'BACKTEST BLOCKED BY DATA GATE'}
-        </button>
-      </Panel>
-
-      <ImportDatasetModal
-        isOpen={importModalOpen}
-        onClose={() => setImportModalOpen(false)}
-        onImportSuccess={(datasetId) => {
-          const record = mockDatasetStore.getSnapshot().records.find((r) => r.id === datasetId)
-          if (record) {
-            const dataset = toDatasetRef(record)
-            updateWorkspace({ exchange: dataset.exchange, symbol: dataset.symbol, dataset })
-          }
-        }}
-      />
-    </div>
-  )
+function latestSelectableDate(): string {
+  const yesterday = new Date()
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+  return yesterday.toISOString().slice(0, 10)
 }
 
-function DateTimeInput({
-  label,
-  dateValue,
-  timeValue,
-  onDateChange,
-  onTimeChange,
+export function DatasetPanel({
+  apiAvailable,
+  selectedDatasetId,
+  onDatasetSelect,
+  onOpenBacktest,
 }: {
-  label: string
-  dateValue: string
-  timeValue: string
-  onDateChange: (value: string) => void
-  onTimeChange: (value: string) => void
+  apiAvailable: boolean
+  selectedDatasetId: string
+  onDatasetSelect: (datasetId: string) => void
+  onOpenBacktest: () => void
 }) {
+  const latestDate = latestSelectableDate()
+  const [startDate, setStartDate] = useState(FIRST_SUPPORTED_DATE)
+  const [endDate, setEndDate] = useState(FIRST_SUPPORTED_DATE)
+  const [datasets, setDatasets] = useState<BinanceTradeDataset[]>([])
+  const [loadingDatasets, setLoadingDatasets] = useState(true)
+  const [datasetError, setDatasetError] = useState('')
+  const [job, setJob] = useState<BinanceImportJob | null>(null)
+  const [jobError, setJobError] = useState('')
+  const [submitError, setSubmitError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [confirmLargeRange, setConfirmLargeRange] = useState(false)
+  const [notice, setNotice] = useState('')
+
+  const selectedDataset = useMemo(
+    () => datasets.find((dataset) => dataset.dataset_id === selectedDatasetId) ?? null,
+    [datasets, selectedDatasetId],
+  )
+  const dateError = !startDate || !endDate
+    ? 'Choose both a start and end date.'
+    : startDate < FIRST_SUPPORTED_DATE || endDate < FIRST_SUPPORTED_DATE
+    ? 'Choose a date on or after 1 January 2024.'
+    : endDate > latestDate
+      ? `Data Vision archives are selected by complete UTC dates. Choose ${latestDate} or earlier.`
+      : startDate > endDate
+        ? 'The start date must be on or before the end date.'
+        : ''
+  const jobRunning = job?.status === 'queued' || job?.status === 'running'
+  const selectedDayCount = startDate && endDate
+    ? Math.floor((Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`)) / 86_400_000) + 1
+    : 0
+
+  const refreshDatasets = async (showLoading = false) => {
+    if (showLoading) setLoadingDatasets(true)
+    try {
+      const next = await listBinanceTradeDatasets()
+      setDatasets(next.sort((a, b) => Number(b.retrieved_at_ns) - Number(a.retrieved_at_ns)))
+      setDatasetError('')
+      if (!next.some((item) => item.dataset_id === selectedDatasetId)) {
+        onDatasetSelect(next[0]?.dataset_id ?? '')
+      }
+    } catch (error) {
+      setDatasetError(error instanceof Error ? error.message : 'Could not load verified datasets.')
+    } finally {
+      setLoadingDatasets(false)
+    }
+  }
+
+  useEffect(() => {
+    void refreshDatasets(true)
+    let restoredJobId = ''
+    try {
+      restoredJobId = sessionStorage.getItem(JOB_STORAGE_KEY) ?? ''
+    } catch {
+      // Job restoration is optional when session storage is unavailable.
+    }
+    if (restoredJobId) {
+      void getBinanceImportJob(restoredJobId).then((restored) => {
+        setJob(restored)
+        if (restored.status === 'complete' || restored.status === 'failed') {
+          try { sessionStorage.removeItem(JOB_STORAGE_KEY) } catch { /* optional persistence */ }
+        }
+      }).catch((error: unknown) => {
+        try { sessionStorage.removeItem(JOB_STORAGE_KEY) } catch { /* optional persistence */ }
+        const detail = error instanceof Error ? error.message : 'Import status is unavailable.'
+        setJobError(`Could not restore the previous import (${detail}). Verified datasets are still available below; submit a new import to continue.`)
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (apiAvailable) void refreshDatasets(true)
+  }, [apiAvailable])
+
+  useEffect(() => {
+    if (!job?.jobId || !jobRunning) return
+    let cancelled = false
+    let timer: number | undefined
+    const poll = async () => {
+      try {
+        const next = await getBinanceImportJob(job.jobId)
+        if (cancelled) return
+        setJob(next)
+        setJobError('')
+        if (next.status === 'complete') {
+          try { sessionStorage.removeItem(JOB_STORAGE_KEY) } catch { /* optional persistence */ }
+          setNotice(`Import complete. ${next.datasets.length} verified archive${next.datasets.length === 1 ? '' : 's'} added.`)
+          await refreshDatasets()
+          const orderedParts = [...next.datasets].sort((a, b) => Number(a.coverage_start_ns ?? 0) - Number(b.coverage_start_ns ?? 0))
+          const newestPart = orderedParts[orderedParts.length - 1]
+          if (newestPart?.dataset_id) onDatasetSelect(newestPart.dataset_id)
+          return
+        }
+        if (next.status === 'failed') {
+          try { sessionStorage.removeItem(JOB_STORAGE_KEY) } catch { /* optional persistence */ }
+          return
+        }
+      } catch (error) {
+        if (cancelled) return
+        setJobError(error instanceof Error ? error.message : 'Import status check failed; retrying.')
+      }
+      if (!cancelled) timer = window.setTimeout(() => void poll(), 1000)
+    }
+    timer = window.setTimeout(() => void poll(), 1000)
+    return () => {
+      cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
+    }
+  }, [job?.jobId, jobRunning])
+
+  const launchImport = async () => {
+    if (dateError || submitting || jobRunning || !apiAvailable) return
+    setSubmitting(true)
+    setSubmitError('')
+    setJobError('')
+    setNotice('')
+    try {
+      const created = await submitBinanceTradeImport(startDate, endDate)
+      setJob(created)
+      try { sessionStorage.setItem(JOB_STORAGE_KEY, created.jobId) } catch { /* polling continues in this view */ }
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'The import request failed.')
+    } finally {
+      setSubmitting(false)
+      setConfirmLargeRange(false)
+    }
+  }
+
+  const importTrades = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (dateError || submitting || jobRunning || !apiAvailable) return
+    if (selectedDayCount > 31 && !confirmLargeRange) {
+      setConfirmLargeRange(true)
+      return
+    }
+    void launchImport()
+  }
+
   return (
-    <div>
-      <label style={{ display: 'block', color: 'var(--text-2)', fontSize: 10, marginBottom: 2 }}>
-        {label}
-      </label>
-      <div style={{ display: 'flex', gap: 4 }}>
-        <input
-          type="date"
-          value={dateValue}
-          onChange={(event) => onDateChange(event.target.value)}
-          style={{
-            flex: 2,
-            background: 'var(--bg-0)',
-            color: 'var(--text-0)',
-            border: '1px solid var(--border-1)',
-            borderRadius: 3,
-            padding: '4px 6px',
-            fontSize: 10.5,
-            fontFamily: 'var(--font-mono)',
-          }}
-        />
-        <input
-          type="time"
-          step="1"
-          value={timeValue}
-          onChange={(event) => onTimeChange(event.target.value)}
-          style={{
-            flex: 1,
-            background: 'var(--bg-0)',
-            color: 'var(--text-0)',
-            border: '1px solid var(--border-1)',
-            borderRadius: 3,
-            padding: '4px 6px',
-            fontSize: 10.5,
-            fontFamily: 'var(--font-mono)',
-          }}
-        />
+    <div className="data-workspace">
+      <div className="page-heading">
+        <div>
+          <div className="page-eyebrow">STEP 01 <span /> VERIFIED SOURCE INGESTION</div>
+          <h2>Import market data</h2>
+          <p>Download original Binance trade archives, verify their checksums, and preserve a reproducible dataset.</p>
+        </div>
+        <div className="instrument-chip"><span className="instrument-chip__symbol">BTCUSDT</span><span>PERPETUAL</span></div>
+      </div>
+
+      <div className="data-grid">
+        <section className="surface-card import-card" aria-labelledby="import-title">
+          <div className="surface-card__header">
+            <div><span className="section-kicker">BINANCE USDⓈ-M</span><h3 id="import-title">Aggregate trades</h3></div>
+            <span className="fidelity-badge"><span aria-hidden="true">●</span> TRADES ONLY</span>
+          </div>
+          <div className="source-note">
+            <span className="source-note__icon" aria-hidden="true">↗</span>
+            <p>Public Binance source · checksum verified after download · original ZIP preserved</p>
+            <a href="https://github.com/binance/binance-public-data" target="_blank" rel="noreferrer" aria-label="Open Binance public data documentation in a new tab">SOURCE ↗</a>
+          </div>
+
+          <form onSubmit={(event) => void importTrades(event)} noValidate>
+            <div className="date-range-heading"><span>UTC DATE RANGE</span><span>INCLUSIVE</span></div>
+            <div className="date-range-fields">
+              <label>
+                <span>Start date</span>
+                <input type="date" value={startDate} min={FIRST_SUPPORTED_DATE} max={latestDate} disabled={jobRunning} aria-describedby="date-range-hint" aria-invalid={!!dateError} onChange={(event) => { setStartDate(event.target.value); setConfirmLargeRange(false) }} />
+              </label>
+              <span className="date-range-arrow" aria-hidden="true">→</span>
+              <label>
+                <span>End date</span>
+                <input type="date" value={endDate} min={FIRST_SUPPORTED_DATE} max={latestDate} disabled={jobRunning} aria-describedby="date-range-hint" aria-invalid={!!dateError} onChange={(event) => { setEndDate(event.target.value); setConfirmLargeRange(false) }} />
+              </label>
+            </div>
+            <p className={`form-hint ${dateError ? 'form-hint--error' : ''}`} id="date-range-hint">
+              {dateError || `Select completed UTC dates from ${FIRST_SUPPORTED_DATE} through ${latestDate}. Provider archive availability is checked during import.`}
+            </p>
+            <button className="primary-action" type="submit" disabled={!apiAvailable || !!dateError || submitting || !!jobRunning || confirmLargeRange}>
+              <span aria-hidden="true">↓</span>
+              {submitting ? 'SUBMITTING IMPORT…' : jobRunning ? 'IMPORT IN PROGRESS' : 'IMPORT BINANCE TRADES'}
+            </button>
+            {selectedDayCount > 31 && !jobRunning && (
+              <div className="large-range-note" role="note">
+                <strong>Multi-month import</strong>
+                <span>{formatTradeCount(selectedDayCount)} UTC dates selected. Full months use monthly archives; edge dates use daily archives. Raw ZIP files and normalized data are both retained, so this may use substantial local disk space.</span>
+              </div>
+            )}
+            {confirmLargeRange && (
+              <div className="large-range-confirm" role="group" aria-label="Confirm large data import">
+                <strong>Confirm archive download</strong>
+                <p>Import {startDate} through {endDate} UTC ({formatTradeCount(selectedDayCount)} dates)? Check available space under your configured data root before continuing.</p>
+                <div><button type="button" onClick={() => setConfirmLargeRange(false)}>CANCEL</button><button type="button" disabled={!apiAvailable} onClick={() => void launchImport()}>CONFIRM IMPORT</button></div>
+              </div>
+            )}
+            {!apiAvailable && <p className="inline-error" role="alert">Data service is offline. Start the backend data service, then retry.</p>}
+            {submitError && <p className="inline-error" role="alert">{submitError}</p>}
+            {!job && jobError && <p className="inline-error" role="alert">{jobError}</p>}
+          </form>
+
+          {job && (
+            <div className={`job-card job-card--${job.status}`} role={job.status === 'failed' ? 'alert' : 'status'} aria-live="polite">
+              <div className="job-card__top">
+                <strong>{job.status === 'complete' ? 'IMPORT COMPLETE' : job.status === 'failed' ? 'IMPORT FAILED' : job.status === 'queued' ? 'IMPORT QUEUED' : 'IMPORTING ARCHIVES'}</strong>
+                <span className="job-card__status">{job.status.toUpperCase()}</span>
+              </div>
+              {(job.status === 'queued' || job.status === 'running') && (
+                <>
+                  {job.archivesTotal !== undefined && job.archivesCompleted !== undefined ? (
+                    <div className="job-progress">
+                      <div className="job-progress__label"><span>{job.currentArchive ?? 'Preparing next archive'}</span><span>{job.archivesCompleted} / {job.archivesTotal}</span></div>
+                      <div className="job-progress__track" role="progressbar" aria-valuemin={0} aria-valuemax={job.archivesTotal} aria-valuenow={job.archivesCompleted}><i style={{ width: `${job.archivesTotal ? Math.min(100, 100 * job.archivesCompleted / job.archivesTotal) : 0}%` }} /></div>
+                    </div>
+                  ) : <p className="job-card__message">Waiting for the first archive to finish verification.</p>}
+                </>
+              )}
+              {job.status === 'complete' && <p className="job-card__message">{notice || `${job.datasets.length} archive${job.datasets.length === 1 ? '' : 's'} verified and prepared.`}</p>}
+              {job.status === 'failed' && <p className="job-card__message">{job.error || 'The archive could not be imported. Review the details and retry.'}</p>}
+              {jobError && <p className="job-card__message job-card__message--error">{jobError}</p>}
+            </div>
+          )}
+
+          <div className="data-fidelity-note">
+            <span className="data-fidelity-note__marker" aria-hidden="true">i</span>
+            <p>Trades record executed activity. They do not contain historical quotes, resting liquidity, or order queue position. This dataset cannot support realistic order-fill simulation by itself.</p>
+          </div>
+        </section>
+
+        <section className="surface-card dataset-card" aria-labelledby="datasets-title">
+          <div className="surface-card__header">
+            <div><span className="section-kicker">LOCAL RESEARCH STORE</span><h3 id="datasets-title">Verified datasets <span className="count-pill">{loadingDatasets ? '…' : datasets.length}</span></h3></div>
+            <button className="quiet-action" type="button" onClick={() => void refreshDatasets(true)} disabled={loadingDatasets} aria-label="Refresh verified datasets">↻ <span>Refresh</span></button>
+          </div>
+
+          {datasetError && <div className="inline-error dataset-error" role="alert">{datasetError}<button type="button" onClick={() => void refreshDatasets(true)}>Retry</button></div>}
+          {loadingDatasets ? (
+            <div className="dataset-empty dataset-empty--loading" role="status"><span className="loading-mark" aria-hidden="true" />Loading dataset manifests…</div>
+          ) : datasetError ? null : datasets.length === 0 ? (
+            <div className="dataset-empty">
+              <span className="dataset-empty__glyph" aria-hidden="true">↧</span>
+              <strong>No verified datasets yet</strong>
+              <p>Choose a UTC date range and import the first Binance archive. The manifest will appear here after checksum and schema validation.</p>
+            </div>
+          ) : (
+            <>
+              <div className="dataset-list" role="list" aria-label="Verified Binance trade datasets">
+                {datasets.map((dataset) => (
+                  <div key={dataset.dataset_id} role="listitem">
+                    <button
+                      type="button"
+                      className={`dataset-row ${selectedDatasetId === dataset.dataset_id ? 'is-selected' : ''}`}
+                      aria-pressed={selectedDatasetId === dataset.dataset_id}
+                      onClick={() => onDatasetSelect(dataset.dataset_id)}
+                    >
+                      <span className="dataset-row__icon" aria-hidden="true">◈</span>
+                      <span className="dataset-row__main"><strong>{dataset.archive_filename}</strong><small>{formatManifestDate(dataset.coverage_start_ns)} <i>→</i> {formatManifestDate(dataset.coverage_end_ns)} UTC</small></span>
+                      <span className="dataset-row__count mono">{formatTradeCount(dataset.row_count)}<small>TRADES</small></span>
+                      <span className="dataset-row__check" aria-hidden="true">{selectedDatasetId === dataset.dataset_id ? '✓' : '›'}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {selectedDataset && <ManifestDetails dataset={selectedDataset} onOpenBacktest={onOpenBacktest} />}
+            </>
+          )}
+        </section>
       </div>
     </div>
   )
 }
 
-function PipelineStage({ label, state, last }: { label: string; state: PipelineStageState; last: boolean }) {
-  const visualState = state === 'complete' ? 'ok' : state === 'active' ? 'warn' : state === 'failed' ? 'bad' : 'off'
+function ManifestDetails({ dataset, onOpenBacktest }: { dataset: BinanceTradeDataset; onOpenBacktest: () => void }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        color: state === 'pending' ? 'var(--text-2)' : 'var(--text-0)',
-        fontSize: 10.5,
-      }}
-    >
-      <StatusDot state={visualState} pulse={state === 'active'} />
+    <div className="manifest-details">
+      <div className="manifest-details__heading"><div><span className="section-kicker">SELECTED MANIFEST</span><h4>{dataset.symbol} · {dataset.data_fidelity}</h4></div><button className="text-action" type="button" onClick={onOpenBacktest}>VIEW BACKTEST GATE <span aria-hidden="true">→</span></button></div>
+      <div className="manifest-grid">
+        <ManifestField label="Market" value={dataset.market} />
+        <ManifestField label="Source" value={dataset.source} />
+        <ManifestField label="Coverage start" value={formatManifestTimestamp(dataset.coverage_start_ns)} />
+        <ManifestField label="Coverage end" value={formatManifestTimestamp(dataset.coverage_end_ns)} />
+        <ManifestField label="Retrieved at" value={formatManifestTimestamp(dataset.retrieved_at_ns)} />
+        <ManifestField label="Accepted events" value={formatTradeCount(dataset.row_count)} />
+        <ManifestField label="Source archive" value={dataset.archive_filename} />
+        <ManifestField label="Pipeline version" value={dataset.pipeline_version} />
+        <ManifestField label="Capabilities" value={dataset.data_capabilities.join(', ')} />
+        <ManifestField label="Book depth" value={dataset.book_depth_available ? 'Available' : 'Not present'} />
+        <ManifestField label="Historical best quotes" value={dataset.historical_best_quotes_available ? 'Available' : 'Not present'} />
+        <ManifestField label="Dataset ID" value={dataset.dataset_id} mono />
+        <ManifestField label="SHA-256" value={dataset.archive_sha256} mono />
+        <ManifestField label="Source URI" value={dataset.source_uri} mono />
+      </div>
+      <div className="manifest-source-line"><span className="verified-check" aria-hidden="true">✓</span> Provider checksum verified <span className="manifest-separator">·</span> Raw archive preserved</div>
+    </div>
+  )
+}
+
+function ManifestField({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const copyValue = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopyState('copied')
+      window.setTimeout(() => setCopyState('idle'), 1400)
+    } catch {
+      setCopyState('failed')
+    }
+  }
+
+  return (
+    <div className="manifest-field">
       <span>{label}</span>
-      {!last && (
-        <span aria-hidden="true" style={{ color: 'var(--text-2)', fontSize: 9 }}>
-          →
-        </span>
-      )}
+      <div className="manifest-field__value">
+        <strong className={mono ? 'mono' : ''} title={value}>{value}</strong>
+        {mono && <button type="button" className="manifest-copy" onClick={() => void copyValue()} aria-label={`Copy ${label}`} title={`Copy ${label}`}>{copyState === 'copied' ? 'COPIED' : 'COPY'}</button>}
+      </div>
+      {copyState === 'failed' && <small className="manifest-copy-error" role="status">Clipboard access unavailable.</small>}
     </div>
   )
 }

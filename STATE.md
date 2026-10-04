@@ -646,3 +646,58 @@ Summary: Implemented a background API workflow to import official Binance USD-M 
 Deviations from spec: Task A/B importer is complete. Tasks C/D and Block 2.0 acceptance remain incomplete: vendored hftbacktest order execution consumes book depth, and public aggTrades do not contain L1/L2 depth or queue state. Binance historical T_DEPTH access requires an approved account/API key; the public bookDepth summary feed is not compatible. The import API is available, but no UI integration or real backtest workflow is claimed.
 Open questions for Planner: Owner must provide an approved compatible historical depth source (Binance T_DEPTH access or another permitted provider) before an honest hftbacktest execution adapter can be implemented. The user has been asked whether approved access exists or whether to keep backtests disabled pending access.
 Next step: Once a compatible depth archive is available, specify/implement its adapter and validate one real dataset through vendored hftbacktest, then connect persisted async runs and the data-driven UI. Until then, keep order-fill backtests unavailable.
+### [2.0.D] IN_PROGRESS — Real-data research UI and mock isolation
+Timestamp: 2026-10-04T09:10:00Z
+Agent: Codex (Planner/Executor)
+Status: IN_PROGRESS
+Files touched:
+  - frontend/src/App.tsx (planned)
+  - frontend/src/components/layout/SecondaryMonitor.tsx (planned)
+  - frontend/src/components/secondary/DatasetPanel.tsx (planned)
+  - frontend/src/components/secondary/BacktestPanel.tsx (planned)
+  - frontend/src/components/secondary/binanceDataApi.ts (planned)
+  - frontend/src/styles/research-workflow.css (planned)
+  - frontend/src/state/syncBus.ts (planned)
+  - docs/08-secondary-monitor-components.md (planned)
+  - STATE.md
+Spec files read:
+  - AGENTS.md §§1–8
+  - docs/16-implementation-roadmap.md §2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2
+  - docs/08-secondary-monitor-components.md §§8.8–8.16
+  - docs/11-design-system.md §§11.1–11.10
+  - docs/14-cross-cutting-systems.md §§14.7–14.9
+  - docs/15-api-and-data-model-spec.md §15.2
+Summary: Started connecting the existing real Binance importer to the user-facing research workflow. The current dataset and backtest panels still read from mock stores, and the app hides mock indicators; these are the main UX/data-trust defects being addressed. Binance official docs confirm L2 T_DEPTH and S_DEPTH retrieval is access-controlled; public trades alone cannot run a valid depth-based backtest.
+Deviations from spec: The owner authorized Planner changes and requested a completed real-data experience. The product UI will be narrowed to working real-data import/inspection and an explicitly disabled engine step rather than displaying mock prices, strategies, fills, or results as operational.
+Open questions for Planner: None; the required depth access is already identified as an external prerequisite, and the interface will state it clearly.
+Next step: Specify the exact real dataset import/review and backtest-unavailable UI contract, then implement it against the existing API and real dataset manifests.
+### [2.0.D] BLOCKED — Real-data research UI, truthful gating, and UX
+Timestamp: 2026-10-04T08:38:56Z
+Agent: Codex (Planner/Executor)
+Status: BLOCKED
+Files touched:
+  - README.md
+  - backend/data/app/binance_import.py
+  - backend/data/app/tests/test_binance_import.py
+  - docs/08-secondary-monitor-components.md
+  - frontend/src/App.tsx
+  - frontend/src/main.tsx
+  - frontend/src/components/layout/SecondaryMonitor.tsx
+  - frontend/src/components/secondary/DatasetPanel.tsx
+  - frontend/src/components/secondary/BacktestPanel.tsx
+  - frontend/src/components/secondary/binanceDataApi.ts
+  - frontend/src/state/syncBus.ts
+  - frontend/src/styles/research-workflow.css
+  - STATE.md
+Spec files read:
+  - docs/16-implementation-roadmap.md §2.0
+  - docs/05-engine-abstraction-and-data-pipeline.md §5.2
+  - docs/08-secondary-monitor-components.md §§8.8–8.16, 8.28
+  - docs/11-design-system.md §§11.1–11.10
+  - docs/14-cross-cutting-systems.md §§14.7–14.9
+  - docs/15-api-and-data-model-spec.md §15.2
+Summary: Replaced the running mock dashboard shell with a real-data research workspace. The DATA step calls the Binance importer, resumes/polls persisted jobs, handles service and import errors, lists only verified manifests, shows provenance/fidelity fields, supports copying long identifiers, and requires confirmation for ranges longer than 31 days. The BACKTEST step only reads real manifests and clearly disables execution while depth data and a validated adapter are absent; mock markets, strategies, jobs, and results are no longer mounted. Added the exact workflow contract and local UI startup guidance.
+Deviations from spec: Block 2.0 end-to-end acceptance remains incomplete because no compatible historical L2 depth source has been approved/provided; no engine job or result is claimed. UI viewport acceptance at 1440x900 and 390x844 could not be performed because the required in-app browser Node REPL runtime is unavailable in this session. Static/build checks and backend contracts pass.
+Open questions for Planner: External blockers are approved compatible historical L2 data plus an in-app browser runtime for visual/interaction review at the specified viewports. Binance documents its historical order-book products as access-controlled; credentials must be configured server-side after approval.
+Next step: Complete visual interaction review when the in-app browser runtime is available; after compatible L2 access is approved, implement the depth adapter and real hftbacktest run before marking Block 2.0 complete.

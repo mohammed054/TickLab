@@ -463,3 +463,85 @@ evidence — see `docs/10-experiment-management-and-ai-research.md` §10.5 for t
 mandatory evidence-citation behavior and the hard constraint that this assistant can
 only ever *propose*, never *create or run*, an experiment without an explicit user
 click on a `[ CREATE EXPERIMENT ]` action rendered inline in its responses).
+
+## 8.28 Real Data Research Workspace (Phase 2 owner milestone)
+
+For the current real-data-first release, the running application must open directly to
+this research workflow. Mock market, strategy, result, and telemetry screens must not
+be reachable from this release shell or shown as operational. The existing historical
+mock UI remains source code only until each surface is connected to a real service.
+
+### Shell and navigation
+
+- `frontend/src/App.tsx` renders `SecondaryMonitor` as the single application shell;
+  it must not mount `MainMonitor`, `CommandPalette`, or mock-runtime keyboard flows.
+- `frontend/src/components/layout/SecondaryMonitor.tsx` renders the TickLab wordmark,
+  a `RESEARCH` environment label (fixed, not a selector), real data-service connection
+  state, and two keyboard-accessible tabs: `DATA` and `BACKTEST`.
+- Initial active tab is `DATA`. The data-service state is `CONNECTING`, `CONNECTED`,
+  or `DISCONNECTED`, read from `GET {VITE_DATA_API_URL}/health` every 5 seconds. Use
+  blue informational, green healthy, and red disconnected styling with an adjacent
+  text label; never report the engine as healthy unless a real engine health check exists.
+- At widths below 720px, the workflow steps become horizontally reachable above the
+  active panel, the heading can wrap, and the active panel scrolls vertically. No
+  page-level horizontal overflow is allowed.
+
+### `DATA` tab — `DatasetPanel`
+
+- Replace mock dataset selection with the real Binance trade import API documented in
+  `docs/15-api-and-data-model-spec.md` §15.2. Fixed instrument is Binance USD-M
+  BTCUSDT perpetual; fixed feed is `AGG_TRADE`. Show `TRADES ONLY` and explain that
+  this feed has no historical order-book depth or queue position.
+- Date controls are inclusive UTC dates. Earliest selectable date is `2024-01-01`;
+  latest is yesterday UTC. Default both dates to `2024-01-01` for a bounded one-day
+  first import. Reject empty or reversed dates inline before sending a request.
+- For a range longer than 31 dates, explain that multiple raw and normalized archives
+  will consume local disk, then require an inline confirmation showing the exact UTC
+  range and day count before submitting. Do not invent a byte-size estimate.
+- Primary action `IMPORT BINANCE TRADES` sends `POST /binance/trades/import` with
+  `{startDate,endDate}`. While a job is `queued` or `running`, lock date controls and
+  submit button, poll its persistent job URL every 1 second, and display actual
+  `archivesCompleted / archivesTotal` and `currentArchive` when supplied. If the
+  component unmounts, stop polling; persist the active job ID in session storage so a
+  reload can resume polling.
+- On `complete`, refresh `GET /binance/trades/datasets`, select the newest returned
+  dataset, and show a completion announcement. On `failed`, show the backend's
+  actionable message, retain the chosen date range, and allow retry. A disconnected
+  data service shows a start-service instruction and disables import.
+- List verified datasets from manifests only; do not seed rows or infer provider
+  coverage. Each row displays the original archive filename, exact UTC coverage
+  derived from `coverage_start_ns` and `coverage_end_ns`, and accepted trade count.
+  Selecting a row shows market, source, retrieval time, full SHA-256, dataset ID,
+  archive name, source URI, pipeline version, `TRADES_ONLY` fidelity, capabilities,
+  and the book/best-quote availability flags. Long provenance values are truncated
+  visually but have a keyboard-accessible copy action.
+- Empty state says no verified dataset has been imported and offers the import form.
+  Dataset and job API errors are visible, retryable, and never replaced by empty fake data.
+
+### `BACKTEST` tab — `BacktestPanel`
+
+- Never import mock datasets, mock strategies, mock jobs, or mock result data.
+- Show the selected real manifest and exact trade coverage when one is selected.
+  Without a selected dataset, show an actionable prompt to import/select one.
+- With a `TRADES_ONLY` dataset, show a warning that the engine order-fill run is
+  unavailable because hftbacktest requires compatible market depth for its exchange
+  and queue fill behavior. Show two blocked requirements: approved compatible
+  historical L2 (`T_DEPTH` or another engine-compatible source) and a source adapter
+  validated against vendored hftbacktest. Keep `RUN BACKTEST` absent/disabled; never
+  expose latency/queue controls or output fields that suggest a run could proceed.
+- Link to Binance's official historical-depth access guide. State clearly that
+  public `bookDepth` percentage summaries are not a compatible order-book event feed.
+  A real engine health check, runner, and result API must all exist before this gate
+  can be changed.
+
+### Acceptance checks
+
+- A clean frontend install renders only real research data surfaces and contains no
+  mock dataset or fake backtest values in the visible UI.
+- Against a running data service, a user can submit a real import, observe the
+  backend job status, select its manifest, and inspect provenance/fidelity fields.
+- With the service stopped, errors are actionable and the screen remains usable.
+- Backtest cannot be submitted for trade-only data, and its limitation is stated in
+  text that does not rely on color alone.
+- `npm run check` passes; test the screen at 1440x900 and 390x844 for clipping,
+  keyboard tab use, loading, empty, error, and completed-import states.

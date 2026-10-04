@@ -1,180 +1,163 @@
-import { mockRuntime } from '../../mock/runtime/runtime'
-import { StatusDot } from '../shared/Panel'
-import { StrategyPanel } from '../secondary/StrategyPanel'
-import { ParametersPanel } from '../secondary/ParametersPanel'
-import { DatasetPanel } from '../secondary/DatasetPanel'
-import { DataCenterPanel } from '../secondary/DataCenterPanel'
-import { RealtimeMonitorPanel } from '../secondary/RealtimeMonitorPanel'
-import { MarketOverviewPanel } from '../secondary/MarketOverviewPanel'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { BacktestPanel } from '../secondary/BacktestPanel'
-import { ResultsPanel } from '../secondary/ResultsPanel'
-import { ExperimentsPanel } from '../secondary/ExperimentsPanel'
-import { ReplayPanel } from '../secondary/ReplayPanel'
-import { AnalyticsPanel } from '../secondary/AnalyticsPanel'
-import { LogsPanel } from '../secondary/LogsPanel'
-import { RiskPanel } from '../secondary/RiskPanel'
-import { ComparePanel } from '../secondary/ComparePanel'
-import { SweepsPanel } from '../secondary/SweepsPanel'
-import { WalkForwardPanel } from '../secondary/WalkForwardPanel'
-import { ReportPanel } from '../secondary/ReportPanel'
-import { DataQualityPanel } from '../secondary/DataQualityPanel'
-import { EventInspector } from '../secondary/EventInspector'
-import { WhyPanel } from '../secondary/WhyPanel'
-import { NotesPanel } from '../secondary/NotesPanel'
-import { AiResearchTab } from '../ai-research/AiResearchTab'
-import { GlobalSearch } from '../shared/GlobalSearch'
-import { PresetSwitcher } from '../shared/PresetSwitcher'
-import { SecondaryTabId } from '../../state/syncBus'
-import { useMarketRuntime } from '../../state/appStore'
-import { useWorkbench } from '../../state/workbenchStore'
-import { useWorkspace } from '../../state/useWorkspace'
+import { DatasetPanel } from '../secondary/DatasetPanel'
+import { getDataServiceHealth, type DataServiceHealth } from '../secondary/binanceDataApi'
+import '../../styles/research-workflow.css'
 
-const TABS: readonly { id: SecondaryTabId; label: string; group?: string }[] = [
-  { id: 'strategy', label: 'STRATEGY' },
-  { id: 'parameters', label: 'PARAMS' },
-  { id: 'data', label: 'DATASETS' },
-  { id: 'data-center', label: 'DATA CENTER' },
-  { id: 'data-quality', label: 'QUALITY' },
-  { id: 'backtest', label: 'BACKTEST' },
-  { id: 'results', label: 'RESULTS' },
-  { id: 'analytics', label: 'ANALYTICS' },
-  { id: 'compare', label: 'COMPARE' },
-  { id: 'sweeps', label: 'SWEEPS' },
-  { id: 'walk-forward', label: 'WALK-FORWARD' },
-  { id: 'experiments', label: 'RUNS' },
-  { id: 'replay', label: 'REPLAY' },
-  { id: 'event-inspector', label: 'L3 TICKS' },
-  { id: 'why-investigation', label: 'ROOT CAUSE' },
-  { id: 'ai-research', label: 'AI COPILOT' },
-  { id: 'research-notes', label: 'JOURNAL' },
-  { id: 'realtime-monitor', label: 'TELEMETRY' },
-  { id: 'market-overview', label: 'UNIVERSE' },
-  { id: 'risk', label: 'RISK' },
-  { id: 'report', label: 'REPORT' },
-  { id: 'logs', label: 'LOGS' },
-]
+type WorkflowTab = 'data' | 'backtest'
 
 export function SecondaryMonitor() {
-  const [workspace, updateWorkspace] = useWorkspace()
-  const runtime = useMarketRuntime()
-  const { experiments } = useWorkbench()
-  const tab = workspace.activeTab.secondaryMonitor
-  const result = workspace.experiment ? experiments.find((experiment) => experiment.id === workspace.experiment?.id)?.results ?? null : null
+  const [activeTab, setActiveTab] = useState<WorkflowTab>('data')
+  const [health, setHealth] = useState<DataServiceHealth>('connecting')
+  const [compactLayout, setCompactLayout] = useState(false)
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('ticklab.real-dataset.selected') ?? ''
+    } catch {
+      return ''
+    }
+  })
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
+
+  useEffect(() => {
+    let mounted = true
+    const refreshHealth = async () => {
+      const next = await getDataServiceHealth()
+      if (mounted) setHealth(next)
+    }
+    void refreshHealth()
+    const timer = window.setInterval(() => void refreshHealth(), 5000)
+    return () => {
+      mounted = false
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 720px)')
+    const updateLayout = () => setCompactLayout(media.matches)
+    updateLayout()
+    media.addEventListener('change', updateLayout)
+    return () => media.removeEventListener('change', updateLayout)
+  }, [])
+
+  const selectDataset = (datasetId: string) => {
+    setSelectedDatasetId(datasetId)
+    try {
+      if (datasetId) localStorage.setItem('ticklab.real-dataset.selected', datasetId)
+      else localStorage.removeItem('ticklab.real-dataset.selected')
+    } catch {
+      // Storage is a convenience; a restricted browser session must still work.
+    }
+  }
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const previousKey = compactLayout ? 'ArrowLeft' : 'ArrowUp'
+    const nextKey = compactLayout ? 'ArrowRight' : 'ArrowDown'
+    if (![previousKey, nextKey, 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const next = event.key === 'Home' || event.key === previousKey && activeTab === 'backtest'
+      ? 0
+      : event.key === 'End' || event.key === nextKey && activeTab === 'data'
+        ? 1
+        : activeTab === 'data' ? 0 : 1
+    const targetTab = next === 0 ? 'data' : 'backtest'
+    setActiveTab(targetTab)
+    tabRefs.current[next]?.focus()
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-0)' }}>
-      {/* Institutional Lab Header */}
-      <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--border-1)', background: 'var(--bg-1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--color-brand-primary)' }}>
-            RESEARCH & QUANT STUDIO
-          </span>
-          <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'var(--text-1)' }}>
-            <span style={{ color: 'var(--text-0)', fontWeight: 600 }}>{runtime.symbol} · {runtime.exchange}</span>
-            <span><StatusDot state="ok" /> {runtime.strategy.name}</span>
-            <span><StatusDot state="ok" /> SIMULATION ENGINE</span>
-            <span><StatusDot state="ok" /> DATA GATEWAY</span>
-          </div>
+    <main className="research-shell">
+      <header className="research-header">
+        <div className="research-brand-lockup">
+          <span className="research-mark" aria-hidden="true">T</span>
+          <span className="research-brand">TickLab</span>
+          <span className="research-divider" aria-hidden="true" />
+          <span className="research-environment">RESEARCH</span>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
-            <span className="dim mono">ENV</span>
-            <select
-              aria-label="Environment"
-              value={workspace.environment}
-              onChange={(event) => {
-                const environment = event.target.value as 'RESEARCH' | 'PAPER' | 'LIVE'
-                updateWorkspace({ environment })
-                mockRuntime.setEnvironment(environment)
-              }}
-              style={{
-                background: 'var(--bg-2)',
-                color: environmentColor(workspace.environment),
-                border: '1px solid var(--border-1)',
-                borderRadius: 3,
-                padding: '2px 6px',
-                fontSize: 10,
-                fontWeight: 700,
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              <option value="RESEARCH">RESEARCH</option>
-              <option value="PAPER">PAPER</option>
-              <option value="LIVE">LIVE</option>
-            </select>
-          </label>
-          <PresetSwitcher />
-          <div style={{ minWidth: 200 }}><GlobalSearch /></div>
+        <div className={`service-status service-status--${health}`} role="status" aria-live="polite">
+          <span className="service-status__dot" aria-hidden="true" />
+          <span>{health === 'connected' ? 'DATA SERVICE CONNECTED' : health === 'disconnected' ? 'DATA SERVICE OFFLINE' : 'CONNECTING TO DATA SERVICE'}</span>
         </div>
-      </div>
+      </header>
 
-      {/* Modern Studio Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 2,
-          padding: '4px 8px',
-          borderBottom: '1px solid var(--border-1)',
-          background: 'var(--bg-0)',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {TABS.map(({ id, label }) => {
-          const isActive = id === tab
-          return (
+      <div className="research-frame">
+        <aside className="workflow-rail" aria-label="Research workflow">
+          <div className="workflow-rail__eyebrow">RESEARCH WORKSPACE</div>
+          <h1>Market data</h1>
+          <p>Build a reproducible dataset before running research.</p>
+          <nav className="workflow-steps" aria-label="Workflow steps" role="tablist" aria-orientation={compactLayout ? 'horizontal' : 'vertical'}>
             <button
-              key={id}
-              onClick={() => updateWorkspace({ activeTab: { secondaryMonitor: id } })}
-              style={{
-                fontSize: 10,
-                fontFamily: 'var(--font-mono)',
-                padding: '4px 9px',
-                borderRadius: 3,
-                border: isActive ? '1px solid var(--border-focus)' : '1px solid transparent',
-                background: isActive ? 'var(--bg-2)' : 'transparent',
-                color: isActive ? 'var(--color-brand-primary)' : 'var(--text-2)',
-                fontWeight: isActive ? 700 : 500,
-                cursor: 'pointer',
-                transition: 'all 0.1s ease',
-              }}
+              ref={(element) => { tabRefs.current[0] = element }}
+              type="button"
+              role="tab"
+              id="workflow-tab-data"
+              aria-controls="workflow-panel-data"
+              aria-selected={activeTab === 'data'}
+              tabIndex={activeTab === 'data' ? 0 : -1}
+              className={`workflow-step ${activeTab === 'data' ? 'is-active' : selectedDatasetId ? 'is-complete' : ''}`}
+              aria-current={activeTab === 'data' ? 'step' : undefined}
+              onClick={() => setActiveTab('data')}
+              onKeyDown={handleTabKeyDown}
             >
-              {label}
+              <span className="workflow-step__index">01</span>
+              <span className="workflow-step__copy"><strong>Import data</strong><small>Trades · provenance · coverage</small></span>
+              <span className="workflow-step__chevron" aria-hidden="true">›</span>
             </button>
-          )
-        })}
-      </div>
+            <button
+              ref={(element) => { tabRefs.current[1] = element }}
+              type="button"
+              role="tab"
+              id="workflow-tab-backtest"
+              aria-controls="workflow-panel-backtest"
+              aria-selected={activeTab === 'backtest'}
+              tabIndex={activeTab === 'backtest' ? 0 : -1}
+              className={`workflow-step ${activeTab === 'backtest' ? 'is-active' : ''}`}
+              aria-current={activeTab === 'backtest' ? 'step' : undefined}
+              onClick={() => setActiveTab('backtest')}
+              onKeyDown={handleTabKeyDown}
+            >
+              <span className="workflow-step__index">02</span>
+              <span className="workflow-step__copy"><strong>Backtest</strong><small>Engine readiness and data gate</small></span>
+              <span className="workflow-step__chevron" aria-hidden="true">›</span>
+            </button>
+          </nav>
+          <div className="workflow-future">
+            <span className="workflow-step__index" aria-hidden="true">03</span>
+            <span className="workflow-step__copy"><strong>Strategy research</strong><small>Not implemented in this real-data release</small></span>
+            <span className="workflow-lock">NOT READY</span>
+          </div>
 
-      {/* Active Panel Viewport */}
-      <div style={{ flex: '1 1 auto', minHeight: 0, padding: 8, overflow: 'hidden' }}>
-        {tab === 'strategy' && <StrategyPanel />}
-        {tab === 'parameters' && <ParametersPanel />}
-        {tab === 'data' && <DatasetPanel />}
-        {tab === 'data-center' && <DataCenterPanel />}
-        {tab === 'realtime-monitor' && <RealtimeMonitorPanel />}
-        {tab === 'market-overview' && <MarketOverviewPanel />}
-        {tab === 'backtest' && <BacktestPanel />}
-        {tab === 'results' && <ResultsPanel result={result} />}
-        {tab === 'compare' && <ComparePanel />}
-        {tab === 'sweeps' && <SweepsPanel />}
-        {tab === 'walk-forward' && <WalkForwardPanel />}
-        {tab === 'experiments' && <ExperimentsPanel />}
-        {tab === 'replay' && <ReplayPanel />}
-        {tab === 'analytics' && <AnalyticsPanel />}
-        {tab === 'risk' && <RiskPanel />}
-        {tab === 'report' && <ReportPanel result={result} />}
-        {tab === 'logs' && <LogsPanel />}
-        {tab === 'data-quality' && <DataQualityPanel />}
-        {tab === 'event-inspector' && <EventInspector />}
-        {tab === 'why-investigation' && <WhyPanel />}
-        {tab === 'research-notes' && <NotesPanel />}
-        {tab === 'ai-research' && <AiResearchTab />}
+          <div className="workflow-rail__foot">
+            <span className="workflow-rail__foot-label">ACTIVE MARKET</span>
+            <strong>BTCUSDT <span>PERPETUAL</span></strong>
+            <small>Binance USDⓈ-M Futures</small>
+          </div>
+        </aside>
+
+        <section className="research-content" aria-label="Research workspace">
+          <div className="research-content__topline">
+            <div className="breadcrumbs"><span>RESEARCH</span><i>/</i><strong>{activeTab === 'data' ? 'DATA' : 'BACKTEST'}</strong></div>
+            <span className="truth-label"><span aria-hidden="true">●</span> REAL MARKET DATA ONLY</span>
+          </div>
+          <div className="workflow-tabpanel" role="tabpanel" id="workflow-panel-data" aria-labelledby="workflow-tab-data" tabIndex={0} hidden={activeTab !== 'data'}>
+            <DatasetPanel
+              apiAvailable={health === 'connected'}
+              selectedDatasetId={selectedDatasetId}
+              onDatasetSelect={selectDataset}
+              onOpenBacktest={() => setActiveTab('backtest')}
+            />
+          </div>
+          <div className="workflow-tabpanel" role="tabpanel" id="workflow-panel-backtest" aria-labelledby="workflow-tab-backtest" tabIndex={0} hidden={activeTab !== 'backtest'}>
+            <BacktestPanel apiAvailable={health === 'connected'} selectedDatasetId={selectedDatasetId} onOpenData={() => setActiveTab('data')} />
+          </div>
+          <footer className="research-footer">
+            <span>RESEARCH ENVIRONMENT</span>
+            <span>NO ORDER ROUTING</span>
+            <span>DATA SOURCE: BINANCE DATA VISION</span>
+          </footer>
+        </section>
       </div>
-    </div>
+    </main>
   )
-}
-
-function environmentColor(environment: 'RESEARCH' | 'PAPER' | 'LIVE'): string {
-  return environment === 'LIVE' ? 'var(--color-negative)' : environment === 'PAPER' ? 'var(--color-brand-primary)' : 'var(--text-1)'
 }
