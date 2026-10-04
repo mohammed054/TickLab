@@ -854,3 +854,31 @@ Summary: Registered the owner's existing Binance BTCUSDT Spot archive set as 641
 Deviations from spec: None. Spot remains ineligible for backtests because this is raw trades-only data with no historical depth or canonical normalizer.
 Open questions for Planner: None.
 Next step: User can open TickLab DATA to browse the registered days; future work needs a separately specified Spot normalizer and compatible depth/engine path before Spot backtesting.
+### [R0] DONE - Publish executor-safe real research pipeline plan
+Timestamp: 2026-10-04T18:43:52Z
+Agent: Codex GPT-6 (Planner)
+Status: DONE
+Files touched:
+  - docs/16-implementation-roadmap.md
+  - docs/18-real-research-pipeline.md
+  - C:/ticklab-coord/coordination.py (outside repository)
+  - C:/ticklab-coord/coordination.db (outside repository)
+  - STATE.md
+Spec files read:
+  - AGENTS.md Sections 1-9
+  - docs/00-vision-and-principles.md Sections 0.1-0.9
+  - docs/03-tech-stack-and-repo-structure.md Sections 3.1-3.8
+  - docs/04-hftbacktest-engine-analysis.md Sections 4.2-4.10
+  - docs/05-engine-abstraction-and-data-pipeline.md Sections 5.1-5.7
+  - docs/08-secondary-monitor-components.md Sections 8.3-8.16, 8.23, 8.27-8.29
+  - docs/09-analytics-and-investigation-suite.md Sections 9.1-9.19
+  - docs/10-experiment-management-and-ai-research.md Sections 10.1-10.7
+  - docs/11-design-system.md Sections 11.1-11.10
+  - docs/12-execution-modes-and-risk.md Sections 12.1-12.5
+  - docs/13-data-management-and-monitoring.md Section 13.2
+  - docs/14-cross-cutting-systems.md Sections 14.4, 14.7-14.10
+  - docs/15-api-and-data-model-spec.md Sections 15.1-15.5
+Summary: Replaced the ambiguous active roadmap with a concise pointer to a new executor contract covering R1-R11 from real source/engine compatibility through native end-to-end release. The contract pins narrow tasks, owned paths, frozen API/state schemas, capability and financial fail-closed rules, strategy versioning, actual hftbacktest execution, durable experiments, metrics/replay, bounded concurrent batches, sweeps, leakage-safe walk-forward, OpenRouter human approval, and packaged acceptance. Updated the external SQLite seed and initialized 11 dependency-ordered current blocks; changed stale UI/scale-out rows to historical/superseded or needs_review without deleting them. Corrected R8's SQLite dependency to wait for R7 so shared experiment/job ownership cannot run in parallel.
+Deviations from spec: None. The plan intentionally keeps acquisition/backtest completion blocked until R1 establishes and R3 obtains authentic engine-compatible source data; the existing raw Spot catalog is explicitly ineligible.
+Open questions for Planner: None.
+Next step: Commit and push the two repository planning documents and STATE.md; agents can start by claiming R1 from the shared SQLite board.
