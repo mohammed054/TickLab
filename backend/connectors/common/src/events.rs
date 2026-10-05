@@ -19,10 +19,10 @@ pub enum MarketEventType {
 }
 
 /// `MarketEvent.side` (`docs/15` §15.5).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Side {
-    Bid,
+    #[default] Bid,
     Ask,
 }
 
