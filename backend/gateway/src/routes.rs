@@ -116,6 +116,57 @@ async fn not_found() -> Response {
     )
 }
 
+/// Dataset endpoints (`docs/15` §15.2)
+async fn list_datasets(State(state): State<AppState>) -> impl IntoResponse {
+    let datasets = state.datasets.list().await;
+    Json(serde_json::json!({"datasets": datasets}))
+}
+
+async fn get_dataset_quality(State(state): State<AppState>, Json(payload): Json<serde_json::Value>) -> impl IntoResponse {
+    let dataset_id = payload.get("dataset_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let quality = state.datasets.get_quality(dataset_id).await;
+    Json(quality)
+}
+
+/// Strategy template endpoints (`docs/15` §15.2)
+async fn list_strategies_templates(State(state): State<AppState>) -> impl IntoResponse {
+    let templates = state.strategies.list_templates().await;
+    Json(serde_json::json!({"templates": templates}))
+}
+
+async fn validate_strategy(State(state): State<AppState>, Json(payload): Json<serde_json::Value>) -> impl IntoResponse {
+    let result = state.strategies.validate(&payload).await;
+    Json(result)
+}
+
+/// Experiment endpoints (`docs/15` §15.2)
+async fn get_experiment(State(state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
+    let experiment = state.experiments.get(&id).await;
+    Json(experiment)
+}
+
+async fn reproduce_experiment(State(state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
+    let new_id = state.experiments.reproduce(&id).await;
+    Json(serde_json::json!({"newExperimentId": new_id}))
+}
+
+/// Job batch endpoint (`docs/15` §15.2)
+async fn submit_batch(State(state): State<AppState>, Json(payload): Json<serde_json::Value>) -> impl IntoResponse {
+    let result = state.jobs.submit_batch(payload).await;
+    Json(result)
+}
+
+async fn not_found() -> Response {
+    gateway_error(
+        StatusCode::NOT_FOUND,
+        "NOT_FOUND",
+        "no such endpoint".to_string(),
+        "See docs/15 §15.2 for the REST contract.",
+    )
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(root))
@@ -127,5 +178,11 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/jobs", get(proxy_to_jobs))
         .route("/api/v1/jobs/:id", get(proxy_to_jobs).delete(proxy_to_jobs))
         .route("/api/v1/jobs/:id/result", get(proxy_to_jobs))
+        .route("/api/v1/datasets", get(list_datasets))
+        .route("/api/v1/datasets/{dataset_id}/quality", post(get_dataset_quality))
+        .route("/api/v1/strategies/templates", get(list_strategies_templates))
+        .route("/api/v1/strategies/validate", post(validate_strategy))
+        .route("/api/v1/experiments/{id}", get(get_experiment).post(reproduce_experiment))
+        .route("/api/v1/jobs/batches", post(submit_batch))
         .fallback(not_found)
 }

@@ -15,6 +15,8 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use num_cpus;
+use uuid::Uuid;
 
 use axum::{
     extract::{Path, Query, State},
@@ -27,8 +29,8 @@ use axum::{
 use crate::queue::JobStore;
 use crate::runner::total_events_for_iterations;
 use crate::types::{
-    ApiError, BacktestRequest, JobStatus, RobustnessRequest, SubmitResponse, SweepRequest,
-    SweepSubmitResponse, WalkforwardRequest,
+    ApiError, BacktestRequest, BatchChild, BatchRequest, BatchResponse, JobStatus, RobustnessRequest,
+    SubmitResponse, SweepRequest, SweepSubmitResponse, WalkforwardRequest,
 };
 
 /// Shared service state.
@@ -61,6 +63,7 @@ fn status_for_code(code: &str) -> StatusCode {
         "INVALID_REQUEST" => StatusCode::BAD_REQUEST,
         "JOB_NOT_FOUND" => StatusCode::NOT_FOUND,
         "RESULT_PENDING" | "RESULT_UNAVAILABLE" => StatusCode::CONFLICT,
+        "INVALID_BATCH_COUNT" | "INVALID_CONCURRENCY" => StatusCode::UNPROCESSABLE_ENTITY,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
@@ -116,6 +119,93 @@ async fn submit_robustness(
         Ok(job_id) => Ok((StatusCode::CREATED, Json(SubmitResponse { job_id }))),
         Err(e) => Err(err(status_for_code(&e.code), e)),
     }
+}
+
+async fn submit_batch(
+    State(state): State<AppState>,
+    Json(req): Json<BatchRequest>,
+) -> Result<impl IntoResponse, ApiResponse> {
+    // Validate batch count: 1..100
+    let num_configs = req.runConfigs.len();
+    if num_configs < 1 || num_configs > 100 {
+        return Err(err(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            ApiError::new(
+                "INVALID_BATCH_COUNT",
+                format!("batch must have 1-100 run configs, got {}", num_configs),
+                Some("Adjust the runConfigs array to have between 1 and 100 configurations."),
+            ),
+        ));
+    }
+
+    // Validate concurrency: 1..max(1, CPU count - 1)
+    let cpu_count = num_cpus::get() as u32;
+    let max_concurrency = cpu_count.saturating_sub(1).max(1);
+    if req.concurrencyLimit < 1 || req.concurrencyLimit > max_concurrency {
+        return Err(err(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            ApiError::new(
+                "INVALID_CONCURRENCY",
+                format!(
+                    "concurrency limit must be 1-{}, got {}",
+                    max_concurrency, req.concurrencyLimit
+                ),
+                Some("Adjust the concurrencyLimit to a valid range.",
+                ),
+            ),
+        ));
+    }
+
+    // Validate all run configs before creating any children
+    for (i, config) in req.runConfigs.iter().enumerate() {
+        if let Err(e) = crate::types::validate_backtest_request(config) {
+            return Err(err(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ApiError::new(
+                    "INVALID_REQUEST",
+                    format!("runConfig[{}] is invalid: {}", i, e.message),
+                    Some("Fix the request fields and resubmit."),
+                ),
+            ));
+        }
+    }
+
+    // Persist batch records before submitting
+    let batch_id = uuid::Uuid::new_v4().to_string();
+    let children = req
+        .runConfigs
+        .iter()
+        .map(|config| {
+            let experiment_id = format!("exp-{}", batch_id);
+            let job_id = format!("job-{}", batch_id);
+            (
+                job_id.clone(),
+                experiment_id.clone(),
+                config.clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+
+    // Submit each job in the batch
+    let mut submitted_children = Vec::new();
+    for (job_id, experiment_id, config) in &children {
+        let total = total_events_for_iterations(config.iterations);
+        let record = state.store.submit_backtest(config.clone(), total);
+        // Store experiment link
+        let _ = state.store.link_experiment(&experiment_id, &job_id);
+        submitted_children.push(BatchChild {
+            job_id: job_id.clone(),
+            experiment_id: experiment_id.clone(),
+        });
+    }
+
+    Ok((
+        StatusCode::CREATED,
+        Json(BatchResponse {
+            batch_id,
+            children: submitted_children,
+        }),
+    ))
 }
 
 async fn get_job(
@@ -181,7 +271,12 @@ async fn fallback_404() -> ApiResponse {
         ApiError::new(
             "NOT_FOUND",
             "no such endpoint".to_string(),
-            Some("See docs/15 §15.2 for the REST contract."),
+            Some(vec![ApiErrorField {
+                field: "endpoint".to_string(),
+                code: "NOT_FOUND".to_string(),
+                message: "no such endpoint".to_string(),
+            }]),
+            Some(uuid::Uuid::new_v4().to_string()),
         ),
     )
 }
@@ -197,9 +292,10 @@ pub fn router(state: AppState) -> Router {
         .route("/api/v1/jobs/:id", get(get_job))
         .route("/api/v1/jobs/:id", delete(cancel_job))
         .route("/api/v1/jobs/:id/result", get(get_result))
-        .route("/healthz", get(health))
-        .fallback(fallback_404)
-        .with_state(state)
+.route("/healthz", get(health))
+    .route("/api/v1/jobs/batches", post(submit_batch))
+    .fallback(fallback_404)
+    .with_state(state)
 }
 
 #[cfg(test)]
@@ -316,7 +412,8 @@ mod tests {
         let (status, body) = post_json(app, "/api/v1/jobs/backtest", bad).await;
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert_eq!(body["code"], "INVALID_REQUEST");
-        assert!(body["action"].is_string());
+        assert!(body["fieldErrors"].is_array());
+        assert_eq!(body["fieldErrors"][0]["field"], "datasetId");
     }
 
     #[tokio::test]

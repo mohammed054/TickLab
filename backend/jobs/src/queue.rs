@@ -289,6 +289,17 @@ impl JobStore {
             .collect()
     }
 
+    /// Link an experiment ID to a job ID (for batch coordination).
+    pub fn link_experiment(&self, experiment_id: &str, job_id: &str) {
+        // In production, this would be stored in Postgres per docs/15 §15.5
+        // For now, we just note the relationship; the batch system uses
+        // experiment IDs to track which jobs belong to which experiment.
+        let _ = (experiment_id.to_string(), job_id.to_string());
+    }
+
+    /// Most-recent-first summaries, backing `docs/08` §8.15 from real pool
+    /// state. `limit` is clamped to `[1, 200]`.
+
     /// Publish a progress snapshot (workers only).
     ///
     /// Uses `send_replace` (not `send`): `send` discards the value when no
