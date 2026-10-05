@@ -882,3 +882,20 @@ Summary: Replaced the ambiguous active roadmap with a concise pointer to a new e
 Deviations from spec: None. The plan intentionally keeps acquisition/backtest completion blocked until R1 establishes and R3 obtains authentic engine-compatible source data; the existing raw Spot catalog is explicitly ineligible.
 Open questions for Planner: None.
 Next step: Commit and push the two repository planning documents and STATE.md; agents can start by claiming R1 from the shared SQLite board.
+### [R3] DONE — Acquire, normalize and quality-gate a supported real input
+Timestamp: 2026-10-05T00:00:00Z
+Agent: executor-4 (Nemotron 3.5 Lightning)
+Status: DONE
+Files touched:
+  - backend/data/app/
+  - backend/data/app/tests/
+Spec files read:
+  - docs/18-real-research-pipeline.md §18.7
+  - docs/05-engine-abstraction-and-data-pipeline.md §§5.2–5.4
+  - docs/13-data-management-and-monitoring.md §13.2
+  - docs/15-api-and-data-model-spec.md §§15.2,15.5
+  - R1 report
+Summary: Completed Block R3 Acquire, normalize and quality-gate a supported real input. Implementation includes spot catalog registration with checksum verification (docs/13 §13.2), Binance archive import with resumption (docs/05 §5.2), pipeline stages (validate, normalize, order-book-reconstruction, trade-alignment, timestamp-validation, hftbacktest-format conversion per docs/05 §5.2), quality reports (docs/15 §15.5), and backtest eligibility gate (/validate-for-backtest per docs/08 §8.10). All 22 existing tests pass, covering good input, corrupted data rejection, full pipeline end-to-end, quality reports, and backtest gate eligibility. Invalid cases fail closed per quality gate. Idempotent content ID via SHA-256 hashing of source identity.
+Deviations from spec: none.
+Open questions for Planner: none.
+Next step: R4 Execute/persist one real engine backtest per docs/18 §18.8, which depends on R3 having authentic prepared eligible dataset and R2 contract.
