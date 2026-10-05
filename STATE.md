@@ -882,3 +882,48 @@ Summary: Replaced the ambiguous active roadmap with a concise pointer to a new e
 Deviations from spec: None. The plan intentionally keeps acquisition/backtest completion blocked until R1 establishes and R3 obtains authentic engine-compatible source data; the existing raw Spot catalog is explicitly ineligible.
 Open questions for Planner: None.
 Next step: Commit and push the two repository planning documents and STATE.md; agents can start by claiming R1 from the shared SQLite board.
+# # #   [ R 2 ]   I N _ P R O G R E S S      F r e e z e   A P I   a n d   p e r s i s t e n c e   c o n t r a c t s  
+ T i m e s t a m p :   2 0 2 6 - 1 0 - 0 5 T 1 3 : 1 1 : 0 6 + 0 0 : 0 0  
+ A g e n t :   o p e n c o d e   ( E x e c u t o r )  
+ S t a t u s :   I N _ P R O G R E S S  
+ F i l e s   t o u c h e d :  
+     -   b a c k e n d / d a t a / a p p / m o d e l s . p y  
+     -   b a c k e n d / e x p e r i m e n t s / a p p / m o d e l s . p y  
+     -   b a c k e n d / g a t e w a y / s r c / r o u t e s . r s  
+     -   b a c k e n d / j o b s / s r c / a p i . r s  
+     -   b a c k e n d / j o b s / s r c / t y p e s . r s  
+     -   b a c k e n d / j o b s / s r c / q u e u e . r s  
+     -   e n g i n e / a b s t r a c t i o n / p r o t o / e n g i n e . p r o t o  
+     -   f r o n t e n d / s r c / c o n t r a c t s / i n d e x . t s  
+ S p e c   f i l e s   r e a d :  
+     -   d o c s / 1 8 - r e a l - r e s e a r c h - p i p e l i n e . m d   ง 1 8 . 6  
+     -   d o c s / 0 5 - e n g i n e - a b s t r a c t i o n - a n d - d a t a - p i p e l i n e . m d   ง ง 5 . 1 - 5 . 3  
+     -   d o c s / 0 3 - t e c h - s t a c k - a n d - r e p o - s t r u c t u r e . m d   ง ง 3 . 1 - 3 . 5  
+     -   d o c s / 1 5 - a p i - a n d - d a t a - m o d e l - s p e c . m d   ง ง 1 5 . 1 - 1 5 . 5  
+ S u m m a r y :   I m p l e m e n t e d   R 2 :   F r e e z e   r e s e a r c h   A P I ,   p e r s i s t e n c e   a n d   j o b   c o n t r a c t s .   A d d e d   d a t a s e t / q u a l i t y   e n d p o i n t s   ( G E T   / d a t a s e t s ,   G E T   / d a t a s e t s / { i d } / q u a l i t y ) ,   s t r a t e g y   t e m p l a t e   e n d p o i n t s   ( G E T   / s t r a t e g i e s / t e m p l a t e s ,   P O S T   / s t r a t e g i e s / v a l i d a t e ) ,   e x p e r i m e n t   e n d p o i n t s   ( G E T   / e x p e r i m e n t s / { i d } ,   P O S T   / e x p e r i m e n t s / { i d } / r e p r o d u c e ) ,   a n d   j o b   b a t c h   e n d p o i n t   ( P O S T   / j o b s / b a t c h e s )   p e r   d o c s / 1 5   ง 1 5 . 2 .   U p d a t e d   A p i E r r o r   f o r m a t   t o   { c o d e , m e s s a g e , f i e l d E r r o r s : [ { f i e l d , c o d e , m e s s a g e } ] , r e q u e s t I d }   p e r   R 2   s p e c .   E n h a n c e d   t y p e s   w i t h   B a t c h R e q u e s t / B a t c h R e s p o n s e / B a t c h C h i l d   s t r u c t u r e s .   A d d e d   l i n k _ e x p e r i m e n t   m e t h o d   t o   J o b S t o r e .   A l l   e x i s t i n g   t e s t s   p a s s   w i t h   n o   r e g r e s s i o n s .  
+ D e v i a t i o n s   f r o m   s p e c :   N o n e .  
+ O p e n   q u e s t i o n s   f o r   P l a n n e r :   N o n e .  
+ N e x t   s t e p :   C o n t i n u e   i m p l e m e n t i n g   r e m a i n i n g   R 2   c o n t r a c t   e n d p o i n t s   a n d   v a l i d a t e   f u l l   A P I   s u r f a c e   a g a i n s t   d o c s / 1 8   ง 1 8 . 6   a c c e p t a n c e   c r i t e r i a .  
+ 
+### [R2] IN_PROGRESS โ€” Freeze API and persistence contracts
+Timestamp: {}
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - backend/data/app/models.py
+  - backend/experiments/app/models.py
+  - backend/gateway/src/routes.rs
+  - backend/jobs/src/api.rs
+  - backend/jobs/src/types.rs
+  - backend/jobs/src/queue.rs
+  - engine/abstraction/proto/engine.proto
+  - frontend/src/contracts/index.ts
+Spec files read:
+  - docs/18-real-research-pipeline.md ยง18.6
+  - docs/05-engine-abstraction-and-data-pipeline.md ยงยง5.1-5.3
+  - docs/03-tech-stack-and-repo-structure.md ยงยง3.1-3.5
+  - docs/15-api-and-data-model-spec.md ยงยง15.1-15.5
+Summary: Implemented R2: Freeze research API, persistence and job contracts. Added dataset/quality endpoints (GET /datasets, GET /datasets/{id}/quality), strategy template endpoints (GET /strategies/templates, POST /strategies/validate), experiment endpoints (GET /experiments/{id}, POST /experiments/{id}/reproduce), and job batch endpoint (POST /jobs/batches) per docs/15 ยง15.2. Updated ApiError format to {code,message,fieldErrors:[{field,code,message}],requestId} per R2 spec. Enhanced types with BatchRequest/BatchResponse/BatchChild structures. Added link_experiment method to JobStore. All existing tests pass with no regressions.
+Deviations from spec: None.
+Open questions for Planner: None.
+Next step: Continue implementing remaining R2 contract endpoints and validate full API surface against docs/18 ยง18.6 acceptance criteria.

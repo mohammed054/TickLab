@@ -218,6 +218,33 @@ pub struct JobSummary {
     pub dataset_id: String,
 }
 
+/// Batch request: runConfigs × concurrencyLimit (`docs/15` §15.2).
+/// Batch 1..100; reject invalid count before writes. Concurrency 1..max(1, CPU count-1);
+/// invalid gets 422, never clamp. Persist records before 202.
+/// Validate whole batch before creating any children.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchRequest {
+    pub runConfigs: Vec<BacktestRequest>,
+    pub concurrencyLimit: u32,
+}
+
+/// Batch response: ordered child IDs (`docs/15` §15.2).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchResponse {
+    pub batch_id: String,
+    pub children: Vec<BatchChild>,
+}
+
+/// One child experiment/job in a batch.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchChild {
+    pub job_id: String,
+    pub experiment_id: String,
+}
+
 /// Job result (`docs/15` §15.5 `BacktestResult`). Headline metrics are computed
 /// in Block 2.4 (`docs/04` §4.7, `docs/09` §9.1); until the vendor execution
 /// wiring (Block 2.2 `TODO`) and metrics integration land, `headline` is null
@@ -258,30 +285,46 @@ impl MetricsPending {
 }
 
 /// Typed API error (`docs/14` §14.9: actionable messages, never a bare
-/// "Error: undefined"). `action` tells the caller what to do next.
+/// "Error: undefined"). R2: error format is `{code,message,fieldErrors:[{field,code,message}],requestId}`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiError {
     pub code: String,
     pub message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub action: Option<String>,
+    #[serde(rename = "fieldErrors", skip_serializing_if = "Option::is_none")]
+    pub field_errors: Option<Vec<ApiErrorField>>,
+    #[serde(rename = "requestId", skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiErrorField {
+    pub field: String,
+    pub code: String,
+    pub message: String,
 }
 
 impl ApiError {
-    pub fn new(code: &str, message: String, action: Option<&str>) -> Self {
+    pub fn new(code: &str, message: String, field_errors: Option<Vec<ApiErrorField>>, request_id: Option<String>) -> Self {
         Self {
             code: code.to_string(),
             message,
-            action: action.map(str::to_string),
+            field_errors,
+            request_id,
         }
     }
 
-    pub fn invalid_request(message: String) -> Self {
+    pub fn invalid_request(message: String, field: &str, detail: &str) -> Self {
         Self::new(
             "INVALID_REQUEST",
             message,
-            Some("Fix the request fields and resubmit."),
+            Some(vec![ApiErrorField {
+                field: field.to_string(),
+                code: "INVALID_REQUEST".to_string(),
+                message: detail.to_string(),
+            }]),
+            Some(uuid::Uuid::new_v4().to_string()),
         )
     }
 
@@ -289,7 +332,12 @@ impl ApiError {
         Self::new(
             "JOB_NOT_FOUND",
             format!("no job with id '{job_id}'"),
-            Some("Check the jobId, or list recent jobs via GET /api/v1/jobs."),
+            Some(vec![ApiErrorField {
+                field: "jobId".to_string(),
+                code: "JOB_NOT_FOUND".to_string(),
+                message: format!("no job with id '{job_id}'"),
+            }]),
+            Some(uuid::Uuid::new_v4().to_string()),
         )
     }
 
@@ -297,7 +345,12 @@ impl ApiError {
         Self::new(
             "RESULT_PENDING",
             format!("job '{job_id}' has not completed yet"),
-            Some("Subscribe to job.{jobId}.progress or poll GET /api/v1/jobs/{jobId} until status is complete."),
+            Some(vec![ApiErrorField {
+                field: "jobId".to_string(),
+                code: "RESULT_PENDING".to_string(),
+                message: format!("job '{job_id}' has not completed yet"),
+            }]),
+            Some(uuid::Uuid::new_v4().to_string()),
         )
     }
 }

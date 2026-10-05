@@ -47,12 +47,75 @@ pub struct GatewayConfig {
     pub jobs_base_url: String,
 }
 
+/// Dataset service state stub.
+#[derive(Clone)]
+pub struct DatasetsState;
+
+impl DatasetsState {
+    pub async fn list(&self) -> Vec<serde_json::Value> {
+        vec![]
+    }
+    pub async fn get_quality(&self, _dataset_id: &str) -> serde_json::Value {
+        serde_json::json!({
+            "datasetId": _dataset_id,
+            "totalEvents": 0,
+            "trades": 0,
+            "orderBookUpdates": 0,
+            "snapshots": 0,
+            "missingIntervals": {"count": 0, "status": "green", "ranges": []},
+            "duplicateEvents": {"count": 0, "status": "green"},
+            "sequenceGaps": {"count": 0, "status": "green"},
+            "timestampRange": [0, 0],
+            "fileSizeBytes": 0,
+            "source": "",
+            "normalizationVersion": "",
+            "tickSize": 0.0,
+            "lotSize": 0.0,
+            "l3ActiveOrderCount": 0
+        })
+    }
+}
+
+/// Strategy service state stub.
+#[derive(Clone)]
+pub struct StrategiesState;
+
+impl StrategiesState {
+    pub async fn list_templates(&self) -> Vec<serde_json::Value> {
+        vec![]
+    }
+    pub async fn validate(&self, _payload: &serde_json::Value) -> serde_json::Value {
+        serde_json::json!({
+            "valid": false,
+            "errors": []
+        })
+    }
+}
+
+/// Experiment service state stub.
+#[derive(Clone)]
+pub struct ExperimentsState;
+
+impl ExperimentsState {
+    pub async fn get(&self, _id: &str) -> Option<serde_json::Value> {
+        None
+    }
+    pub async fn reproduce(&self, _id: &str) -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
+}
+
 /// Build the full gateway router.
 pub fn build_router(config: &GatewayConfig) -> Result<Router, String> {
     let jobs = progress::JobsClient::new(config.jobs_base_url.clone())?;
     let state = AppState {
         hub: hub::Hub::new(),
         jobs,
+        // REST API state stubs for datasets, strategies, and experiments.
+        // These will be populated in later blocks as the full data layer is built.
+        datasets: DatasetsState,
+        strategies: StrategiesState,
+        experiments: ExperimentsState,
     };
     Ok(Router::new()
         .merge(routes::routes())
