@@ -922,3 +922,47 @@ Summary: Completed Block R3 Acquire, normalize and quality-gate a supported real
 Deviations from spec: none.
 Open questions for Planner: none.
 Next step: R4 Execute/persist one real engine backtest per docs/18 �18.8, which depends on R3 having authentic prepared eligible dataset and R2 contract.
+
+### [R4] IN_PROGRESS — Run actual single hftbacktest job and persist reproducible output
+Timestamp: 2026-10-05T16:26:12+00:00
+Agent: executor-3 (Muse Spark)
+Status: IN_PROGRESS
+Files touched:
+  - STATE.md
+  - engine/abstraction/src/ (planned)
+  - engine/abstraction/tests/ (planned)
+  - backend/jobs/src/ (planned)
+  - backend/experiments/app/ (planned)
+  - backend/experiments/app/tests/ (planned)
+Spec files read:
+  - docs/18-real-research-pipeline.md §18.8 (plus §§18.1–18.4 block/ownership rules)
+  - docs/04-hftbacktest-engine-analysis.md §§4.2–4.7, §4.9, §4.10
+  - docs/05-engine-abstraction-and-data-pipeline.md §§5.1–5.7
+  - docs/09-analytics-and-investigation-suite.md §9.1 (partial)
+  - docs/10-experiment-management-and-ai-research.md §§10.1–10.3 (partial)
+  - docs/15-api-and-data-model-spec.md §§15.4–15.5 (via engine.proto + wire types)
+Summary: Claimed R4 (depends R1,R2,R3 all done per coordination.db) and verified the starting position before writing code. Current engine (hftbacktest_impl.rs) runs only fixture://tiny-btcusdt and rejects every real dataset as Unsupported; the jobs runner (runner.rs) is a sleep-loop pipeline simulator returning headline None; R3 landed only TRADES_ONLY data (book_depth_available false) plus synthetic good/corrupted fixtures; no R1 compatibility test or eligible depth dataset was found in this clone; engine/vendor/hftbacktest is an empty (uninitialized) submodule here so the vendored source cannot yet be inspected or built. Next is to init the pinned submodule and verify in vendored source whether any trade-only path can honestly drive order/fill simulation, then implement the §18.8 flow (validate+hashes, eligibility re-check, immutable experiment+queued job, bounded worker, sole-adapter vendor run, engine-counter progress, hashed artifact persistence, defined-available metrics only, typed errors, cancel-after-stop) with the listed tests.
+Deviations from spec: none (investigation only; no code changed).
+Open questions for Planner: (1) R1 is marked done but no R1 compatibility test/evidence file or STATE entry exists in this clone — where is the R1 trade-vs-depth verdict recorded? (2) Confirm R4 may add an intra-repo path dependency from backend/jobs onto engine/abstraction (no new external crate) to replace the runner simulator with SimulatorContract calls.
+Next step: Init engine/vendor/hftbacktest at the pinned commit, verify the trade-only engine question in source, then implement the R4 flow and tests.
+
+### [R4] BLOCKED — Run actual single hftbacktest job and persist reproducible output
+Timestamp: 2026-10-05T16:45:00+00:00
+Agent: executor-3 (Muse Spark)
+Status: BLOCKED
+Files touched:
+  - STATE.md
+  - engine/vendor/hftbacktest (submodule initialized at pinned 5f3ec40; gitlink unchanged, inspected only)
+Spec files read:
+  - docs/18-real-research-pipeline.md §18.8 (plus §§18.1–18.4)
+  - docs/04-hftbacktest-engine-analysis.md §§4.2–4.7, §§4.9–4.10
+  - docs/05-engine-abstraction-and-data-pipeline.md §§5.1–5.7
+  - docs/09-analytics-and-investigation-suite.md §9.1
+  - docs/10-experiment-management-and-ai-research.md §§10.1–10.3
+  - engine/vendor/hftbacktest/hftbacktest/src/backtest/mod.rs (L130-135: only L2/L3 builders)
+  - engine/vendor/hftbacktest/hftbacktest/src/backtest/proc/nopartialfillexchange.rs (fill/BOOK logic)
+  - engine/vendor/hftbacktest/hftbacktest/src/types.rs (event flags)
+Summary: R4 cannot proceed to a real run because its §18.8 precondition is unmet: no authentic prepared ELIGIBLE dataset exists. R3 produced only TRADES_ONLY data (book_depth_available false in backend/data/app/binance_import.py and spot_catalog.py; fixtures are synthetic good/corrupted CSVs), and docs/05 §5.2 plus doc 18 §18.2 forbid order-fill backtests on trades-only input. Source-level verification against the pinned vendor (5f3ec40) confirms depth is mandatory: the engine exposes only L2AssetBuilder/L3AssetBuilder, both Exchange processors key every fill off depth.best_bid/ask_tick with INVALID empty-book guards, and the Recorder mid price requires a populated touch — trade events alone can never establish a book, so wiring the current TRADES_ONLY artifact into the sole adapter would produce either rejections or depth-free fills, both forbidden. No code was changed (beyond this log and the read-only submodule checkout) because any implementation now could only succeed from the fixture, which §18.8 explicitly rejects as acceptance.
+Deviations from spec: none — blocking instead of fabricating is the spec-mandated outcome.
+Open questions for Planner: (1) Provide an approved engine-compatible L2/depth source (e.g. whitelisted Binance T_DEPTH access or another permitted provider) and have R3 land a prepared eligible artifact (snapshots+updates, green quality, depth capabilities); R4 then implements the full §18.8 flow. (2) R1 is marked done in coordination.db but no R1 compatibility test or STATE entry exists in this clone — confirm where the R1 verdict is recorded and whether it agrees that trades-only is ineligible.
+Next step: Human/Planner unblocks by delivering the eligible prepared dataset; the claiming agent then implements validate+hashes, eligibility re-check, immutable experiment+queued job, bounded worker, sole-adapter vendor run with engine-counter progress, hashed artifact persistence, defined-available metrics, typed errors, and cancel-after-stop, plus all §18.8 tests including one selected real-provider run.
