@@ -18,8 +18,8 @@ pub struct Level {
 /// Top-N book for one symbol, maintained from exchange deltas.
 #[derive(Clone, Debug, Default)]
 pub struct TopBook {
-    bids: HashMap<u64, f64>,
-    asks: HashMap<u64, f64>,
+    pub bids: HashMap<u64, f64>,
+    pub asks: HashMap<u64, f64>,
     /// Last exchange sequence number applied (`MarketEvent.sequence`).
     pub sequence: Option<i64>,
 }

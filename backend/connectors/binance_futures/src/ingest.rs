@@ -28,6 +28,7 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tracing::{error, info, warn};
 
 use crate::{config::Config, error::ConnectorError};
+use ticklab_connectors_common::book::Level;
 
 /// Hot-path counters (surfaced on `/health`; measured values only, never
 /// placeholders — `docs/06` §6.5).
@@ -146,11 +147,11 @@ pub fn simulate_fill(
         // price > 0 means limit order; price <= 0 means market order
         let price_ok = if price > 0.0 {
             if is_buy {
-                // Buy limit: execute at or below limit price
-                price <= level_price
+                // Buy limit: execute when ask price <= limit price
+                level_price <= price
             } else {
-                // Sell limit: execute at or above limit price
-                price >= level_price
+                // Sell limit: execute when bid price >= limit price
+                level_price >= price
             }
         } else {
             // Market order: always acceptable
@@ -166,7 +167,7 @@ pub fn simulate_fill(
         let fill_qty = available_qty.min(remaining);
         if fill_qty > 0.0 {
             filled_total += fill_qty;
-            *remaining -= fill_qty;
+            remaining -= fill_qty;
             available_qty -= fill_qty;
             
             fills.push(Fill {
@@ -176,8 +177,8 @@ pub fn simulate_fill(
             });
             
             // Update quantity in the map (remove level if fully consumed)
-            if *available_qty > 0.0 {
-                target_map.insert(*price_bits, *available_qty);
+            if available_qty > 0.0 {
+                target_map.insert(*price_bits, available_qty);
             } else {
                 target_map.remove(price_bits);
             }
@@ -378,10 +379,11 @@ mod tests {
             // For asks, lower price is better for buyers.
             // We'll manually insert some ask levels.
             use std::collections::hash_map::DefaultHasher;
-            use sha1::{Sha1, Digest};
-            // Simplified: just insert directly
-            book["btcusdt"].asks.insert(10100000000000001u64, 2.0);  // price ~101.0
-            book["btcusdt"].asks.insert(10200000000000001u64, 1.0);  // price ~102.0
+            // Simplified: just insert directly via get_mut
+            if let Some(entry) = book.get_mut("btcusdt") {
+                entry.asks.insert(10100000000000001u64, 2.0);  // price ~101.0
+                entry.asks.insert(10200000000000001u64, 1.0);  // price ~102.0
+            }
         }
 
         let result = simulate_fill(&books, "btcusdt", true, 0.0, 2.5);
@@ -402,8 +404,12 @@ mod tests {
         // Seed the book with bid levels
         {
             let mut book = books.lock().unwrap();
-            book["btcusdt"].bids.insert(99000000000000001u64, 1.5);  // bid ~99.0
-            book["btcusdt"].bids.insert(98000000000000001u64, 1.0);  // bid ~98.0
+            // Bid levels: price_bits -> qty. Higher price_bits = higher price.
+            // For bids, higher price is better for buyers.
+            if let Some(entry) = book.get_mut("btcusdt") {
+                entry.bids.insert(99000000000000001u64, 1.5);  // bid ~99.0
+                entry.bids.insert(98000000000000001u64, 1.0);  // bid ~98.0
+            }
         }
 
         let result = simulate_fill(&books, "btcusdt", false, 0.0, 2.0);
@@ -423,8 +429,12 @@ mod tests {
         // Seed ask levels
         {
             let mut book = books.lock().unwrap();
-            book["btcusdt"].asks.insert(10100000000000001u64, 5.0);  // ask ~101.0
-            book["btcusdt"].asks.insert(10200000000000001u64, 3.0);  // ask ~102.0
+            // Asks: price_bits -> qty. Higher price_bits = higher price.
+            // For asks, lower price is better for buyers.
+            if let Some(entry) = book.get_mut("btcusdt") {
+                entry.asks.insert(10100000000000001u64, 5.0);  // ask ~101.0
+                entry.asks.insert(10200000000000001u64, 3.0);  // ask ~102.0
+            }
         }
 
         // Limit buy at 101.5 - should only fill against ask at 101.0 (not 102.0)
@@ -450,8 +460,12 @@ mod tests {
         // Seed ask levels at 101.0 and 102.0
         {
             let mut book = books.lock().unwrap();
-            book["btcusdt"].asks.insert(10100000000000001u64, 5.0);  // ask ~101.0
-            book["btcusdt"].asks.insert(10200000000000001u64, 3.0);  // ask ~102.0
+            // Asks: price_bits -> qty. Higher price_bits = higher price.
+            // For asks, lower price is better for buyers.
+            if let Some(entry) = book.get_mut("btcusdt") {
+                entry.asks.insert(10100000000000001u64, 5.0);  // ask ~101.0
+                entry.asks.insert(10200000000000001u64, 3.0);  // ask ~102.0
+            }
         }
 
         // Limit buy at 100.5 - should not fill anything (both asks are above 100.5)
