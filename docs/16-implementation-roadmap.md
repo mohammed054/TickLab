@@ -17,6 +17,16 @@ mirrored by `C:\ticklab-coord\coordination.py` into the shared local
 `C:\ticklab-coord\coordination.db`. Agents must claim only R1–R11 for current work;
 legacy IDs are historical and non-claimable.
 
+## Proposed replacement direction (not active)
+
+The owner has asked to evaluate replacing the Bitcoin/HFT objective with a local
+Solana token-launch research and paper-trading workstation. The complete proposed
+vision and staged roadmap are in `docs/19-solana-launch-research-workstation.md` and
+`docs/20-solana-research-roadmap-proposal.md`. These proposals do **not** supersede
+the active R1–R11 contract until the owner explicitly approves the product decision,
+P0 verifies source/data feasibility, and the Planner writes an executor-ready
+migration plan. Do not claim or implement the new objective from this pointer alone.
+
 The sequence begins with evidence about actual source/engine compatibility. The
 already cataloged Binance BTCUSDT **Spot** aggregate trades (2025-01-01 through
 2026-10-03) are raw, trades-only, lack historical order-book depth, and are not

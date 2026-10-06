@@ -72,7 +72,7 @@ blocks' paths.
 | ID | Scope | Owned paths | Depends on |
 |---|---|---|---|
 | R1 | Data/engine compatibility evidence and source gate | `backend/data/app/tests/` | — |
-| R2 | Freeze API, persistence and state schemas | `backend/data/app/models.py`, `backend/experiments/app/models.py`, `backend/gateway/src/`, `backend/jobs/src/`, `engine/abstraction/proto/`, `frontend/src/contracts/` | R1 |
+| R2 | Freeze API, persistence and state schemas | `backend/data/app/models.py`, `backend/experiments/app/models.py`, `backend/gateway/src/`, `backend/jobs/src/`, `engine/abstraction/proto/`, `frontend/src/contracts/` | — |
 | R3 | Acquire, normalize and quality-gate a supported real input | `backend/data/app/`, `backend/data/app/tests/`, data-only `scripts/` | R1,R2 |
 | R4 | Run actual single hftbacktest job and persist reproducible output | `engine/abstraction/src/`, `engine/abstraction/tests/`, `backend/jobs/src/`, `backend/experiments/app/`, `backend/experiments/app/tests/` | R1,R2,R3 |
 | R5 | Version/validate runnable strategies and compatible presets | `backend/experiments/app/templates/`, `backend/experiments/app/parameter_schema.py`, `backend/experiments/app/tests/` | R2,R4 |
@@ -88,6 +88,26 @@ cannot finish before R4. R6 may render R2 fixtures, but acceptance waits on real
 R7 consumes only persisted R4 output. R8 uses exact R2/R4 queue contract; R9 cannot
 redefine worker behavior. R10 cannot call job APIs. R11 may fix only its owned test/
 packaging paths; contract defects return to the owner block and reopen it.
+
+### Audit correction (2026-10-05)
+
+The initial R1/R2/R3 SQLite `done` statuses were accepted without the completion
+evidence required by their acceptance criteria. They are not valid sign-offs. R1's
+tests build synthetic ZIP bytes and synthetic fixture events; they do not show a
+provider-attributed depth stream executing through the engine adapter. R2's current
+job API has in-memory storage and the runner advances a timer-derived counter before
+returning a result with null metrics; its source does not contain the claimed batch,
+experiment, or dataset-quality contracts. R3's fixture pipeline accepts locally
+authored events and does not emit an artifact that the job runner can load. Those
+claims must not be used as evidence for research readiness.
+
+R2 has no dependency on R1: its schemas and API contracts can be frozen independently
+of source eligibility. R1 remains blocked until the owner obtains an eligible
+historical BTCUSDT USD-M perpetual L2 source and its approved Binance access. R3 and
+R4 remain blocked until authentic eligible bytes are available and prepared. No
+trade-only or generated fixture may be used to clear those gates. The active SQLite
+board was corrected to match these states on 2026-10-05; every future `done` status
+must include the exact acceptance command and evidence in STATE.md.
 
 ## 18.5 R1 — Verify exact source/engine compatibility
 
@@ -149,6 +169,12 @@ Error JSON exactly `{code,message,fieldErrors:[{field,code,message}],requestId}`
 404 unknown ID; 409 immutable/state conflict; 422 invalid/unsupported/capability;
 429 queue full plus retry metadata; 500 unexpected fault plus request ID. Never put
 secret field in public schema.
+
+Until R4 has wired and verified the actual engine, every public backtest, sweep,
+walk-forward, and robustness submission must return HTTP 503
+`ENGINE_UNAVAILABLE` with no job/experiment writes. A timer-driven or fixture-only
+runner must not be reachable through these routes. R4 removes this guard only after
+the acceptance criteria in §18.8 pass.
 
 **Accept:** contract tests for each endpoint, field/unit agreement across Rust/Python/
 protobuf/TS, transitions, immutability, cancel, batch boundaries 100/101, invalid

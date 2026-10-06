@@ -25,10 +25,8 @@ use axum::{
 };
 
 use crate::queue::JobStore;
-use crate::runner::total_events_for_iterations;
 use crate::types::{
-    ApiError, BacktestRequest, JobStatus, RobustnessRequest, SubmitResponse, SweepRequest,
-    SweepSubmitResponse, WalkforwardRequest,
+    ApiError, BacktestRequest, JobStatus, RobustnessRequest, SweepRequest, WalkforwardRequest,
 };
 
 /// Shared service state.
@@ -61,61 +59,48 @@ fn status_for_code(code: &str) -> StatusCode {
         "INVALID_REQUEST" => StatusCode::BAD_REQUEST,
         "JOB_NOT_FOUND" => StatusCode::NOT_FOUND,
         "RESULT_PENDING" | "RESULT_UNAVAILABLE" => StatusCode::CONFLICT,
+        "ENGINE_UNAVAILABLE" => StatusCode::SERVICE_UNAVAILABLE,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
 
+fn engine_unavailable() -> ApiResponse {
+    err(
+        StatusCode::SERVICE_UNAVAILABLE,
+        ApiError::new(
+            "ENGINE_UNAVAILABLE",
+            "backtest submission is disabled because no prepared dataset can yet be executed by the vendored hftbacktest adapter".to_string(),
+            Some("Provide an eligible prepared depth dataset and complete R4 engine/job integration before submitting research runs."),
+        ),
+    )
+}
+
 async fn submit_backtest(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(req): Json<BacktestRequest>,
-) -> Result<impl IntoResponse, ApiResponse> {
+) -> Result<Response, ApiResponse> {
     if let Err(e) = crate::types::validate_backtest_request(&req) {
         return Err(err(StatusCode::BAD_REQUEST, e));
     }
-    let total = total_events_for_iterations(req.iterations);
-    let record = state.store.submit_backtest(req, total);
-    Ok((
-        StatusCode::CREATED,
-        Json(SubmitResponse {
-            job_id: record.job_id.clone(),
-        }),
-    ))
+    Ok(engine_unavailable().into_response())
 }
 
-async fn submit_sweep(
-    State(state): State<AppState>,
-    Json(req): Json<SweepRequest>,
-) -> Result<impl IntoResponse, ApiResponse> {
-    match crate::sweep::submit_sweep(&state.store, req) {
-        Ok((job_id, cell_job_ids)) => Ok((
-            StatusCode::CREATED,
-            Json(SweepSubmitResponse {
-                job_id,
-                cell_job_ids,
-            }),
-        )),
-        Err(e) => Err(err(status_for_code(&e.code), e)),
-    }
+async fn submit_sweep(State(_state): State<AppState>, Json(_req): Json<SweepRequest>) -> Response {
+    engine_unavailable().into_response()
 }
 
 async fn submit_walkforward(
-    State(state): State<AppState>,
-    Json(req): Json<WalkforwardRequest>,
-) -> Result<impl IntoResponse, ApiResponse> {
-    match crate::walkforward::submit_walkforward(&state.store, req) {
-        Ok(job_id) => Ok((StatusCode::CREATED, Json(SubmitResponse { job_id }))),
-        Err(e) => Err(err(status_for_code(&e.code), e)),
-    }
+    State(_state): State<AppState>,
+    Json(_req): Json<WalkforwardRequest>,
+) -> Response {
+    engine_unavailable().into_response()
 }
 
 async fn submit_robustness(
-    State(state): State<AppState>,
-    Json(req): Json<RobustnessRequest>,
-) -> Result<impl IntoResponse, ApiResponse> {
-    match crate::robustness::submit_robustness(&state.store, req) {
-        Ok(job_id) => Ok((StatusCode::CREATED, Json(SubmitResponse { job_id }))),
-        Err(e) => Err(err(status_for_code(&e.code), e)),
-    }
+    State(_state): State<AppState>,
+    Json(_req): Json<RobustnessRequest>,
+) -> Response {
+    engine_unavailable().into_response()
 }
 
 async fn get_job(
@@ -279,33 +264,32 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn submit_poll_complete_result_over_http() {
+    async fn public_submission_routes_fail_closed_without_engine() {
         let app = app();
-        let (status, body) =
-            post_json(app.clone(), "/api/v1/jobs/backtest", backtest_body(2)).await;
-        assert_eq!(status, StatusCode::CREATED);
-        let job_id = body["jobId"].as_str().expect("jobId").to_string();
-
-        // Poll fallback until terminal (docs/15 §15.2).
-        let deadline = tokio::time::Instant::now() + tokio::time::Duration::from_secs(15);
-        let final_status = loop {
-            if tokio::time::Instant::now() > deadline {
-                panic!("job did not finish");
-            }
-            let (status, body) = get_json(app.clone(), &format!("/api/v1/jobs/{job_id}")).await;
-            assert_eq!(status, StatusCode::OK);
-            let s = body["status"].as_str().expect("status").to_string();
-            if ["complete", "failed", "cancelled"].contains(&s.as_str()) {
-                break s;
-            }
-            tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-        };
-        assert_eq!(final_status, "complete");
-
-        let (status, body) = get_json(app.clone(), &format!("/api/v1/jobs/{job_id}/result")).await;
+        let base = backtest_body(2);
+        let requests = [
+            ("/api/v1/jobs/backtest", base.clone()),
+            (
+                "/api/v1/jobs/sweep",
+                serde_json::json!({"request":base,"axes":[{"parameter":"x","values":[1,2]}]}),
+            ),
+            (
+                "/api/v1/jobs/walkforward",
+                serde_json::json!({"request":base,"windows":2}),
+            ),
+            (
+                "/api/v1/jobs/robustness",
+                serde_json::json!({"request":base,"cases":[{"name":"case","parameterOverrides":{}}]}),
+            ),
+        ];
+        for (path, body) in requests {
+            let (status, response) = post_json(app.clone(), path, body).await;
+            assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE, "{path}");
+            assert_eq!(response["code"], "ENGINE_UNAVAILABLE", "{path}");
+        }
+        let (status, body) = get_json(app, "/api/v1/jobs?limit=10").await;
         assert_eq!(status, StatusCode::OK);
-        assert!(body["headline"].is_null());
-        assert!(body["metricsPending"]["blockedBy"].is_array());
+        assert_eq!(body["jobs"].as_array().expect("jobs").len(), 0);
     }
 
     #[tokio::test]
@@ -326,22 +310,23 @@ mod tests {
         assert_eq!(status, StatusCode::NOT_FOUND);
         assert_eq!(body["code"], "JOB_NOT_FOUND");
 
-        let (status, _) = post_json(app.clone(), "/api/v1/jobs/backtest", backtest_body(30)).await;
-        assert_eq!(status, StatusCode::CREATED);
-        // Fresh big job: result raced immediately is 409 (or 200 in the
-        // unlikely event it already finished — either is correct behavior).
-        let (status, _) = get_json(app, "/api/v1/jobs/job-1/result").await;
-        assert!(status == StatusCode::CONFLICT || status == StatusCode::OK);
+        let (status, body) =
+            post_json(app.clone(), "/api/v1/jobs/backtest", backtest_body(30)).await;
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(body["code"], "ENGINE_UNAVAILABLE");
+        let (status, body) = get_json(app, "/api/v1/jobs/job-1/result").await;
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["code"], "JOB_NOT_FOUND");
     }
 
     #[tokio::test]
-    async fn list_endpoint_shows_submitted_jobs() {
+    async fn rejected_submission_does_not_create_jobs() {
         let app = app();
         let (status, _) = post_json(app.clone(), "/api/v1/jobs/backtest", backtest_body(1)).await;
-        assert_eq!(status, StatusCode::CREATED);
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         let (status, body) = get_json(app, "/api/v1/jobs?limit=10").await;
         assert_eq!(status, StatusCode::OK);
-        assert_eq!(body["jobs"].as_array().expect("jobs").len(), 1);
+        assert_eq!(body["jobs"].as_array().expect("jobs").len(), 0);
     }
 
     #[tokio::test]
