@@ -4,9 +4,9 @@ Status: **APPROVED DIRECTION — P0 FEASIBILITY ROADMAP, NOT CODE-READY**
 Companion vision: `docs/19-solana-launch-research-workstation.md`  
 Owner direction confirmed: 2026-10-06
 
-Repository handling: prior HFT files and changes were preserved in local branch `HFT`
-at commit `015064d`; `main` now contains the new product planning workspace. Push and
-remote verification are pending. This roadmap does not promise that free data supports
+Repository handling: prior HFT files and changes were preserved in branch `HFT` at
+commit `015064d`; `main` now contains the new product planning workspace. Both branch
+heads are published to `origin`. This roadmap does not promise that free data supports
 reliable live trading or that a resulting signal will be profitable.
 
 This is a decision and sequencing aid. It deliberately does not authorize code edits.

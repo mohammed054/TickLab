@@ -910,3 +910,22 @@ Summary: Committed the complete pre-transition repository state, including exist
 Deviations from spec: none
 Open questions for Planner: none
 Next step: Review staged tree, commit the main transition, push HFT and main, and verify both remote branch heads.
+
+### [P0] DONE — Preserve HFT and reset main to research planning
+Timestamp: 2026-10-06T15:07:09Z
+Agent: Codex GPT-6 (Planner)
+Status: DONE
+Files touched:
+  - README.md
+  - docs/16-implementation-roadmap.md
+  - docs/19-solana-launch-research-workstation.md
+  - docs/20-solana-research-roadmap-proposal.md
+  - STATE.md
+Spec files read:
+  - AGENTS.md Sections 1-9
+  - docs/19-solana-launch-research-workstation.md
+  - docs/20-solana-research-roadmap-proposal.md
+Summary: Preserved the complete pre-transition local repository, including prior working changes, on HFT at 015064d and pushed it to origin. Reset main’s tracked tree to .gitignore, AGENTS.md, README.md, STATE.md, and docs/16, docs/19, and docs/20. Reconciled five concurrent remote commits without force-pushing; their history remains an ancestor of main while the final main tree stays planning-only. Verified origin/HFT at 015064da and origin/main at 7a551852; ignored local datasets and caches were left untouched.
+Deviations from spec: none
+Open questions for Planner: none
+Next step: Begin P0 feasibility research from docs/20; no product implementation until its source, coverage, recovery, terms, and cost gates are reviewed.
