@@ -972,3 +972,21 @@ Summary: Ran the full local check matrix per owner request. npm test 159 of 159 
 Deviations from spec: none in product behavior. Pins changed within already-spec-listed deps; scripts/ensure-dual-sqlite.mjs is repo tooling, not product code. npm run dist not attempted (owner-gated per Q22); the electron-builder.yml files fix for shipping the native module is static-only and untested until dist runs.
 Open questions for Planner: owner still owes P0 live captures (Q12), trade mapping verification (Q13), dist plus e2e and soak (Q22); recorded question answers that touch the spec (Q10 six inputs, Q15 cooldown reading, Q17 15-minute rule) need folding into docs.
 Next step: Owner runs npm run dist on Windows to validate the installer with the fixed files list, then works the P0 live capture list and replies go per the Phase 0 gate.
+
+---
+
+### [T8.1-T8.9] DONE - dist installer, P0 capture smoke, installed-app verification
+Timestamp: 
+2026-10-10T12:33:29Z
+Agent: muse-spark (Executor)
+Status: DONE
+Files touched:
+  - .gitignore (ignore release/ installer output)
+  - STATE.md
+Spec files read:
+  - docs/07-phases-and-tasks.md Phase 0 and Phase 8 cards
+  - docs/08-qa-and-done.md
+Summary: Ran the remaining owner-gated checks per owner request. P0.1 lib selftest prints OK with the 25th call delayed. P0.2 capture smoke with --hours 0.05 wrote 12 lines, all HTTP 200, zero errors, zero 429s, 68 unique pools, meeting the card acceptance of 10-plus lines plus summary. npm run dist run elevated produces TickLab Radar Setup 1.0.0.exe (90.5 MB); the winCodeSign symlink step fails unelevated, which the elevated run avoids. Verified the packaged app ships the native module per the fixed files list (app.asar.unpacked contains the v130 better-sqlite3 binary). Silent-installed with /S, launched the installed TickLab Radar.exe, confirmed the TickLab Radar window, then quit it; the app stays installed for owner manual checks. e2e could not run: tests/e2e is empty and no Playwright config exists, so T8.3 and T8.6 have no implementation yet. Long gates (24-hour P0 capture, 2-hour pipeline watch, 72-hour soak) and p0:rpc plus fields report need owner time and keys and remain open.
+Deviations from spec: none. No product code changed; only .gitignore gained release/. The dist build notes the default Electron icon is used because no app icon asset is configured.
+Open questions for Planner: e2e suite (T8.3 outage spec, T8.6 S1-S15) is unimplemented and blocks the Phase 8 gate; decide scope and owner before it is built. P0.4 through P0.7 still need the owner.
+Next step: Owner does manual live checks in the installed app, then P0.4 RPC probe with provider credit numbers, FIELDS plus TERMS plus REPORT, and replies go per the Phase 0 gate.
