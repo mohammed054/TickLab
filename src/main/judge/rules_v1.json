@@ -1,0 +1,17 @@
+{
+ "version": "rules_v1",
+ "rules": {
+  "R01_MINT_AUTH": {"enabled": true, "points": 25},
+  "R02_FREEZE_AUTH": {"enabled": true, "points": 20},
+  "R03_TOP1_HOLDER": {"enabled": true, "points": 15, "thresholdPct": 20},
+  "R04_TOP10_HOLDERS": {"enabled": true, "points": 15, "thresholdPct": 50},
+  "R05_CREATOR_SERIAL": {"enabled": true, "points": 20, "lookbackDays": 14, "minPriorTokens": 3, "minDumped": 2, "dumpFraction": 0.2, "minPeakLiqUsd": 3000},
+  "R06_EARLY_SYNC": {"enabled": true, "points": 10, "windowSec": 2, "minWallets": 6, "earlySec": 120, "maxFirstTradeDelaySec": 30},
+  "R07_SHARED_FUNDER": {"enabled": false, "points": 15, "minShared": 3, "sample": 10},
+  "R08_EXIT_IMPACT": {"enabled": true, "tiers": [{"above": 0.03, "points": 10}, {"above": 0.08, "points": 20}]},
+  "R09_LOW_LIQ": {"enabled": true, "tiers": [{"below": 5000, "points": 10}, {"below": 1500, "points": 20}]},
+  "R10_LIQ_DROP": {"enabled": true, "points": 25, "dropFraction": 0.5, "minPeakUsd": 3000, "minSnapshots": 3},
+  "R11_THIN_CROWD": {"enabled": true, "points": 10, "maxBuyersH1": 15, "minVolH1": 20000}
+ },
+ "bands": {"LOW": 24, "MEDIUM": 49, "HIGH": 74}
+}

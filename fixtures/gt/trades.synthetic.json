@@ -1,0 +1,44 @@
+{
+ "_note": "SYNTHETIC FIXTURE - not a real API response. Field names follow docs/03 3.1 (unverified). Replace via `npm run p0:capture`.",
+ "data": [
+  {
+   "id": "t1",
+   "type": "trade",
+   "attributes": {
+    "block_number": 1001,
+    "tx_hash": "8aa3PPhXJkUJzgYy7wLaTsnKG5hGbyt6kyGPFkq2ev5g",
+    "tx_from_address": "7Wkg7tUFaCfho7F4RxQVD4vCegZz9SrEjaZv5BWSYXwt",
+    "from_token_amount": "1.5",
+    "to_token_amount": "15000",
+    "price_from_in_usd": "150",
+    "price_to_in_usd": "0.0001",
+    "block_timestamp": "2026-10-07T12:00:00.000Z",
+    "kind": "buy",
+    "volume_in_usd": "225"
+   }
+  },
+  {
+   "id": "t2",
+   "type": "trade",
+   "attributes": {
+    "block_number": 1002,
+    "tx_hash": "3gKu6EJAgtcudQtcfASjvPnfyETmjqnmcLEALrreFSsk",
+    "tx_from_address": "UDeSQCMJSwqvoVAXA9NAq9qnsesotQtKyntwwNN5SD1",
+    "from_token_amount": "8000",
+    "to_token_amount": "0.7",
+    "price_from_in_usd": "0.00013",
+    "price_to_in_usd": "150",
+    "block_timestamp": "2026-10-07T12:00:05.000Z",
+    "kind": "sell",
+    "volume_in_usd": "105"
+   }
+  },
+  {
+   "id": "bad",
+   "type": "trade",
+   "attributes": {
+    "kind": "swap"
+   }
+  }
+ ]
+}

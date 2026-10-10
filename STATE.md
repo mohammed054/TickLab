@@ -929,3 +929,27 @@ Summary: Preserved the complete pre-transition local repository, including prior
 Deviations from spec: none
 Open questions for Planner: none
 Next step: Begin P0 feasibility research from docs/20; no product implementation until its source, coverage, recovery, terms, and cost gates are reviewed.
+
+---
+
+### [T1.1-T8.9] DONE - Review and push the sandbox-built TickLab Radar app tree
+Timestamp: 2026-10-10T09:43:48Z
+Agent: muse-spark (Executor)
+Status: DONE
+Files touched:
+  - src/ (180 files: main, preload, renderer, shared)
+  - tests/ (19 files: unit + e2e)
+  - scripts/ (p0 capture/rpc/fields/lib + make-synthetic-fixtures.mjs)
+  - fixtures/ (synthetic GT + RPC)
+  - package.json, package-lock.json, tsconfigs, vitest.config.ts, .eslintrc.cjs
+  - electron.vite.config.ts, electron-builder.yml
+  - docs/USER-GUIDE.md, docs/build-spec/
+  - QUESTIONS.md, STATUS.md
+  - README.md, .gitignore
+  - STATE.md
+Spec files read:
+  - docs/00 through docs/08, STATUS.md, QUESTIONS.md
+Summary: Reviewed the full uncommitted tree against HEAD 4d8f6ce and pushed it. The tree is the complete TickLab Radar Electron TypeScript React implementation built in the sandbox on 2026-10-10: main process with SQLite schema and append-only triggers, settings with loosening cooldown, judge rules R01-R11, alerts, risk engine, journal paper plus real, GeckoTerminal and RPC clients with token bucket, discovery tracker deep backfill retention scheduler, Rules Lab, read-only wallet import, OpenRouter helper, zod-validated IPC with channel allowlist, preload bridge, two-window entry, CSP, safeStorage secrets, daily backups, diagnostics; renderer with Feed, Detail, Watchlist, Journal, Lab, Health, Settings, first-run notice; Phase 0 scripts, synthetic fixtures, packaging config, USER-GUIDE, README, QUESTIONS 1-22, STATUS handoff. Checks before push: no secrets, env files, or databases in the tree; all JSON configs parse; src layout matches docs/01; unit tests mirror the docs/04 boundary tables. A local npm install for re-verification was attempted but aborted after about 15 minutes stalled in dependency fetch with the Electron binary never fetched; the push relies on the sandbox verification recorded in STATUS.md (159 tests passing, typecheck clean, lint clean, electron-vite build succeeds). Staged all tracked modifications and untracked app files, committed, and pushed to origin main.
+Deviations from spec: none claimed in the implementation itself; the 22 documented assumptions in QUESTIONS.md stand as written and need owner or Planner review. Local test, typecheck, lint, and build were not re-run here because the install stalled; that gap is recorded here instead of silently passed.
+Open questions for Planner: owner gates from STATUS.md and docs/07-08 remain: Phase 0 live capture plus the go reply, real swap fixtures, Windows npm install dev test typecheck lint build and dist, manual live checks, e2e and soak runs, and QUESTIONS.md review.
+Next step: Owner runs npm install, npm test, typecheck, lint, and dev smoke on Windows, then works the Phase 0 live capture list and replies go per the Phase 0 gate.

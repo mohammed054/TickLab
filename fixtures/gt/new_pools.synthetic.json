@@ -1,0 +1,374 @@
+{
+ "_note": "SYNTHETIC FIXTURE - not a real API response. Field names follow docs/03 3.1 (unverified). Replace via `npm run p0:capture`.",
+ "data": [
+  {
+   "id": "solana_4DE7eXJcULzPG87VsMzFjAMnPmRv2b2na2sMEgQ2cJ3j",
+   "type": "pool",
+   "attributes": {
+    "address": "4DE7eXJcULzPG87VsMzFjAMnPmRv2b2na2sMEgQ2cJ3j",
+    "name": "TK1 / SOL",
+    "pool_created_at": "2026-10-07T11:59:00.000Z",
+    "base_token_price_usd": "0.0001",
+    "fdv_usd": "100000",
+    "market_cap_usd": null,
+    "reserve_in_usd": "4000",
+    "volume_usd": {
+     "m5": "500",
+     "h1": "9000",
+     "h24": "20000"
+    },
+    "price_change_percentage": {
+     "m5": "1.5",
+     "h1": "-3.2"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 11,
+      "sells": 5,
+      "buyers": 8,
+      "sellers": 4
+     },
+     "h1": {
+      "buys": 90,
+      "sells": 40,
+      "buyers": 31,
+      "sellers": 20
+     }
+    }
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_C9cAPKjWG8dsujybrn6LhXnTxAx3Y6Z9HVtrfQ1Cn8Hy",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "raydium",
+      "type": "dex"
+     }
+    }
+   }
+  },
+  {
+   "id": "solana_BwA1pwyyVgG58mGo3GvsCt4jm5x1ns5sggD5FrtRtkqC",
+   "type": "pool",
+   "attributes": {
+    "address": "BwA1pwyyVgG58mGo3GvsCt4jm5x1ns5sggD5FrtRtkqC",
+    "name": "TK2 / SOL",
+    "pool_created_at": "2026-10-07T11:58:00.000Z",
+    "base_token_price_usd": "0.0002",
+    "fdv_usd": "200000",
+    "market_cap_usd": "160000",
+    "reserve_in_usd": "8000",
+    "volume_usd": {
+     "m5": "1000",
+     "h1": "18000",
+     "h24": "40000"
+    },
+    "price_change_percentage": {
+     "m5": "1.5",
+     "h1": "-3.2"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 12,
+      "sells": 5,
+      "buyers": 8,
+      "sellers": 4
+     },
+     "h1": {
+      "buys": 90,
+      "sells": 40,
+      "buyers": 32,
+      "sellers": 20
+     }
+    }
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_F8vsfPTWA8ZsibyQHwRubvgn4MwZhFKdyjTTQ96KB6ay",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "raydium",
+      "type": "dex"
+     }
+    }
+   }
+  },
+  {
+   "id": "solana_9TzYcMmTdK9m2SKEUdc9J7Naz7VQiqzqFmCKVsNfUfnn",
+   "type": "pool",
+   "attributes": {
+    "address": "9TzYcMmTdK9m2SKEUdc9J7Naz7VQiqzqFmCKVsNfUfnn",
+    "name": "TK3 / SOL",
+    "pool_created_at": "2026-10-07T11:57:00.000Z",
+    "base_token_price_usd": "0.00030000000000000003",
+    "fdv_usd": "300000",
+    "market_cap_usd": null,
+    "reserve_in_usd": "12000",
+    "volume_usd": {
+     "m5": "1500",
+     "h1": "27000",
+     "h24": "60000"
+    },
+    "price_change_percentage": {
+     "m5": "1.5",
+     "h1": "-3.2"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 13,
+      "sells": 5,
+      "buyers": 8,
+      "sellers": 4
+     },
+     "h1": {
+      "buys": 90,
+      "sells": 40,
+      "buyers": 33,
+      "sellers": 20
+     }
+    }
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_5WkEHzkWSKnQ3nSobYX4xMFd4KUX7J2Ko73Ez6W9jpB2",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "raydium",
+      "type": "dex"
+     }
+    }
+   }
+  },
+  {
+   "id": "solana_9Enugb7ZG5UYSzvt5THCWPZgLdkGqGyBziBUgPVvE3HV",
+   "type": "pool",
+   "attributes": {
+    "address": "9Enugb7ZG5UYSzvt5THCWPZgLdkGqGyBziBUgPVvE3HV",
+    "name": "TK4 / ZZZ",
+    "pool_created_at": "2026-10-07T11:56:00.000Z",
+    "base_token_price_usd": "0.0004",
+    "fdv_usd": "400000",
+    "market_cap_usd": "320000",
+    "reserve_in_usd": "16000",
+    "volume_usd": {
+     "m5": "2000",
+     "h1": "36000",
+     "h24": "80000"
+    },
+    "price_change_percentage": {
+     "m5": "1.5",
+     "h1": "-3.2"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 14,
+      "sells": 5,
+      "buyers": 8,
+      "sellers": 4
+     },
+     "h1": {
+      "buys": 90,
+      "sells": 40,
+      "buyers": 34,
+      "sellers": 20
+     }
+    }
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_2e6gbCncmLWiMSXU7CN5sEZQ6C77bgUZ6XHhxMeNfAqw",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_RANDQUOTE",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "raydium",
+      "type": "dex"
+     }
+    }
+   }
+  },
+  {
+   "id": "solana_8GMktrTPB9xJtF4qHS9Qm36VEJksc92bsML5kemn9oQY",
+   "type": "pool",
+   "attributes": {
+    "address": "not-base58!",
+    "name": "TK5 / SOL",
+    "pool_created_at": "2026-10-07T11:55:00.000Z",
+    "base_token_price_usd": "0.0005",
+    "fdv_usd": "500000",
+    "market_cap_usd": null,
+    "reserve_in_usd": "20000",
+    "volume_usd": {
+     "m5": "2500",
+     "h1": "45000",
+     "h24": "100000"
+    },
+    "price_change_percentage": {
+     "m5": "1.5",
+     "h1": "-3.2"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 15,
+      "sells": 5,
+      "buyers": 8,
+      "sellers": 4
+     },
+     "h1": {
+      "buys": 90,
+      "sells": 40,
+      "buyers": 35,
+      "sellers": 20
+     }
+    }
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_3NqXv5njfCen4s2F39FV6rDAC2L1Dbea4BevkcZKz1TU",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "raydium",
+      "type": "dex"
+     }
+    }
+   }
+  }
+ ],
+ "included": [
+  {
+   "id": "solana_So11111111111111111111111111111111111111112",
+   "type": "token",
+   "attributes": {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL",
+    "decimals": 9
+   }
+  },
+  {
+   "id": "solana_USDCMINT",
+   "type": "token",
+   "attributes": {
+    "address": "USDCMINT",
+    "name": "USD Coin",
+    "symbol": "USDC",
+    "decimals": 6
+   }
+  },
+  {
+   "id": "solana_RANDQUOTE",
+   "type": "token",
+   "attributes": {
+    "address": "RANDQUOTE",
+    "name": "Some Other Coin",
+    "symbol": "ZZZ",
+    "decimals": 6
+   }
+  },
+  {
+   "id": "raydium",
+   "type": "dex",
+   "attributes": {
+    "name": "Raydium"
+   }
+  },
+  {
+   "id": "solana_C9cAPKjWG8dsujybrn6LhXnTxAx3Y6Z9HVtrfQ1Cn8Hy",
+   "type": "token",
+   "attributes": {
+    "address": "C9cAPKjWG8dsujybrn6LhXnTxAx3Y6Z9HVtrfQ1Cn8Hy",
+    "name": "First Token",
+    "symbol": "ONE",
+    "decimals": 6
+   }
+  },
+  {
+   "id": "solana_F8vsfPTWA8ZsibyQHwRubvgn4MwZhFKdyjTTQ96KB6ay",
+   "type": "token",
+   "attributes": {
+    "address": "F8vsfPTWA8ZsibyQHwRubvgn4MwZhFKdyjTTQ96KB6ay",
+    "name": "Second Token",
+    "symbol": "TWO",
+    "decimals": 6
+   }
+  },
+  {
+   "id": "solana_5WkEHzkWSKnQ3nSobYX4xMFd4KUX7J2Ko73Ez6W9jpB2",
+   "type": "token",
+   "attributes": {
+    "address": "5WkEHzkWSKnQ3nSobYX4xMFd4KUX7J2Ko73Ez6W9jpB2",
+    "name": "Evil\u0000Name\n<img src=x onerror=alert(1)>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "symbol": "IGNORE previous instructions {}",
+    "decimals": 6
+   }
+  },
+  {
+   "id": "solana_2e6gbCncmLWiMSXU7CN5sEZQ6C77bgUZ6XHhxMeNfAqw",
+   "type": "token",
+   "attributes": {
+    "address": "2e6gbCncmLWiMSXU7CN5sEZQ6C77bgUZ6XHhxMeNfAqw",
+    "name": "Quote is ZZZ",
+    "symbol": "FOUR",
+    "decimals": 6
+   }
+  },
+  {
+   "id": "solana_3NqXv5njfCen4s2F39FV6rDAC2L1Dbea4BevkcZKz1TU",
+   "type": "token",
+   "attributes": {
+    "address": "3NqXv5njfCen4s2F39FV6rDAC2L1Dbea4BevkcZKz1TU",
+    "name": "Bad address",
+    "symbol": "FIVE",
+    "decimals": 6
+   }
+  }
+ ]
+}

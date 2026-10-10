@@ -1,24 +1,8 @@
-/data/
-/target/
-/*.pid
-/node_modules/
-frontend/node_modules/
-frontend/dist/
-
-# Rust build artifacts and locks
-engine/abstraction/target/
-engine/abstraction/Cargo.lock
-backend/connectors/common/target/
-backend/connectors/common/Cargo.lock
-backend/connectors/binance_futures/target/
-backend/connectors/binance_futures/Cargo.lock
-backend/market/target/
-backend/market/Cargo.lock
-# Tauri desktop build output (exe/MSI/NSIS) and generated schemas
-frontend/src-tauri/target/
-frontend/src-tauri/gen/
-__pycache__/
-frontend/tsconfig.tsbuildinfo
-
-# Local test/build logs
-test-output.txt
+node_modules
+out
+dist
+data
+*.db
+*.db-wal
+*.db-shm
+.env

@@ -1,0 +1,29 @@
+{
+ "jsonrpc": "2.0",
+ "result": {
+  "context": {
+   "slot": 1
+  },
+  "value": {
+   "lamports": 1461600,
+   "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+   "data": {
+    "program": "spl-token",
+    "parsed": {
+     "type": "mint",
+     "info": {
+      "decimals": 6,
+      "freezeAuthority": null,
+      "isInitialized": true,
+      "mintAuthority": null,
+      "supply": "1000000000000000"
+     }
+    },
+    "space": 82
+   },
+   "executable": false
+  }
+ },
+ "id": 1,
+ "_note": "SYNTHETIC FIXTURE - not a real RPC capture. Shapes follow the standard Solana JSON-RPC jsonParsed format."
+}

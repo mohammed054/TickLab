@@ -1,0 +1,12 @@
+export const APP_VERSION = '1.0.0';
+export const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+export const SYSTEM_PROGRAM = '11111111111111111111111111111111';
+export const INCINERATOR = '1nc1nerator11111111111111111111111111111111';
+export const ALLOWED_QUOTES = ['SOL', 'USDC', 'USDT'];
+export const EXTERNAL_PREFIXES = ['https://www.geckoterminal.com/', 'https://solscan.io/', 'https://dexscreener.com/'];
+export const GT_BASE = 'https://api.geckoterminal.com/api/v2';
+export const GT_ACCEPT = 'application/json;version=20230302';
+export const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
+export const LATE_MS = 120_000;
+export const MS = { sec: 1000, min: 60_000, hour: 3_600_000, day: 86_400_000 } as const;
+export const BANNED_UI_WORDS = ['guaranteed', 'profit target', 'easy money', "can't lose", 'moon', 'buy now', 'sure thing'];
