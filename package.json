@@ -15,17 +15,17 @@
     "p0:capture": "node scripts/p0/capture.mjs",
     "p0:rpc": "node scripts/p0/rpc.mjs",
     "p0:report": "node scripts/p0/fields.mjs",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps && node scripts/ensure-dual-sqlite.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",
     "@fontsource/jetbrains-mono": "5.3.0",
     "@tanstack/react-virtual": "3.14.13",
-    "better-sqlite3": "13.0.3",
+    "better-sqlite3": "^12.11.1",
     "bs58": "5.0.0",
     "electron-log": "5.4.4",
     "lightweight-charts": "4.2.0",
-    "lucide-react": "1.52.0",
+    "lucide-react": "1.55.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "6.30.6",

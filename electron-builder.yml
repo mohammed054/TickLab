@@ -1,7 +1,15 @@
 appId: com.ticklab.radar
 productName: TickLab Radar
 directories: { output: release, buildResources: build }
-files: ['out/**/*', 'package.json']
+files:
+  - out/**/*
+  - package.json
+  # Native DB driver: lib JS + per-ABI binaries staged by scripts/ensure-dual-sqlite.mjs,
+  # plus its only runtime dependency. (build/Release must NOT ship: it can only
+  # hold one ABI and would shadow the per-ABI layout via the `bindings` lookup.)
+  - node_modules/better-sqlite3/package.json
+  - node_modules/better-sqlite3/lib/**/*
+  - node_modules/bindings/**/*
 asarUnpack: ['**/node_modules/better-sqlite3/**']
 win:
   target: [{ target: nsis, arch: [x64] }]

@@ -953,3 +953,22 @@ Summary: Reviewed the full uncommitted tree against HEAD 4d8f6ce and pushed it. 
 Deviations from spec: none claimed in the implementation itself; the 22 documented assumptions in QUESTIONS.md stand as written and need owner or Planner review. Local test, typecheck, lint, and build were not re-run here because the install stalled; that gap is recorded here instead of silently passed.
 Open questions for Planner: owner gates from STATUS.md and docs/07-08 remain: Phase 0 live capture plus the go reply, real swap fixtures, Windows npm install dev test typecheck lint build and dist, manual live checks, e2e and soak runs, and QUESTIONS.md review.
 Next step: Owner runs npm install, npm test, typecheck, lint, and dev smoke on Windows, then works the Phase 0 live capture list and replies go per the Phase 0 gate.
+
+---
+
+### [T1.1-T8.9] DONE - Verify checks, fix lucide-react and better-sqlite3, confirm dev boot
+Timestamp: 2026-10-10T11:15:03Z
+Agent: muse-spark (Executor)
+Status: DONE
+Files touched:
+  - package.json, package-lock.json (lucide-react 1.52.0 to 1.55.0, better-sqlite3 13.0.3 to 12.11.1, postinstall chain)
+  - scripts/ensure-dual-sqlite.mjs (new)
+  - electron-builder.yml (ship better-sqlite3 lib plus bindings)
+  - STATE.md
+Spec files read:
+  - docs/00 through docs/08, STATUS.md, QUESTIONS.md (prior session)
+  - docs/01 dependency line, docs/05 icon rule, docs/07 task cards
+Summary: Ran the full local check matrix per owner request. npm test 159 of 159 pass. typecheck FAILED at first with 13 TS7016 errors and electron-vite build FAILED resolving lucide-react, both because the locked lucide-react 1.52.0 tarball ships no ESM entry and no types; bumped to 1.55.0 (tarball verified intact) and both go green. npm install postinstall FAILED because node-gyp found no MSVC compiler; installed the BuildTools C-plus-plus workload plus Windows SDK (full workload blocked by C: space at 4.2 GB free, minimal components used instead) and the native rebuild passes. npm run dev still exited silently because better-sqlite3 v13 requires Node 22 but Electron 33 bundles Node 20, so opening any database hard-crashes the host with no catchable error; downgraded to better-sqlite3 12.11.1 (supports Node 20 to 26) with a dual-ABI postinstall layout so vitest and Electron each resolve their own binary. Dev boot verified twice with the TickLab Radar window open, ticklab.db created with WAL active, backups dir ready, and no errors logged. Asked all 22 QUESTIONS.md items via the question tool; owner explicitly accepted 1, 5, 6, 7, 8, 11, will run P0 captures (Q12) and verify trade mapping (Q13); all other answers keep current behavior.
+Deviations from spec: none in product behavior. Pins changed within already-spec-listed deps; scripts/ensure-dual-sqlite.mjs is repo tooling, not product code. npm run dist not attempted (owner-gated per Q22); the electron-builder.yml files fix for shipping the native module is static-only and untested until dist runs.
+Open questions for Planner: owner still owes P0 live captures (Q12), trade mapping verification (Q13), dist plus e2e and soak (Q22); recorded question answers that touch the spec (Q10 six inputs, Q15 cooldown reading, Q17 15-minute rule) need folding into docs.
+Next step: Owner runs npm run dist on Windows to validate the installer with the fixed files list, then works the P0 live capture list and replies go per the Phase 0 gate.
