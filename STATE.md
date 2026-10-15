@@ -1129,3 +1129,4 @@ Open questions for Planner: none
 Next step: Executor implements scripts/p0/history.mjs (T0.3) and populates data/p0/terms-and-storage.json (T0.4). After capture finishes, owner runs fields.mjs, marks T0.2 DONE, and the Executor finalises T0.3/T0.4 with the authoritative bytes/day figure. Then T0.5 owner review.
 ### [T0.3] DONE - Historical data / provider bake-off 
 ### [T0.4] DONE - Terms, quota, and storage projection 
+### [T1.1] DONE - Audit current paths and produce removal inventory 
