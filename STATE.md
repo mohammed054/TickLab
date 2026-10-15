@@ -990,3 +990,44 @@ Summary: Ran the remaining owner-gated checks per owner request. P0.1 lib selfte
 Deviations from spec: none. No product code changed; only .gitignore gained release/. The dist build notes the default Electron icon is used because no app icon asset is configured.
 Open questions for Planner: e2e suite (T8.3 outage spec, T8.6 S1-S15) is unimplemented and blocks the Phase 8 gate; decide scope and owner before it is built. P0.4 through P0.7 still need the owner.
 Next step: Owner does manual live checks in the installed app, then P0.4 RPC probe with provider credit numbers, FIELDS plus TERMS plus REPORT, and replies go per the Phase 0 gate.
+
+---
+
+### [R0.1] DONE - Supersede TickLab Radar plan with local Solana research system
+Timestamp: 2026-10-15T14:26:15Z
+Agent: Codex GPT-6 (Planner)
+Status: DONE
+Files touched:
+  - README.md
+  - STATUS.md
+  - docs/00-read-first.md
+  - docs/07-phases-and-tasks.md
+  - docs/08-qa-and-done.md
+  - docs/09-research-system.md
+  - docs/09-analytics-and-investigation-suite.md
+  - docs/16-implementation-roadmap.md
+  - docs/build-spec/FIELDS.md
+  - docs/build-spec/P0-REPORT.md
+  - docs/build-spec/P0-TERMS.md
+  - STATE.md
+Spec files read:
+  - AGENTS.md Sections 1-9
+  - README.md
+  - docs/00-read-first.md
+  - docs/01-architecture.md
+  - docs/02-data-model.md
+  - docs/03-data-pipeline.md
+  - docs/04-judge-and-lab.md
+  - docs/05-ui-spec.md
+  - docs/06-ipc-modules-journal-ai.md
+  - docs/07-phases-and-tasks.md
+  - docs/08-qa-and-done.md
+  - docs/build-spec/FIELDS.md
+  - docs/build-spec/P0-REPORT.md
+  - docs/build-spec/P0-TERMS.md
+  - STATUS.md
+  - QUESTIONS.md
+Summary: Replaced the old product direction with an owner-approved plan for a local-first Solana new-launch research workstation. Added research/data/model/backtest contracts, exact financial formulas, a compatibility roadmap index, task cards from provider feasibility through prospective paper validation, revised QA gates and updated Phase 0 evidence templates. The plan keeps every discovered launch in shallow capture, uses selective deep capture, targets one integrated six-hour net-return ranking with transparent risk evidence, caps managed storage at 150 GiB subject to measurement, and excludes live trading and hosted AI. Preserved the pre-existing local code edits in commit 2d37dab; this planning change has not been committed or pushed yet.
+Deviations from spec: No implementation code changed. Provider, terms, data-capture, GPU/VRAM, disk-growth and owner go evidence remain Phase 0 blockers by design.
+Open questions for Planner: Owner should confirm the proposed default 150 GiB managed storage allocation and, before Phase 9, set minimum forward-paper duration and completed-signal count. Phase 0 must determine whether historical data can support venue-specific executable quote reconstruction.
+Next step: Owner reviews the new authority docs; after that, run Phase 0 T0.1-T0.4 and stop before T1 until the T0.5 owner go gate.

@@ -1,202 +1,263 @@
-# 07 — Phases and Task Cards
+# 07 — Transformation Phases and Executor Task Cards
 
-Do cards strictly in order. Card format: **Files** (the only files you may touch) · **Spec** (what to read) · **Do** · **Accept** (must pass, paste output).
-"Fixture test" = a vitest test that loads a saved real response from `fixtures/` and asserts on parsed values.
-A phase is finished only when its **Phase gate** passes. Phase 0 and Phase 5 gates need the owner's review.
+These cards replace the old Radar/Judge/Journal build roadmap. Follow task IDs and dependencies in order. Do not implement future phases early. `docs/09-research-system.md` is the required contract. The Planner owns this file and all docs; the Executor owns only each task's listed non-doc files.
 
----
-## PHASE 0 — Feasibility (plain Node scripts, no app yet)
+## Phase 0 — Feasibility and owner gate (no product-code changes)
 
-**P0.1 Scripts workspace.** Files: `package.json`, `scripts/p0/.env.example`, `scripts/p0/lib.mjs`. Spec: 03 §3.1-3.3. Do: npm init; `lib.mjs` exports `getJson(url,{headers})` with timeout 10 s, a simple 24-calls/min limiter, and `appendJsonl(file,obj)`. Accept: `node scripts/p0/lib.mjs --selftest` prints `OK` and shows the limiter delaying the 25th call in a loop test.
+**Goal:** verify real source coverage, historical access, terms, disk rate, and machine capability before committing to providers or adding a Python ML stack. The existing `P0-REPORT.md` remains the evidence form.
 
-**P0.2 Discovery capture.** Files: `scripts/p0/capture.mjs`. Spec: 03 §3.4. Do: poll `new_pools?page=1` every 15 s for N hours (`--hours`), append every response (raw) to `data/p0/gt-newpools.jsonl` with local timestamp + HTTP status; log errors and 429s. Accept: run with `--hours 0.05`; file has >= 10 lines; summary printed: calls, errors, unique pool addresses.
+### T0.1 Machine and storage profile
 
-**P0.3 Fixture + field verification.** Files: `fixtures/gt/*.json`, `scripts/p0/fields.mjs`, `docs/build-spec/FIELDS.md`. Spec: 03 §3.1. Do: fetch ONE real response each for new_pools, pools/multi (5 addresses), pool trades, ohlcv minute, tokens info; save to `fixtures/gt/`. `fields.mjs` prints, for every expected field in 03 §3.1, `present/missing` and the real name if different. Write `FIELDS.md` = table of real field names + `max page served` + `pools per page`. Accept: `FIELDS.md` exists, no row says "assumed".
+**Files:** `scripts/p0/system.mjs`, `data/p0/system.json`. **Spec:** docs/00 §0.2; docs/09 §§9.2–9.3. **Do:** record Windows version, CPU, total/free disk, system RAM, exact GPU name/VRAM/driver, Python version, CUDA availability, and current model cache sizes. Do not download models. **Accept:** command prints and saves a JSON report; all fields are populated or explicitly `unknown`; no secrets are emitted.
 
-**P0.4 RPC probe.** Files: `scripts/p0/rpc.mjs`, `fixtures/rpc/*.json`. Spec: 03 §3.1B, §3.7. Do: take 50 tokens from the capture; for each run mint check, largest accounts, owners, creator derivation; measure latency and success; record the provider dashboard credits before/after (owner supplies numbers). Save one fixture per method. Accept: printed table: success % per method; fixtures saved.
+### T0.2 Real launch and shallow-data coverage
 
-**P0.5 Wallet-swap fixtures.** Files: `fixtures/rpc/swap-*.json`. Spec: 06 §6.5. Do: with the owner's help, save 3 real `getTransaction` (jsonParsed) results of DEX swaps (1 buy, 1 sell, 1 non-swap transfer) from any public wallet. Choose the SOL/USDC reference pool and record its address in `FIELDS.md`. Accept: files exist; owner confirms they are real.
+**Files:** `scripts/p0/capture.mjs`, `scripts/p0/fields.mjs`, `fixtures/gt/new_pools.real.json`, `fixtures/gt/pools_multi.real.json`, `fixtures/gt/trades.real.json`, `fixtures/gt/ohlcv.real.json`, `fixtures/gt/token_info.real.json`, `data/p0/coverage.json`. **Spec:** docs/09 §9.4. **Do:** capture 24 hours of real launch responses; save real fixtures for launch discovery, pool snapshot, trades, OHLCV, and token metadata; compare a two-hour launch sample against an independent public reference and list unsupported venues. **Accept:** fixtures are real and dated; JSON report gives counts, latency, missingness, venue coverage, HTTP status/error/429 rate, and measured bytes/day; no field is marked verified without fixture evidence.
 
-**P0.6 Terms and cost check.** Files: `docs/build-spec/P0-TERMS.md`. Do: summarize (with links + date) GeckoTerminal and the chosen RPC provider terms for local storage; confirm free-tier limits; record real RPC credit cost per method. Accept: file has all three sections and a monthly credit projection.
+### T0.3 Historical data/provider bake-off
 
-**P0.7 Feasibility report + gate.** Files: `docs/build-spec/P0-REPORT.md`. Spec: 03 §3.10. Do: fill the numbers; verdict Full / Reduced / Not feasible with reasons; list spec items that must change. Accept: **PHASE 0 GATE: owner reads the report and replies "go".**
+**Files:** `scripts/p0/history.mjs`, `fixtures/history/provider_a_sample.jsonl`, `fixtures/history/provider_b_sample.jsonl`, `data/p0/provider-bakeoff.json`. **Spec:** docs/09 §9.4. **Do:** evaluate the existing source plus at least one historical/on-chain candidate on the same 25 active and 25 failed/dead launches; measure history start/end, trades/candles, point-in-time fields, pool migration handling, coverage gaps, latency, free limits, and data export. Save exact requests/responses and a provider comparison table. **Accept:** every scored claim links to a dated fixture or official terms/pricing page; JSON report explicitly identifies unobservable fields and archive limitations.
 
----
-## PHASE 1 — Skeleton
+### T0.4 Terms, quota, and storage projection
 
-**T1.1 Scaffold.** Files: whole scaffold. Spec: 01 §1.2-1.4. Do: `npm create @quick-start/electron` react-ts; install allowed deps; create the folder tree with empty `index.ts` placeholders; configure strict TS, ESLint, Prettier, vitest. Accept: `npm run typecheck`, `lint`, `test` pass; `npm run dev` opens a window.
+**Files:** `data/p0/terms-and-storage.json`. **Spec:** docs/09 §§9.3–9.4. **Do:** date-stamp provider data retention/research terms, free quotas, per-method costs if exposed, and measured capture storage; project 30/90/365-day usage under shallow and selected-deep capture. **Accept:** report includes source links, worst-case estimate and recommended configuration under the 150 GiB managed cap; a source whose terms prohibit local retention is rejected. Planner transfers the reviewed evidence into `docs/build-spec/P0-TERMS.md` and `P0-REPORT.md`.
 
-**T1.2 Logger, clock, constants.** Files: `main/logger.ts`, `main/clock.ts`, `shared/constants.ts`. Do: per 01 §1.5. Accept: unit test: frozen clock returns set time; log file appears in userData/logs.
+### T0.5 Feasibility verdict and owner decision
 
-**T1.3 DB open + migrations.** Files: `db/open.ts`, `db/migrate.ts`, `db/migrations/001_init.sql`. Spec: 02 entire. Do: copy SQL exactly, add the append-only triggers for ALL tables listed. Accept: test opens a temp DB, runs migrations twice (idempotent), and UPDATE/DELETE on `decisions`, `fills`, `fill_voids`, `decision_notes`, `rule_configs`, `equity_events`, `risk_acks` each throw `append-only table`.
+**Owner + Planner gate; no Executor file assignment.** Planner reviews `data/p0/*.json` and dated fixtures, updates `docs/build-spec/P0-REPORT.md`, `P0-TERMS.md`, and `FIELDS.md`, and recommends Full / Reduced / Not feasible with first provider set, final capture cadence, Python/model compatibility, and any paid dependency. **Accept:** all measurements are filled, limitations explicit, and owner replies `go` before Phase 1. If paid data is required, owner approval is separately required; otherwise use a reduced scope or stop.
 
-**T1.4 Settings store + secrets.** Files: `settings/*.ts`. Spec: 01 §1.6-1.7, 06 §6.3 (cooldown). Do: typed get/set with zod per key, defaults, audit rows, `effectiveLimits`, secrets via `safeStorage` (fallback in tests: in-memory). Accept: tests: defaults load; loosening `risk.maxPositionPct` 5->8 writes audit with `effective_at = now+24h` and `effectiveLimits(now)` still returns 5; tightening applies immediately; secret round-trips and is never in SQLite.
+**PHASE 0 GATE:** no worker/model stack, data migrations, or product feature expansion until the owner reviews the evidence and replies `go`.
 
-**T1.5 Shared types + IPC contracts.** Files: `shared/types.ts`, `shared/ipc.ts`, `shared/format.ts`. Spec: 06 §6.1-6.2, 05 §5.2. Do: all types, channel name constants, zod schemas for payloads, format functions. Accept: format unit tests cover every rule in 05 §5.2 including null and tiny prices (`0.00001234` -> `$0.00001234`).
+## Phase 1 — Supersede old product paths and establish local worker
 
-**T1.6 Preload + IPC registry.** Files: `preload/index.ts`, `ipc/register.ts`. Spec: 01 §1.6, 06 §6.1. Do: allowlist bridge; `register()` wires handlers (stubs return `{ok:false,error:{code:'NOT_IMPLEMENTED'}}`). Accept: test: unknown channel rejected; invalid payload returns `VALIDATION`.
+**Goal:** retain the Electron app shell but make its boundaries match the research-only product.
 
-**T1.7 Window manager.** Files: `main/windows.ts`, `main/index.ts`, `main/menu.ts`. Spec: 01 §1.1, 05 §5.5/5.7. Do: create Feed and Detail windows with sizes/mins from 05, security flags, save/restore bounds+display, single-display fallback (Detail right 40%), `detail:select` + `evt:detail-selected` plumbing, minimal menu (File: Quit; View: Reload, Toggle DevTools in dev only). Accept: manual: two windows open; closing Detail then selecting a token in Feed reopens it; relaunch restores positions.
+### T1.1 Audit current paths and produce removal inventory
 
-**T1.8 Design tokens + base components.** Files: `renderer/styles/*.css`, `components/{Button,Input,Select,Toggle,Chip,ScoreChip,Tabs,Tooltip,Spinner}.tsx`. Spec: 05 §5.1, 5.3. Do: exact sizes/colors. Accept: a dev-only `#/kit` route renders every component; component tests assert heights (28/18/32) via computed style.
+**Files:** `scripts/research/audit-scope.mjs`, `tests/unit/research-scope.test.ts`. **Spec:** docs/09 §§9.1–9.2, 9.9. **Do:** scan current source for real account/journal, wallet import, trading/signing, remote AI, renderer networking, and all old `paper|real` references; report exact path/line and classify keep/remove/archive. **Accept:** report flags all real-money journal and wallet-import workflows; test fails if transaction-signing or send-order identifiers are introduced; no source files changed in this task.
 
-**T1.9 Table, Modal, Toast.** Files: `components/{Table,Modal,Toast}.tsx`. Spec: 05 §5.3. Do: virtualized table with sticky header, row selection, keyboard handling hooks; modal with focus trap + Esc; toast manager (max 3, 5 s, hover pause). Accept: test renders 5,000 rows and only < 60 DOM rows exist; Esc closes modal.
+### T1.2 Add pinned local Python worker environment
 
-**T1.10 Shell: sidebar, top bar, status bar, router.** Files: `Sidebar.tsx`, `TopBar.tsx`, `StatusBar.tsx`, `router.tsx`, `main.tsx`, `screens/*/index.tsx` (placeholders). Spec: 05 §5.4-5.5. Do: layout exactly as the diagram; placeholders show screen name; shortcuts. Accept: Playwright: sidebar width 48, top bar 40, status bar 24; `Ctrl+3` navigates to `#/journal`.
+**Files:** `research-worker/requirements.txt`, `research-worker/README.md`, `scripts/research/bootstrap-worker.ps1`, `scripts/research/worker-health.ps1`. **Spec:** docs/09 §§9.2, 9.8. **Do:** create a per-user virtual environment with Python version and exact package pins chosen after T0; expose no network listener; document CUDA/CPU fallback and offline health check. **Accept:** clean Windows profile can create the venv and print Python/package/GPU status; no model downloads occur; requirements hash is recorded. Any T0-incompatible dependency is returned to Planner, not guessed.
 
-**T1.11 Zustand store + event hooks.** Files: `state/store.ts`, `state/hooks.ts`. Do: store for filters, selection, source status, alerts, risk; `useIpcEvent(channel, cb)` hook with cleanup. Accept: unit test of reducers; no memory leak test (subscribe/unsubscribe 100x leaves 0 listeners).
+### T1.3 Implement JSONL worker protocol and supervisor
 
-**T1.12 Packaging smoke.** Files: `electron-builder.yml`. Do: NSIS x64 installer config, appId `com.ticklab.radar`. Accept: `npm run dist` produces an installer; installed app launches and creates `radar.db`. **PHASE 1 GATE:** typecheck, lint, test, e2e smoke all green.
+**Files:** `research-worker/src/protocol.py`, `research-worker/src/main.py`, `src/main/research/worker.ts`, `src/main/research/worker.test.ts`. **Spec:** docs/09 §9.2. **Do:** implement request/response/progress schema, typed errors, 1 MiB response bound, stderr logs, child shutdown and interruption behavior. **Accept:** tests cover success, malformed JSON, unknown command, mismatched ID, oversized output, crash, graceful stop and forced stop; worker binds no TCP/HTTP socket; renderer cannot spawn it.
 
----
-## PHASE 2 — Data pipeline
+### T1.4 Persist research job lifecycle
 
-**T2.1 TokenBucket.** Files: `net/tokenBucket.ts`+test. Spec: 03 §3.2. Accept: tests with fake clock: burst of 6 passes, 7th waits; `penalize(60000)` blocks; priority ordering respected.
+**Files:** `src/main/db/migrations/002_research_jobs.sql`, `src/main/research/jobs.ts`, `src/main/research/jobs.test.ts`, `src/main/ipc/handlers/researchJobs.ts`, `src/shared/api.ts`. **Spec:** docs/09 §§9.2, 9.8. **Do:** add queued/running/paused/cancelled/interrupted/failed/completed job states with timestamps, config hash, progress, result path, and typed error. **Accept:** migration preserves existing `radar.db`; duplicate job IDs rejected; killed app marks running job interrupted on next open; only allowlisted, zod-validated IPC can control jobs.
 
-**T2.2 HTTP client.** Files: `net/http.ts`+test. Spec: 03 §3.3. Accept: tests with a local mock server: timeout, 500 retry x2 then fail, 429 no retry, usage counters incremented.
+### T1.5 Remove real-money workflow and archive existing records
 
-**T2.3 GeckoTerminal client.** Files: `sources/geckoterminal.ts`+test. Spec: 03 §3.1, FIELDS.md. Do: methods `newPools(page)`, `poolsMulti(addrs)`, `poolTrades(addr,minUsd?)`, `poolOhlcv(addr,tf)`, all through bucket + http, returning `Result`. Accept: fixture tests parse every fixture into typed objects; unknown response shape returns `PARSE_FAIL` not a throw.
+**Files:** `src/main/wallet/import.ts`, `src/main/wallet/parseSwap.ts`, `src/main/wallet/solUsd.ts`, `src/main/journal/service.ts`, `src/main/journal/exportCsv.ts`, `src/main/ipc/handlers/journal.ts`, `src/shared/api.ts`, `src/shared/ipc.ts`, `src/renderer/screens/Journal/index.tsx`, `src/renderer/screens/Journal/DecisionTable.tsx`, `src/renderer/screens/Journal/DecisionDrawer.tsx`, `src/renderer/screens/Journal/NewDecisionModal.tsx`, `src/renderer/screens/Journal/FillForm.tsx`, `src/renderer/screens/Journal/EquityTab.tsx`, `src/renderer/screens/Journal/UnlinkedTrades.tsx`, `src/renderer/screens/Journal/RiskPanel.tsx`, `src/renderer/screens/Journal/SummaryCards.tsx`, `src/renderer/screens/Journal/riskText.ts`, `src/renderer/screens/Journal/useDecisions.ts`, `src/renderer/screens/Settings/index.tsx`, `src/renderer/screens/Detail/JournalTab.tsx`, `src/renderer/router.tsx`, `tests/unit/journal.test.ts`, `tests/unit/wallet.test.ts`. **Spec:** docs/09 §§9.1, 9.9. **Do:** remove all new decision/fill entry, wallet import, account mutation, and real-trade workflows. Turn the existing Journal route into a read-only Legacy Archive linked from Settings; keep current rows/exports intact, label them as legacy, and never use them in model data. Preserve DB tables and rows unchanged. **Accept:** old DB opens with byte-for-byte-equivalent legacy row values; the archive displays and exports existing rows; no UI/IPC can insert or mutate a journal/wallet record; scan/test finds no transaction signing or order submission code. No owner data is deleted or rewritten.
 
-**T2.4 Normalizers.** Files: `sources/normalize.ts`+test. Spec: 03 §3.8. Accept: fixture tests: symbol/name truncation, control-char stripping, invalid base58 rejected, null numbers stay null, non-SOL/USDC/USDT quote skipped and counted.
+### T1.6 Remove hosted AI calls and credentials
 
-**T2.5 Queries layer.** Files: `db/queries/{tokens,pools,snapshots,trades,holders,judgements,alerts,gaps,usage}.ts`. Spec: 02. Do: prepared statements, upserts, `listLaunches(filters,sort,limit)` joining latest snapshot + latest judgement. Accept: tests with temp DB: upsert idempotent; `listLaunches` filters/sorts correctly for each Filters field; query on 10,000 pools returns < 50 ms.
+**Files:** `src/main/ai/openrouter.ts`, `src/main/app/runtime.ts`, `src/main/ipc/handlers/misc.ts`, `src/main/ipc/handlers/types.ts`, `src/main/db/queries/ai.ts`, `src/main/settings/secrets.ts`, `src/main/settings/defaults.ts`, `src/main/settings/store.ts`, `src/shared/constants.ts`, `src/shared/api.ts`, `src/shared/ipc.ts`, `src/renderer/screens/Settings/AiSection.tsx`, `src/renderer/screens/Settings/fields.tsx`, `src/renderer/screens/Detail/AiTab.tsx`, `src/renderer/screens/Detail/index.tsx`, `src/renderer/router.tsx`, `tests/unit/ai.test.ts`, `tests/unit/settings.test.ts`, `tests/unit/ipc.test.ts`. **Spec:** docs/09 §§9.1–9.2, 9.8. **Do:** remove OpenRouter client, endpoint, secret configuration and cloud AI UI. Preserve unrelated RPC secrets. Keep reusable local sanitization/safety helpers only if still referenced; do not add local model yet. **Accept:** mocked fetch/network inspection proves no AI call to a non-loopback host; OpenRouter key setting/channel is absent; old encrypted key is ignored and never read; app and old DB still open.
 
-**T2.6 Discovery loop.** Files: `pipeline/discovery.ts`+test. Spec: 03 §3.4. Accept: test with mocked client: first poll inserts N launches and emits N `launch-new`; second identical poll emits 0 and inserts N new snapshots; failure updates `error_log` but not `last_ok_at`; status transitions LIVE->DELAYED->STALE with fake clock.
+**PHASE 1 GATE:** app launches with prior DBs; worker can run locally with bounded protocol; real-money paths are removed without deleting old records; no hosted AI client remains.
 
-**T2.7 Backfill and gaps.** Files: `pipeline/backfill.ts`+test. Spec: 03 §3.5. Accept: tests: closed 30 min -> pages until overlap, no gap; closed 3 h with cap reached -> `backfill_cap` gap; closed 10 h -> `app_closed` gap, zero calls; first run -> nothing.
+## Phase 2 — Local research storage and data catalog
 
-**T2.8 Usage meter + source status.** Files: `pipeline/usage.ts`, `pipeline/status.ts`. Do: per-day counters, calls-last-minute window, `evt:source-status` every 5 s. Accept: test of counters and status events.
+### T2.1 Add versioned file catalog and dataset versions
 
-**T2.9 Tracker.** Files: `pipeline/tracker.ts`+test. Spec: 03 §3.6. Accept: tests: filter promotes only qualifying young pools; due-selection picks the right pools per cadence; adaptive multiplier rises when 120 pools tracked and is a multiple of 15 s; tracking ends at 24 h unless watchlisted.
+**Files:** `src/main/db/migrations/004_research_catalog.sql`, `src/main/db/queries/researchFiles.ts`, `src/shared/types.ts`, `tests/unit/researchFiles.test.ts`. **Spec:** docs/09 §§9.3, 9.5. **Do:** add tables for `data_files`, `dataset_versions`, source manifests and checksums. **Accept:** SQLite tests verify path/partition/schema/hash/time-range/byte metadata, immutable dataset versions, and idempotent registration.
 
-**T2.10 RPC client.** Files: `sources/solanaRpc.ts`+test. Spec: 03 §3.1B. Accept: fixture tests for mint info, largest accounts, multiple accounts, signatures, transaction; credit accounting uses the cost table.
+### T2.2 Add raw gzip JSONL writer and manifest
 
-**T2.11 Deep fetch.** Files: `pipeline/deep.ts`+test. Spec: 03 §3.7. Accept: fixture tests for holder classification (wallet/program/burn), `top1/top10` math, creator derivation, 10-minute refresh throttle, stop 60 s after Detail closes.
+**Files:** `src/main/research/rawWriter.ts`, `src/main/research/rawWriter.test.ts`, `src/main/research/manifest.ts`. **Spec:** docs/09 §9.3. **Do:** rotate by hour or 64 MiB uncompressed, whichever occurs first; write exact response body envelopes without auth headers; hash files and register them in the catalog. **Accept:** rotation, restart recovery, partial-file quarantine, hash verification, and secret-header exclusion are tested with temp directories.
 
-**T2.12 Retention.** Files: `pipeline/retention.ts`+test. Spec: 02 §2.2. Accept: test: old snapshots deleted, watchlisted/decision-linked kept, journal rows untouched.
+### T2.3 Add normalized Parquet writer/reader
 
-**T2.13 Scheduler + wiring.** Files: `pipeline/scheduler.ts`, `main/index.ts`. Spec: 03 §3.9. Accept: manual run: app opens, within 30 s the DB has launches; closing and reopening backfills; suspend/resume handled.
+**Files:** `research-worker/src/storage/parquet.py`, `research-worker/src/storage/catalog.py`, `research-worker/tests/test_storage.py`, `src/main/research/datasets.ts`. **Spec:** docs/09 §§9.3, 9.5. **Do:** read catalogued raw files; normalize into date-partitioned Parquet using pinned Zstandard compression; keep schema/data version. **Accept:** fixture round-trip preserves integer timestamps, nulls, addresses, event/available times; files <=128 MiB target; unknown schema fails visibly without overwriting prior data.
 
-**T2.14 IPC: launches + health + settings handlers.** Files: `ipc/handlers/{launches,health,settings,alerts,app}.ts`. Spec: 06 §6.1. Accept: handler tests with temp DB; payload validation; `app:openExternal` rejects a non-allowlisted URL. **PHASE 2 GATE:** run the app 2 hours: no crash, Health shows live counters, no 429 storm, DB has > 100 launches (if the market produced them).
+### T2.4 Enforce disk cap and cleanup policy
 
----
-## PHASE 3 — Feed window
+**Files:** `src/main/research/storageBudget.ts`, `src/main/research/storageBudget.test.ts`, `src/main/settings/defaults.ts`, `src/main/ipc/handlers/settings.ts`. **Spec:** docs/09 §9.3. **Do:** default cap 150 GiB; warning at 80%; stop low-priority deep fetch at 90%; pause raw writes at 95%; record gap and require explicit cleanup configuration. **Accept:** tests use a fake disk meter and prove no file deletion occurs automatically; cap states/events and cleanup preview are correct; final outcomes/run artifacts are excluded from cleanup candidates.
 
-**T3.1 Filters to SQL.** Files: `db/queries/listLaunches.ts`+test. Spec: 05 §5.6, 06 §6.2. Accept: tests for every filter and sort key, including NULL-safe sorting (nulls last).
+### T2.5 Replay and migration safety
 
-**T3.2 Event batching.** Files: `ipc/events.ts`+test. Spec: 06 §6.1. Do: coalesce `launches-updated` ids into one event per second. Accept: test: 500 updates in 900 ms -> one event with unique ids.
+**Files:** `scripts/research/replay-raw.mjs`, `src/main/research/replay.ts`, `src/main/research/replay.test.ts`. **Spec:** docs/09 §§9.3, 9.5. **Do:** replay raw fixtures into a new normalized dataset version, leaving previous data immutable. **Accept:** same raw input + normalizer version gives identical output hash; a changed normalizer creates a different version; SQLite backup/restore is verified before schema migration.
 
-**T3.3 Filter rail.** Files: `screens/Feed/FilterRail.tsx`. Spec: 05 §5.6. Accept: Playwright: width 240; each control present; Reset restores defaults; filters persist in memory while navigating screens.
+**PHASE 2 GATE:** raw-to-normalized replay is deterministic; disk cap only warns/pauses; no automatic data loss.
 
-**T3.4 Feed table.** Files: `screens/Feed/{FeedTable.tsx,columns.tsx,index.tsx}`. Spec: 05 §5.6. Accept: Playwright with a seeded DB of 2,000 rows: column widths match spec, default sort = newest first, header click sorts, scrolling stays at 60 fps (no frame > 32 ms in a 5-second scroll trace), live inserts do not move the viewport.
+## Phase 3 — All-launch shallow capture
 
-**T3.5 Keyboard + selection -> Detail.** Files: `screens/Feed/keys.ts`. Accept: Playwright: arrow keys move selection; 150 ms debounce calls `detail:select` once for rapid presses; `Enter` focuses Detail; `W` toggles watchlist.
+### T3.1 Update provider schemas from Phase 0 real fixtures
 
-**T3.6 New-row flash + LATE badge.** Files: `screens/Feed/rowEffects.tsx`. Accept: unit test of the effect timing (1200 ms); LATE badge shows when `late=true`.
+**Files:** `src/main/sources/geckoterminal.ts`, `src/main/sources/normalize.ts`, `src/main/sources/geckoterminal.test.ts`, `src/main/sources/normalize.test.ts`, `fixtures/gt/new_pools.real.json`, `fixtures/gt/pools_multi.real.json`, `fixtures/gt/trades.real.json`, `fixtures/gt/ohlcv.real.json`, `fixtures/gt/token_info.real.json`. **Spec:** docs/09 §§9.4–9.5; docs/build-spec/FIELDS.md. **Do:** implement only fields proven in real fixtures; preserve source-specific raw field paths in provenance. **Accept:** every supported endpoint has real fixture tests; unknown/missing fields become unknown; no synthetic fixture is treated as live proof.
 
-**T3.7 Context menu + watchlist.** Files: `screens/Feed/ContextMenu.tsx`, `ipc/handlers/watchlist.ts`, `screens/Watchlist/index.tsx`. Spec: 05 §5.6, 5.8. Accept: add/remove updates star instantly; notes editable and saved; watched tokens auto-tracked (Tier 2).
+### T3.2 Discover and retain every launch
 
-**T3.8 Top bar + status bar live data + bell.** Files: `TopBar.tsx`, `StatusBar.tsx`, `AlertsPopover.tsx`. Spec: 05 §5.5. Accept: Playwright: statuses change with mocked events; bell badge counts unseen; `Mark all seen` clears.
+**Files:** `src/main/pipeline/discovery.ts`, `src/main/db/queries/launches.ts`, `src/main/pipeline/discovery.test.ts`. **Spec:** docs/09 §9.4. **Do:** remove score/liquidity/developer filters from insertion; persist all provider-discovered launches and their coverage status; deduplicate on chain+mint+pool. **Accept:** test fixture with scam, dead, low-liquidity, migrated and supported launches inserts every item; repeat polls do not duplicate launches and do create observations.
 
-**T3.9 Empty/offline states.** Files: `screens/Feed/states.tsx`. Spec: 05 §5.6. Accept: three states render under mocked conditions. **PHASE 3 GATE:** owner opens the app, sees live launches, filters/sorts them, and screenshots match the layout spec.
+### T3.3 Persist shallow market snapshots on measured cadence
 
----
-## PHASE 4 — Detail window
+**Files:** `src/main/pipeline/tracker.ts`, `src/main/pipeline/scheduler.ts`, `src/main/settings/defaults.ts`, `src/main/pipeline/tracker.test.ts`, `src/main/pipeline/scheduler.test.ts`. **Spec:** docs/09 §9.4. **Do:** configurable initial target cadence (15s first 5m, 1m to 1h, 5m to 24h, 15m thereafter) with provider quota adaptation; record actual cadence and every skipped interval reason. **Accept:** fake-clock tests cover tier transitions, rate-limit slowdown, no duplicate timers, and gaps; effective cadence is visible in Health.
 
-**T4.1 Detail shell + follow selection.** Files: `screens/Detail/{index.tsx,Header.tsx}`. Spec: 05 §5.7. Accept: Playwright with two windows: selecting in Feed updates Detail within 300 ms; Pin stops following; empty state text exact.
+### T3.4 Capture trades and pool migration observations
 
-**T4.2 Overview tab.** Files: `screens/Detail/Overview.tsx`, `ipc/handlers/detail.ts`. Spec: 05 §5.7. Accept: stat cards show formatted values; stale clock icon appears when snapshot > 3 min old; flags list sorted by points desc.
+**Files:** `src/main/sources/normalize.ts`, `src/main/pipeline/trades.ts`, `src/main/db/queries/trades.ts`, `src/main/pipeline/trades.test.ts`, `fixtures/gt/trades.real.json`. **Spec:** docs/09 §§9.4–9.5. **Do:** store provider trade events with event/available timestamps and quality flags; map pool migration as a relationship rather than replacing original pool identity. **Accept:** real fixture verifies buy/sell side and amount direction; dedupe and out-of-order delivery are tested; ambiguous trade mapping is logged as unknown.
 
-**T4.3 Exit estimate panel.** Files: `screens/Detail/ExitEstimate.tsx`, `judge/exitImpact.ts`+test. Spec: 04 §4.2. Accept: tests: `S=10, L=1000 -> impact 1.96%`; null liquidity -> `—`; labelled "estimate".
+### T3.5 Record app/offline/source gaps and bounded backfill
 
-**T4.4 Deep-data lifecycle.** Files: `pipeline/deepLifecycle.ts`. Spec: 03 §3.7. Accept: opening Detail triggers trades+holders fetch; closing stops within 60 s; no duplicate timers after 20 rapid selections.
+**Files:** `src/main/pipeline/backfill.ts`, `src/main/db/queries/gaps.ts`, `src/main/pipeline/status.ts`, `src/main/pipeline/backfill.test.ts`, `src/main/pipeline/status.test.ts`. **Spec:** docs/09 §§9.4, 9.9. **Do:** gap on app close/offline/rate limit/provider outage; backfill only where source confirms availability and within configured page/cost cap. **Accept:** tests distinguish complete/incomplete backfill; unfillable time remains a visible gap; no backfilled record is assigned an earlier `availableAt` than actual fetch time.
 
-**T4.5 Trades tab.** Files: `screens/Detail/Trades.tsx`. Accept: columns/widths per spec; min-USD filter; summary strip numbers equal values computed from rows.
+### T3.6 Source coverage report
 
-**T4.6 Holders tab.** Files: `screens/Detail/Holders.tsx`. Accept: class chips; inline bars; program rows grey; observed-time footer.
+**Files:** `src/main/pipeline/coverage.ts`, `src/main/pipeline/coverage.test.ts`, `src/main/ipc/handlers/health.ts`, `tests/unit/coverage.test.ts`. **Spec:** docs/09 §§9.4, 9.9. **Do:** report launches by source/venue, failed calls, missing intervals/fields, capture lag, request budget, and known unsupported venues. **Accept:** seeded fixtures produce exact counts; UI wording does not imply full-chain coverage when any venue is unsupported.
 
-**T4.7 Chart tab.** Files: `screens/Detail/ChartTab.tsx`, `ipc/handlers/candles.ts`. Spec: 05 §5.7. Accept: candles render from the fixture; timeframe switch refetches; "Not enough history yet." for < 5 candles.
+**PHASE 3 GATE:** at least seven consecutive days of app-open capture, including a full overnight period with the app intentionally kept open, with gaps and source coverage reported and no unexplained data loss.
 
-**T4.8 Evidence tab.** Files: `screens/Detail/Evidence.tsx`. Accept: all enabled rules listed incl. unknown; evidence JSON pretty-printed; hash/time header correct.
+## Phase 4 — Deep observations and risk evidence
 
-**T4.9 Glossary tooltips + external links.** Files: `components/GlossaryTerm.tsx`, `shared/glossary.ts`. Spec: 06 §6.7. Accept: every term in 06 §6.7 present with exact text; GeckoTerminal/Solscan links go through `app:openExternal`. **PHASE 4 GATE:** owner walks a real token through every tab.
+### T4.1 Holder snapshots and concentration
 
----
-## PHASE 5 — Judge, Alerts, Rules Lab
+**Files:** `src/main/pipeline/holders.ts`, `src/main/sources/solanaRpc.ts`, `src/main/db/queries/holders.ts`, `src/main/pipeline/holders.test.ts`, `fixtures/rpc/getTokenLargestAccounts.real.json`, `fixtures/rpc/getMultipleAccounts.real.json`. **Spec:** docs/09 §§9.4, 9.6. **Do:** capture timestamped top holders, wallet/program/burn classifications, top1/top10, completeness. **Accept:** tests verify percentages against hand-calculated supply; unknown owner remains unknown; refresh scheduling respects measured credit caps.
 
-**T5.1 Config loader.** Files: `judge/config.ts`, `judge/rules_v1.json`+test. Spec: 04 §4.3. Accept: valid file loads; missing/extra keys rejected by zod.
+### T4.2 Mint authority and Token-2022 extension observations
 
-**T5.2 Rules R01-R04.** Files: `judge/rules/R01..R04.ts`+tests. Spec: 04 §4.2. Accept: table-driven tests with boundaries (`top1 = 20.0` clear, `20.01` hit), null -> unknown.
+**Files:** `src/main/pipeline/tokenSecurity.ts`, `src/main/sources/solanaRpc.ts`, `src/main/db/queries/risk.ts`, `src/main/pipeline/tokenSecurity.test.ts`, `fixtures/rpc/getAccountInfo.mint-authority-active.synthetic.json`, `fixtures/rpc/getAccountInfo.mint-revoked.synthetic.json`, `fixtures/rpc/token2022-extensions.synthetic.json`. **Spec:** docs/09 §9.6. **Do:** record mint/freeze authorities, extension type and raw evidence at check time. **Accept:** active/revoked/unsupported/unavailable cases are distinct; permanent delegate and transfer-hook fixtures create the specified flags; no absence is interpreted as clear without a successful check. Synthetic extension fixture remains test-only; Phase 0 real fixture is required before claiming observed coverage.
 
-**T5.3 Rules R05-R07.** Files: `judge/rules/R05..R07.ts`+tests. Accept: R05 with 3 priors/2 dumped = hit, 3 priors/1 dumped = clear, creator null = unknown; R06 window logic incl. unknown cases; R07 disabled by default.
+### T4.3 Creator/deployer and wallet behavior features
 
-**T5.4 Rules R08-R11.** Files: `judge/rules/R08..R11.ts`+tests. Accept: tier boundaries (`impact` exactly 0.03 clear, 0.0301 hit, 0.08 -> 10 pts, 0.0801 -> 20); R10 needs >= 3 snapshots.
+**Files:** `src/main/pipeline/creator.ts`, `src/main/pipeline/walletAnalytics.ts`, `src/main/pipeline/creator.test.ts`, `src/main/pipeline/walletAnalytics.test.ts`, `fixtures/rpc/getSignaturesForAddress.real.json`, `fixtures/rpc/getTransaction.real.json`. **Spec:** docs/09 §§9.4–9.6. **Do:** derive creator/funding evidence within explicit page/credit caps; compute wallet behavior only over covered history and attach coverage windows. **Accept:** fixtures validate funding evidence, buy/sell/PnL math, and unknown history; incomplete wallets never receive a complete win-rate claim.
 
-**T5.5 Engine.** Files: `judge/engine.ts`+test. Spec: 04 §4.1. Accept: score cap 100; bands at 24/25, 49/50, 74/75; completeness math with a disabled rule; identical input -> identical `inputsHash`; engine is pure (test calls it 2x, no side effects).
+### T4.4 Timestamped third-party security observations
 
-**T5.6 Judge runner + persistence.** Files: `judge/runner.ts`. Spec: 04 §4.4. Do: build `JudgeInput` from DB, store judgement only when hash changed, emit `evt:judgement-updated`. Accept: test: unchanged data -> no new row; changed liquidity -> new row.
+**Files:** `src/main/sources/securityProvider.ts`, `src/main/sources/securityProvider.test.ts`, `src/main/pipeline/riskObservations.ts`, `src/main/pipeline/riskObservations.test.ts`, `fixtures/security/token-scan.real.json`. **Spec:** docs/09 §§9.4, 9.6. **Do:** integrate only Phase 0-approved free source checks. Store fetched time, provider algorithm/version if exposed, response hash and status. **Accept:** a current scan is never backdated to launch time; provider failure yields unknown; storage terms checked in Phase 0.
 
-**T5.7 Alerts.** Files: `judge/alerts.ts`+test, `ipc/handlers/alerts.ts`. Spec: 04 §4.5. Accept: tests: all-conditions-true creates exactly one alert per token; completeness 0.59 blocks; text matches the exact format; `liq_drop` alert on watchlisted token.
+### T4.5 Optional social/KOL capture feasibility adapter
 
-**T5.8 Lab engine.** Files: `lab/{replay.ts,stats.ts,prng.ts}`+tests. Spec: 04 §4.6. Accept: synthetic DB tests: no look-ahead (a rule input timestamped after T is ignored — test by planting future data), exit-collapse override works, UNKNOWN conservative=-100, mulberry32 reproducible, bootstrap CI is deterministic for a seed, verdict stays `EDGE NOT PROVEN` when n < 200.
+**Planner approval required before this task exists.** On approval, Planner will create a separate exact file list. **Spec:** docs/09 §9.4. **Do:** capture social/KOL observations only when a lawful/allowed source and point-in-time timestamps are available. **Accept:** source terms and timestamps documented; if no valid free source passed Phase 0, mark social/KOL unavailable and do not scrape or guess.
 
-**T5.9 Lab UI + freeze.** Files: `screens/Lab/*`, `ipc/handlers/lab.ts`. Spec: 05 §5.8, 02 (`rule_configs`). Accept: Run produces results table + histogram; Freeze stores sha256; editing a frozen config in the UI is impossible (creates a new one).
+### T4.6 Risk flag rules and evidence UI
 
-**T5.10 Feed integration of scores.** Files: `screens/Feed/columns.tsx` (score/flags cells). Accept: ScoreChip colors/low-data style per 05; flags icons with tooltips. **PHASE 5 GATE:** owner reviews Lab output on collected data. If the verdict is `EDGE NOT PROVEN`, the roadmap says: do not trade; keep collecting.
+**Files:** `src/main/research/riskFlags.ts`, `src/main/research/riskFlags.test.ts`, `src/main/ipc/handlers/launches.ts`, `src/shared/types.ts`, `src/renderer/screens/Detail/Evidence.tsx`, `src/renderer/screens/Detail/Overview.tsx`, `src/renderer/screens/Feed/columns.tsx`, `tests/unit/riskFlagsUi.test.tsx`. **Spec:** docs/09 §§9.6, 9.9. **Do:** map flag families to hit/clear/unknown with evidence timestamps; show flag evidence and completeness. Do not create the opportunity score in this phase. **Accept:** UI distinguishes unknown from clear; fixtures include honeypot, active authority, insider sell, concentration, stale source and false-positive cases; no “safe/profitable” label appears.
 
----
-## PHASE 6 — Journal
+**PHASE 4 GATE:** owner can inspect real token timelines and see raw evidence, provenance, unknowns and collection timestamps for each enabled risk family.
 
-**T6.1 Risk engine.** Files: `journal/risk.ts`+test. Spec: 06 §6.3. Accept: tests: equity/peak/drawdown math; pause at 25.0%; 3 losing trades pause; midnight clears the daily pause (fake clock, local tz); size cap; open cap; cooldown-applied limits.
+## Phase 5 — Point-in-time dataset, labels, and simulator
 
-**T6.2 Decision/fill service.** Files: `journal/service.ts`+test. Spec: 06 §6.4, 02. Accept: createDecision blocked when paused; thesis < 20 rejected; in a transaction; void excluded from outcomes; closed PnL formula test.
+### T5.1 Point-in-time feature builder
 
-**T6.3 Paper fills.** Files: `journal/paperFill.ts`+test. Spec: 06 §6.4. Accept: entry/exit math tests (`S=10, L=1000, p=0.001, fee 1%, net 0.10` expected values written in the test from the formulas); stale price refused.
+**Files:** `research-worker/src/features/build.py`, `research-worker/tests/test_features.py`, `research-worker/src/storage/catalog.py`. **Spec:** docs/09 §§9.5, 9.7. **Do:** build feature rows only from `availableAt <= decisionAt`; version feature code and output. **Accept:** planted future observations are excluded; a late historical API response cannot become an earlier feature; null remains null; identical input/version hashes match.
 
-**T6.4 Stats + CSV.** Files: `journal/{stats.ts,exportCsv.ts}`+tests. Accept: stats on a seeded 12-decision set; CSV has exactly the columns in 06 §6.4; unexitable (0 USD exit) counts as a loss.
+### T5.2 Outcome/label builder
 
-**T6.5 Journal UI.** Files: `screens/Journal/*`, `ipc/handlers/journal.ts`. Spec: 05 §5.8. Accept: Playwright: account switch; summary cards; risk panel states; drawer actions.
+**Files:** `research-worker/src/labels/build.py`, `research-worker/tests/test_labels.py`. **Spec:** docs/09 §9.7. **Do:** create 1m/5m/1h/6h/24h outcome and censoring labels at eligible decision times. **Accept:** hand-worked fixtures verify boundaries, no-data censoring, dead/unexitable outcomes, and no future-best-price entry/exit.
 
-**T6.6 New-decision modal.** Files: `screens/Journal/NewDecisionModal.tsx`. Spec: 05 §5.9. Accept: max size enforced; PAUSED disables submit and shows reason; paper entry fill created instantly.
+### T5.3 Versioned cost and impact model
 
-**T6.7 Manual real-fill form.** Files: `screens/Journal/FillForm.tsx`. Accept: required fields; entry before exit; void with reason.
+**Files:** `research-worker/src/sim/costs.py`, `research-worker/tests/test_costs.py`, `src/main/settings/defaults.ts`. **Spec:** docs/09 §9.7. **Do:** implement documented fee, network cost, delay, size/liquidity price impact and stress multipliers. **Accept:** every formula has a hand-calculated fixture; base/stress settings are frozen into every run; unmeasured values are visibly labelled assumptions.
 
-**T6.8 Wallet import.** Files: `wallet/{import.ts,parseSwap.ts,solUsd.ts}`+tests. Spec: 06 §6.5. Accept: fixture tests: buy, sell, non-swap -> null; failed tx -> null; secret-looking input rejected; sync is idempotent (twice = same rows).
+### T5.4 Deterministic event-driven backtester
 
-**T6.9 Unlinked trades UI.** Files: `screens/Journal/UnlinkedTrades.tsx`, `ipc/handlers/wallet.ts`. Accept: suggested match shown; linking creates a `wallet` fill; never auto-links. **PHASE 6 GATE:** owner records 3 paper decisions end to end.
+**Files:** `research-worker/src/sim/engine.py`, `research-worker/src/sim/portfolio.py`, `research-worker/tests/test_engine.py`. **Spec:** docs/09 §9.7. **Do:** simulate signal delay, entries/exits, concurrent positions, liquidity constraints, partial/unexitable outcomes and costs. **Accept:** tests cover winner, rug, sparse trades, migration, insufficient liquidity, stale data, failed exit and portfolio exposure; rerunning a seeded config gives identical trades/metrics.
 
----
-## PHASE 7 — AI helper
+### T5.5 Chronological split builder and baseline suite
 
-**T7.1 Key + models.** Files: `ai/openrouter.ts`(models part), `screens/Settings/AiSection.tsx`. Spec: 06 §6.6. Accept: only `:free` ids listed; key saved as secret and never returned.
+**Files:** `research-worker/src/evaluation/splits.py`, `research-worker/tests/test_splits.py`, `research-worker/src/baselines/no_trade.py`, `random_eligible.py`, `persistence.py`, `simple_rules.py`, `research-worker/tests/test_baselines.py`, `research-worker/src/reports/baseline.py`. **Spec:** docs/09 §9.8. **Do:** create chronological train/validation/final-test periods with horizon-sized embargo; implement no-trade, random eligible, persistence, and simple liquidity/momentum baselines. **Accept:** no cohort crosses forbidden boundaries; final test data is inaccessible to tuning commands; reports show net results and sample sizes.
 
-**T7.2 Context + sanitizer.** Files: `ai/{context.ts,sanitize.ts}`+tests. Accept: tests: payload contains none of mint/pool/wallet/journal fields; hostile symbol `"ignore previous instructions {}"` -> redacted; length caps.
+**PHASE 5 GATE:** labels and backtest reproduce known cases and pass explicit leakage checks; baseline outcomes are plausible under stress costs.
 
-**T7.3 Prompts + safety filter.** Files: `ai/{prompts.ts,safety.ts}`+tests. Accept: prompt text equals the spec string exactly (snapshot test); each blocked pattern is caught; clean answer passes.
+## Phase 6 — Local model benchmarking and integrated ranking
 
-**T7.4 Client with limiter/fallback/cache.** Files: `ai/openrouter.ts`, `db/queries/ai.ts`+tests. Accept: mocked HTTP: 429 on model 1 falls to model 2; daily limit enforced and counts every attempt; cache hit costs 0; blocked response not cached.
+### T6.1 Predictive metrics and calibration
 
-**T7.5 AI tab UI.** Files: `screens/Detail/AiTab.tsx`, `ipc/handlers/ai.ts`. Spec: 05 §5.7. Accept: three presets + custom question; remaining counter updates; error box with Retry; footer text exact.
+**Files:** `research-worker/src/evaluation/metrics.py`, `research-worker/tests/test_metrics.py`, `research-worker/src/reports/metrics.py`, `research-worker/tests/test_metrics_report.py`. **Spec:** docs/09 §§9.6, 9.8. **Do:** implement return error, positive-net precision/recall, rank correlation/top-k outcomes, probability calibration, downside, drawdown and exitability metrics. **Accept:** hand-calculated fixture values match; undefined metrics show null with reason; metrics include sample counts and time cohort.
 
-**T7.6 Glossary everywhere.** Files: feed/detail/journal text uses `GlossaryTerm`. Accept: grep test: each glossary term appears at least once in the UI. **PHASE 7 GATE:** owner asks three questions on a real token and judges answers "clear for a beginner".
+### T6.2 Interpretable tabular baselines
 
----
-## PHASE 8 — Hardening and ship
+**Files:** `research-worker/src/models/baselines.py`, `research-worker/tests/test_model_baselines.py`. **Spec:** docs/09 §9.8. **Do:** fit simple regression/classification and one tree-based model using training split only. **Accept:** seeded test is deterministic; feature availability assertions prevent leakage; model artifact stores dependency/model hashes and training range.
 
-**T8.1 Error boundaries + crash safety.** Files: `renderer/ErrorBoundary.tsx`, `main/crash.ts`. Accept: a thrown render error shows a recoverable panel; main-process uncaught errors are logged and the app keeps running unless the DB is unusable.
+### T6.3 Candidate model training and ranking output
 
-**T8.2 Backups.** Files: `main/backup.ts`. Do: on start and every 24 h, `VACUUM INTO` a dated file in userData/backups; keep 7. Accept: test creates, rotates, restores.
+**Files:** `research-worker/src/models/train.py`, `research-worker/src/models/rank.py`, `research-worker/tests/test_rank.py`, `src/main/db/queries/researchRuns.ts`, `src/main/ipc/handlers/researchJobs.ts`, `src/shared/types.ts`. **Spec:** docs/09 §§9.6, 9.8. **Do:** generate per-horizon return/downside estimates and one 0–100 cross-sectional percentile ranking of predicted 6-hour net return, then attach risk evidence/completeness. Risk features participate in the same return estimator; no separate risk-score combination is required. **Accept:** cohort boundaries and fewer-than-five fallback test; missing 6-hour estimate produces null; score is never called probability; report demonstrates comparison to naive baseline on validation only.
 
-**T8.3 Outage simulation tests.** Files: `tests/e2e/outage.spec.ts`. Accept: network off for 10 min (fake) -> OFFLINE state, saved data still shown, gap recorded on recovery; 429 storm -> bucket penalty, no tight loop (call count bounded).
+### T6.4 Kronos benchmark adapter
 
-**T8.4 Performance pass.** Files: only perf fixes in existing files. Accept: with 10,000 tokens and 500k snapshots: Feed first paint < 1 s, list query < 100 ms, memory < 600 MB after 1 h, DB writes do not block UI (main loop lag < 50 ms).
+**Files:** `research-worker/src/models/kronos_adapter.py`, `research-worker/tests/test_kronos_adapter.py`, `research-worker/src/reports/kronos_benchmark.py`, `data/research/kronos-benchmark.json`. **Spec:** docs/09 §9.8. **Do:** load only the owner-approved checkpoint and pinned tokenizer; convert canonical OHLCV sequences; benchmark inference memory/runtime and forecast/ranking performance against the same splits. **Accept:** CPU fallback works; GPU out-of-memory fails as a typed job error; no chart screenshots; checkpoint hashes logged; Kronos is retained only if it beats baseline out of sample.
 
-**T8.5 Security review.** Files: none (checklist). Accept: every item in 08 §8.4 passes with evidence.
+### T6.5 Local model/resource controls
 
-**T8.6 E2E suite.** Files: `tests/e2e/*`. Accept: scripted scenarios S1-S15 in 08 §8.2 pass.
+**Files:** `src/main/research/resourcePolicy.ts`, `src/main/research/resourcePolicy.test.ts`, `research-worker/src/runtime/resources.py`, `research-worker/tests/test_resources.py`. **Spec:** docs/09 §§9.2, 9.8. **Do:** cap concurrent jobs to one by default; report RAM/VRAM and permit cancel/pause; avoid loading multiple large models simultaneously. **Accept:** fake resource tests prove queueing and cancellation; worker crash does not block UI/data collection; no model auto-download on launch.
 
-**T8.7 72-hour soak.** Accept: per 08 §8.3.
+### T6.6 Opportunity ranking UI
 
-**T8.8 Installer + first-run.** Files: `main/firstRun.ts`, `screens/Settings/*`. Do: first-run flow (create DB, insert initial deposits, explain two windows, prompt for optional RPC/OpenRouter keys, show the "not advice, no guarantees" notice once). Accept: fresh-profile run shows it; second run does not.
+**Files:** `src/renderer/screens/Feed/columns.tsx`, `src/renderer/screens/Feed/FeedTable.tsx`, `src/renderer/screens/Detail/Overview.tsx`, `src/renderer/screens/Detail/Evidence.tsx`, `src/renderer/screens/Lab/LabResults.tsx`, `src/shared/types.ts`, `tests/unit/researchRankingUi.test.tsx`. **Spec:** docs/09 §§9.6, 9.9. **Do:** show rank, expected net return horizons, downside, completeness, model/version and explainable flags. **Accept:** unknown data is visibly unknown; run/version drilldown works; output can be exported with provenance; no strategy is framed as a buy instruction.
 
-**T8.9 Docs.** Files: `README.md`, `docs/USER-GUIDE.md`. Accept: guide covers install, first run, each screen, backups, limits, troubleshooting (429, offline, gaps), glossary link. **FINAL GATE:** 08 §8.5.
+**PHASE 6 GATE:** at least one local model has a reproducible, leakage-checked comparison against naive baselines; otherwise the accepted result is `NO ROBUST EDGE FOUND` and data collection continues.
+
+## Phase 7 — Logged strategy search and selection
+
+### T7.1 Immutable experiment registry
+
+**Files:** `research-worker/src/experiments/registry.py`, `research-worker/tests/test_registry.py`, `src/main/db/migrations/005_experiments.sql`, `src/main/db/queries/experiments.ts`, `src/main/ipc/handlers/experiments.ts`, `src/main/db/queries/experiments.test.ts`, `src/main/ipc/handlers/experiments.test.ts`. **Spec:** docs/09 §9.8. **Do:** store run hashes, candidate space, data manifest, code commit, metrics and all statuses. **Accept:** completed/failed runs cannot be edited or deleted through app; every result resolves to exact config/data/model hashes.
+
+### T7.2 Bounded candidate generator
+
+**Files:** `research-worker/src/experiments/search.py`, `research-worker/tests/test_search.py`, `research-worker/src/experiments/budget.py`, `research-worker/tests/test_budget.py`, `src/main/settings/defaults.ts`, `src/main/settings/store.ts`, `src/main/settings/store.test.ts`. **Spec:** docs/09 §9.8. **Do:** search only declared entry, exit, threshold, hold-duration and risk-filter parameters; enforce saved candidate, wall-clock, RAM and GPU budgets. **Accept:** budget stops search deterministically; search never edits data, labels, split, or cost definitions; all candidates are logged before evaluation.
+
+### T7.3 Walk-forward evaluator and robustness reports
+
+**Files:** `research-worker/src/evaluation/walk_forward.py`, `research-worker/tests/test_walk_forward.py`, `research-worker/src/reports/robustness.py`, `research-worker/tests/test_robustness_report.py`. **Spec:** docs/09 §9.8. **Do:** evaluate frozen candidates over multiple chronological periods and base/stress costs; include per-month, venue, liquidity, age, risk flags, drawdown and concentration. **Accept:** hand-built regimes appear in the correct buckets; final test remains locked; all tested variants appear in report, including losers.
+
+### T7.4 Candidate selection gate
+
+**Files:** `research-worker/src/evaluation/selection.py`, `research-worker/tests/test_selection.py`, `src/renderer/screens/Results/index.tsx`, `src/renderer/screens/Results/RunComparison.tsx`, `src/renderer/screens/Results/TradeBreakdown.tsx`, `tests/unit/selectionUi.test.tsx`. **Spec:** docs/09 §§9.8, 9.10. **Do:** classify `NO ROBUST EDGE FOUND` unless the candidate beats naive baselines across required untouched windows and cost cases. **Accept:** synthetic pass and fail cases verify gate; no user can override failed final test without creating a clearly labelled exploratory run that does not count as readiness.
+
+**PHASE 7 GATE:** owner reviews the full search ledger and accepts the robustness report; no hidden best-of-many result.
+
+## Phase 8 — Local research assistant (optional after model phase)
+
+### T8.1 Local LLM discovery and hardware benchmark
+
+**Files:** `research-worker/src/llm/benchmark.py`, `data/research/model-benchmark.json`. **Spec:** docs/09 §§9.2, 9.8. **Do:** compare locally runnable models against a fixed research-QA set on current RAM/VRAM; no cloud fallback. **Accept:** model/license/hash/runtime/memory recorded; model is optional; failure disables assistant without affecting collection/backtests. Planner may summarize evidence in docs.
+
+### T8.2 Local report assistant with evidence links
+
+**Files:** `research-worker/src/llm/assistant.py`, `research-worker/tests/test_assistant.py`, `src/main/research/assistant.ts`, `src/main/research/assistant.test.ts`. **Spec:** docs/09 §§9.1, 9.8–9.9. **Do:** answer only from selected local run/token artifacts and cite artifact row/field IDs. **Accept:** absent evidence returns “unknown”; prompt injection in token metadata is treated as untrusted text; assistant cannot edit config, start search, or relabel outcomes without explicit UI action.
+
+**PHASE 8 GATE:** if local model quality is poor or resource cost is excessive, ship without the assistant; this does not block core research.
+
+## Phase 9 — Prospective paper validation
+
+### T9.1 Freeze model/strategy paper version
+
+**Files:** `research-worker/src/paper/freeze.py`, `research-worker/tests/test_freeze.py`, `src/main/db/migrations/006_paper.sql`, `src/main/db/queries/paper.ts`, `src/main/db/queries/paper.test.ts`. **Spec:** docs/09 §§9.8–9.10. **Do:** freeze model, features, strategy, costs and config hashes for a new prospective evaluation period. **Accept:** edits create a new version; all paper signals carry frozen hashes and capture timestamp.
+
+### T9.2 Generate and record paper signals
+
+**Files:** `src/main/paper/signals.ts`, `src/main/paper/signals.test.ts`, `src/main/paper/evaluation.ts`, `src/main/paper/evaluation.test.ts`, `src/main/ipc/handlers/paper.ts`, `src/main/ipc/handlers/paper.test.ts`, `src/main/db/queries/paper.ts`. **Spec:** docs/09 §§9.7, 9.9. **Do:** record candidate signal, hypothetical order-arrival time/size, expected entry/exit and risk evidence without calling any trading API. **Accept:** network mocks assert no order endpoints are called; each signal is immutable and gets eventual outcome/censor status.
+
+### T9.3 Paper monitoring and locked evaluation report
+
+**Files:** `research-worker/src/paper/report.py`, `research-worker/tests/test_paper_report.py`, `src/renderer/screens/Paper/index.tsx`, `src/renderer/screens/Paper/SignalTable.tsx`, `src/renderer/screens/Paper/PaperSummary.tsx`, `tests/unit/paperUi.test.tsx`. **Spec:** docs/09 §§9.8–9.10. **Do:** show prospective net performance, drawdown, signal delays, exits, missing data and cohort results. **Accept:** changing the model/strategy starts a separate paper cohort; owner-defined duration/sample gates must be set before collection and cannot be silently shortened.
+
+**PHASE 9 GATE:** owner reviews an untouched forward-paper report. Passing it only qualifies the research result for discussion; it does not authorize live trading.
+
+## Phase 10 — Research product hardening
+
+### T10.1 Backup, restore, and corruption recovery
+
+**Files:** `src/main/app/backup.ts`, `src/main/app/backup.test.ts`, `src/main/research/manifest.ts`, `src/main/research/manifest.test.ts`. **Spec:** docs/09 §9.3; docs/08 §8.1. **Accept:** backups cover SQLite and catalog manifests; restore verifies hashes and can rebuild derived files; failed restore leaves original data untouched.
+
+### T10.2 Long-run capture and resource soak
+
+**Files:** `tests/e2e/research-soak.spec.ts`, `scripts/research/summarize-soak.mjs`. **Spec:** docs/09 §§9.2–9.4; docs/08 §8.2. **Accept:** 72-hour app-open run across sleep/resume, source outage, rate limit, full disk warning and model cancellation; no silent corruption or UI freeze; resource/storage logs included.
+
+### T10.3 Security and scope audit
+
+**Files:** `tests/unit/security-scope.test.ts`, `scripts/research/audit-scope.mjs`. **Spec:** docs/09 §§9.1–9.2; docs/08 §8.3. **Accept:** renderer has no network; worker has no listening socket; secrets absent from raw/logs; code contains no signing/order submission; legacy real records remain read-only.
+
+### T10.4 Windows packaging and fresh-profile worker setup
+
+**Files:** `electron-builder.yml`, `package.json`, `scripts/research/bootstrap-worker.ps1`, `scripts/research/verify-package.mjs`, `src/main/research/worker.ts`. **Spec:** docs/09 §§9.2–9.3; docs/08 §§8.1, 8.5. **Do:** package the pinned worker bootstrap/runtime according to the Phase 0 decision; show a clear first-run status if Python/model files are missing; never silently download a model. **Accept:** `verify-package.mjs` and the documented manual fresh-profile check confirm install and launch; app remains usable if optional model files are absent; collection and worker status are clear; no network is used for model download.
+
+### T10.5 Final research readiness report
+
+**Files:** `docs/build-spec/FINAL-RESEARCH-REPORT.md` (Planner only), `STATUS.md` evidence. **Spec:** docs/08 §§8.2–8.4. **Do:** compile all phase gate evidence, known gaps, selected providers, disk use, model evaluation, strategy search and paper results. **Accept:** owner signs off on research readiness; report states edge found/not found and limitations; live-trading project remains unapproved and unimplemented.
+
+**FINAL GATE:** research and paper system is stable, reproducible, locally operated, and honest about uncertainty. No task in this roadmap enables live execution.

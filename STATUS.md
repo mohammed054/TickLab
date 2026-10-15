@@ -1,17 +1,31 @@
-# STATUS — TickLab Radar build handoff
+# TickLab transformation handoff
 
-## Done (verified in the build sandbox)
-- Full main process: SQLite schema + append-only triggers, settings with loosening cooldown, judge (R01-R11), alerts, risk engine, journal (paper + real),
-  GeckoTerminal/RPC clients with token bucket, discovery/tracker/deep/backfill/retention scheduler, Rules Lab, read-only wallet import, OpenRouter AI helper,
-  IPC handlers (zod-validated, channel allowlist), preload bridge, two-window Electron entry, CSP, safeStorage secrets, daily backups, diagnostics.
-- Renderer: Feed, Detail, Watchlist, Journal, Lab, Health, Settings, first-run notice.
-- Phase 0 scripts (`scripts/p0/`), electron-builder config, USER-GUIDE, README, QUESTIONS.md (#1-#22).
-- Checks: `npm test` 159 passing, `typecheck` clean, `lint` clean, `electron-vite build` succeeds. No signing/sending code, no banned wording, files <= 300 lines.
+## Current product direction
 
-## Needs the owner (could not be done here)
-1. **Phase 0 live capture** (sandbox had no network access to GeckoTerminal/RPC): run `p0:capture` (24 h), `p0:report`, `p0:rpc`; fill FIELDS.md, P0-TERMS.md, P0-REPORT.md; reply "go".
-   Until then every GT/RPC field name is from the spec and fixtures are synthetic. If real names differ, fix `src/main/sources/normalize.ts`.
-2. Real swap fixtures (P0.5) and the SOL/USDC reference pool for `wallet.solUsdPool`.
-3. Run the app on Windows (`npm install`, `npm run dev`), manual live checks, e2e/soak tests, and `npm run dist` to produce the installer.
-4. Phase gates and review of QUESTIONS.md.
-Note: dev-mode HMR may be blocked by the strict CSP (QUESTIONS #2).
+Owner approved transforming the existing Electron app into a local-first Solana new-launch research workstation. Hosted data APIs may be used, but collection is stored locally and all model/research compute stays on the PC. Collect every launch shallowly; selectively collect expensive details. Capture runs while the desktop app is open. Free providers are preferred. Live trading is explicitly a separate future project requiring new written approval.
+
+Authoritative specs: `docs/00-read-first.md`, `docs/09-research-system.md`, `docs/07-phases-and-tasks.md`, and `docs/08-qa-and-done.md`. Older `docs/01–06` files describe legacy implementation details where not superseded by docs/09.
+
+## Planning complete; execution not started
+
+The repo currently contains a substantial TickLab Radar implementation: Electron/TypeScript/React UI, SQLite, GeckoTerminal/RPC collection, risk rules, Rules Lab, journal, and a local-data explanatory AI integration. The old implementation and documentation are not evidence that the transformed data/model pipeline is complete.
+
+**Current blocker/gate:** Phase 0 is not complete. Real provider field fixtures, historical coverage comparison, terms for local storage/research, measured storage growth, GPU VRAM/CUDA profile, and owner `go` are required before implementation tasks begin. Existing P0 capture/RPC smoke notes do not satisfy the full Phase 0 gate.
+
+## Owner-confirmed environment and defaults
+
+- Windows PC, RTX 2060, 16 GB system RAM; exact GPU variant/VRAM to measure in T0.1.
+- Approximately 200 GB storage available; planned managed data cap is 150 GiB, leaving at least 50 GB free outside the allocation.
+- Prefer free data/model sources; paid sources require separate approval.
+- Current app process is the capture uptime boundary.
+- Local ML + controlled strategy search + optional local LLM; Kronos is a benchmark candidate, not a presumed useful predictor.
+- Research rank should be a single integrated opportunity output that accounts for returns and risk, with risk evidence visible.
+- Live trading and real-money tests are not part of this roadmap.
+
+## Legacy validation evidence (not re-run during planning)
+
+Previous handoff entries report 159 unit tests, typecheck, lint, Electron build, provider smoke capture, and Windows installer launch. The prior real-data gate remained incomplete: provider fields were not verified, fixtures were synthetic, Phase 0 terms/storage projections were TODO, and the E2E suite/soak were incomplete. Re-run applicable checks during the task cards; do not rely on these historical claims as current verification.
+
+## Next step
+
+Run T0.1–T0.4 evidence capture, then Planner/owner review T0.5. Do not start T1 until owner replies `go`.

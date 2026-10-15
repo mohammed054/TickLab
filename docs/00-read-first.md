@@ -1,83 +1,62 @@
-# 00 — READ FIRST (every builder AI, every session)
+# 00 — READ FIRST: TickLab Local Solana Research System
 
-Product: **TickLab Radar**, a Windows desktop app for ONE owner. It watches new Solana
-token launches, scores each for rug/manipulation risk, keeps an honest trade journal
-(paper + real), and has a free AI helper that explains things to a non-trader.
+This file defines the transformed product direction. It supersedes conflicting product-scope statements in docs/01–08 and the old TickLab Radar user guide. Detailed research behavior is specified in `docs/09-research-system.md`; implementation order and task cards are in `docs/07-phases-and-tasks.md`.
 
-It is NOT a trading bot. It never holds private keys, never signs, never submits orders.
+## 0.1 Product objective
 
-## 0.1 Locked decisions (owner answers, do not reopen)
+Transform the existing Windows Electron app into a **local-first research workstation** for Solana new token launches. It collects real market/on-chain data through approved hosted data APIs while the app is open, stores the data locally, runs local analysis and models, and evaluates strategies without sending transactions or using real funds.
+
+The research system has one user-facing objective: rank opportunities by estimated net outcome while accounting for risk. It must also show the evidence, uncertainty, and scam/risk flags that explain the ranking. The implementation may compare different model types internally, but must not make the user choose among unnecessary separate risk and return systems.
+
+The eventual live-trading system is a separate future project requiring new written owner approval. This project has no transaction signing, wallet secrets, order submission, venue integration, or real-money test phase.
+
+## 0.2 Owner decisions (locked)
 
 | Topic | Decision |
 |---|---|
-| Form | Desktop app, **Electron + TypeScript + React**. Windows 10/11 only. |
-| Scope of "final" | Personal tool only: Radar + Judge + Journal + AI helper. No public site, no accounts, no payments. |
-| Windows | **Two windows**: Feed window (main) and Detail window (second monitor). |
-| Sources | All Solana DEX launches (not only Pump.fun). Real market data only. |
-| Data strategy | **Tiered**: shallow data on every launch, deep data on tracked/pinned ones. |
-| Always on? | No. App runs only while open. On open it **backfills**; unfillable time is recorded as a **gap**. |
-| Alerts | **In-app only** (toasts + bell list). No sound, no OS notification, no Telegram. |
-| Look | **Dark, dense trading terminal.** |
-| Verdict style | **Risk score 0-100 plus flags** with evidence. |
-| Journal | Paper AND real. Real trades via manual form AND read-only wallet-address import. |
-| Trade venue | Undecided. The app never integrates with a venue. |
-| AI | OpenRouter **free (`:free`) models**, to explain things to a beginner. |
-| Risk defaults | 5% of equity max per position, max 3 open positions, pause at 25% drawdown from peak, pause for the day after 3 losing trades. Editable; loosening takes effect after 24h. |
-| Start equity | $200 (paper and real tracked separately). |
+| Existing app | Transform TickLab in this repository. |
+| Initial chain/market | Solana new launches. |
+| Collection | Save every launch shallowly; selectively collect expensive/deep data. Do not discard failed, scam, dead, or untradeable launches. |
+| Data location | Hosted data APIs are allowed. Persist data and run all research/model workloads locally. |
+| Capture schedule | Capture while the desktop app is open. Record observable gaps when it is closed or offline. |
+| AI | Local predictive ML, controlled strategy search, and optional local LLM support. No cloud inference. Kronos is a candidate to evaluate, not a presumed winner. |
+| Machine | Current Windows PC; owner reports RTX 2060 and 16 GB system RAM. GPU VRAM must be measured during Phase 0. |
+| Storage | Approximately 200 GB is available. Default managed data allocation is 150 GB, configurable after measuring existing disk use; leave at least 50 GB outside the research allocation. |
+| Budget | Prefer free providers; any paid source requires owner approval after a measured coverage/cost comparison. |
+| Live trading | Explicitly out of scope. Requires a separate project and approval. |
+| Success claims | No strategy or model may be described as guaranteed, safe, or certain to profit. |
 
-If anything in `docs/16`, `docs/19` or `docs/20` disagrees with these files on scope
-(sources, AI, framework), **this folder wins**.
+## 0.3 Spec authority
 
-## 0.2 Phase map (build phases vs. roadmap stages in docs/16)
+For this transformation:
 
-| Build phase | Roadmap stage |
-|---|---|
-| Phase 0 Feasibility scripts | Stage 1 |
-| Phases 1-4 Skeleton, data, Feed, Detail | Stage 2 |
-| Phase 5 Judge + Rules Lab | Stage 3 |
-| Phase 6 Journal | Stage 4 tooling |
-| Phase 7 AI helper, Phase 8 Hardening | Stage 2-4 support |
+1. Owner decisions in this file govern product scope.
+2. `docs/09-research-system.md` governs research architecture, data, labels, risk evidence, models, backtests, and retention. `docs/09-analytics-and-investigation-suite.md` governs financial/backtest formulas. Where these conflict with older docs/01–06, the new docs/09 files win.
+3. `docs/07-phases-and-tasks.md` governs task order and acceptance checks. No executor may skip a gate.
+4. `docs/08-qa-and-done.md` governs verification and final research readiness. It replaces old live-trade-related test gates.
+5. `AGENTS.md` remains in force except when its product references conflict with this transformation. The Planner owns `docs/`; the Executor only edits files named in the active task card.
 
-**Phase 0 is a gate.** If it returns "Not feasible", stop and report to the owner.
+## 0.4 Executor protocol
 
-## 0.3 Worker protocol (you are a small model; follow this exactly)
+1. Read `AGENTS.md`, then the latest relevant `STATE.md` entry.
+2. Work on exactly one task card from `docs/07-phases-and-tasks.md`, in dependency order.
+3. Read every spec section named in that card. Do not infer financial, data, or model behavior.
+4. Edit only files listed in the card. Do not change a dependency or architecture without a Planner task.
+5. If the card’s data contract, formulas, or expected behavior are incomplete, stop that subtask and log the precise question in `QUESTIONS.md`.
+6. Run the acceptance commands listed on the card; report exact command output. Do not claim a check passed if it was not run.
+7. Append progress to `STATE.md` using `AGENTS.md` §3.1. Never rewrite previous entries.
+8. Do not add network access to the renderer. Provider calls belong in the Electron main process or the explicitly specified local research worker.
 
-1. Do ONE task card at a time, in order, from `07-phases-and-tasks.md`.
-2. Read only the files the card lists. Do not "explore" the repo.
-3. Never invent an API field name, endpoint, or number. If a card says VERIFY,
-   fetch a real response, save it under `fixtures/`, and code against the fixture.
-4. If the spec is ambiguous or contradicts itself: append a numbered entry to
-   `QUESTIONS.md` and STOP. Do not guess.
-5. Do not add dependencies not listed in `01-architecture.md` section 1.4.
-6. Do not refactor, rename, "improve" or reformat code outside the card's file list.
-7. Every card ends with its **Acceptance** checks. Run them. Paste the real command
-   output into your reply. A card is not done until all checks pass.
-8. Commit message format: `P<phase>.<task>: <short summary>` (e.g. `P2.3: GeckoTerminal client`).
-9. Max 300 lines per source file. Split if larger.
-10. TypeScript `strict: true`. No `any`. No `@ts-ignore`. No `console.log` (use the logger).
-11. All network code lives ONLY in `src/main/sources/` and `src/main/ai/`. Nowhere else.
-12. Never UPDATE or DELETE rows in `decisions`, `fills`, `fill_voids`, `decision_notes`,
-    `rule_configs`, `equity_events`, `risk_acks`. They are append-only (enforced by DB triggers).
-13. Never log or display API keys. Never put secrets in the DB or settings JSON.
-14. Never render remote images or remote HTML. Text only (React escapes it).
-15. Never write text implying a guaranteed or expected profit anywhere in the UI.
+## 0.5 Vocabulary
 
-## 0.4 Definition of done (per task)
-
-- Code compiles (`npm run typecheck` passes).
-- `npm run lint` passes.
-- `npm test` passes, including tests the card requires.
-- Acceptance checks on the card pass with pasted evidence.
-- No file outside the card's list changed (`git status` shows only listed files).
-
-## 0.5 Vocabulary (use these exact words in code and UI)
-
-- **Token**: a mint address. **Pool**: a DEX trading pair for a token. **Launch**: a newly seen pool.
-- **Snapshot**: one observation of a pool's market numbers at a time.
-- **Tier 1**: discovered (shallow data only). **Tier 2**: tracked (periodic snapshots + one-time on-chain checks).
-  **Tier 3**: deep (Detail window open or open position: trades, holders refresh).
-- **Judgement**: the output of the rules for one token at one time. **Rule result**: one rule's hit/clear/unknown.
-- **Completeness**: share of enabled rules that were not `unknown`.
-- **Gap**: a time span where the app could not observe launches.
-- **Decision**: a pre-registered plan to enter (paper or real). **Fill**: an actual or simulated execution.
-- **Account**: `paper` or `real`.
+- **Launch:** a newly discovered Solana DEX pool/market for a token.
+- **Token:** a mint address. **Pool:** a DEX market/pool where the token trades.
+- **Raw record:** provider response or event stored without lossy transformation.
+- **Normalized record:** validated canonical representation with source and time metadata.
+- **Observation time:** when the chain/source says an event happened.
+- **Available time:** when this app could first have used the record. Features may use only records available by the simulated decision time.
+- **Shallow capture:** launch identity and low-cost market snapshots collected for every discovered launch.
+- **Deep capture:** higher-cost trades, holder, creator, wallet, security, or social data collected selectively.
+- **Risk flag:** an evidence-backed warning. A missing field is `unknown`, never “clear”.
+- **Research run:** immutable record of data version, code/model/config, parameters, outputs, and metrics.
+- **Paper simulation:** hypothetical strategy execution against real observed data. It never submits an order.
