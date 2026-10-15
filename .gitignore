@@ -7,3 +7,6 @@ data
 *.db-wal
 *.db-shm
 .env
+tests/e2e/shots/
+tests/e2e/results/
+test-results/

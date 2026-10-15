@@ -9,10 +9,11 @@ import { ageSecNow, findSource, fmtSecs, stateColor } from './sourceUi';
 import { fmtUsd } from '@shared/format';
 import { useNow } from '../state/hooks';
 import { unseenCount, useStore } from '../state/store';
+import { Chip } from './Chip';
 
 const money = (v: number | undefined): string => (v === undefined ? '—' : fmtUsd(v));
 
-/** 40px high: title, search 320x28, source pill, equity chip, risk chip, bell. */
+/** 40px high: title, search 320x28, source pill, equity chip, risk chip, checklist, bell. */
 export function TopBar() {
   const loc = useLocation();
   const nav = useNavigate();
@@ -22,12 +23,16 @@ export function TopBar() {
   const sources = useStore((s) => s.sources);
   const risk = useStore((s) => s.risk);
   const alerts = useStore((s) => s.alerts);
+  const { checklist } = useStore();
+  const unseen = unseenCount(alerts);
+  const paused = [risk.paper, risk.real].find((r) => r && !r.active);
+  const checklistUnseen = checklist.filter((i) => !i.verified).length;
+  const allDone = checklist.every((i) => i.verified);
   const [open, setOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
   const title = SCREENS.find((s) => loc.pathname.startsWith(s.path))?.title ?? 'TickLab Radar';
   const gt = findSource(sources, 'geckoterminal');
-  const unseen = unseenCount(alerts);
-  const paused = [risk.paper, risk.real].find((r) => r && !r.active);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
@@ -36,6 +41,7 @@ export function TopBar() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
   return (
     <header style={{ height: 40, flex: 'none', background: 'var(--bg-1)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 12px', gap: 12 }}>
       <h1 style={{ fontSize: 14, lineHeight: '20px', fontWeight: 600, margin: 0, minWidth: 80 }}>{title}</h1>
@@ -55,6 +61,9 @@ export function TopBar() {
           style={{ height: 18, padding: '0 6px', border: 0, fontWeight: 700, color: paused ? 'var(--bad)' : 'var(--good)', background: `color-mix(in srgb, ${paused ? 'var(--bad)' : 'var(--good)'} 16%, transparent)` }}>
           {paused ? 'PAUSED' : 'ACTIVE'}
         </button>
+        <Chip title={allDone ? 'All verified' : `${checklistUnseen}/5 phases pending`}>
+          {allDone ? '✓ Complete' : `${checklistUnseen}/5 verified`}
+        </Chip>
         <div ref={bellRef} style={{ position: 'relative' }}>
           <Button iconOnly variant="ghost" aria-label="Alerts" onClick={() => setOpen((o) => !o)} icon={<Bell size={16} strokeWidth={1.5} />} />
           {unseen > 0 ? (
