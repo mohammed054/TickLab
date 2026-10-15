@@ -1054,3 +1054,21 @@ Summary: Added an explicit current-product override because AGENTS.md contained 
 Deviations from spec: No product code changed. No task implementation or test run performed.
 Open questions for Planner: none.
 Next step: Executor begins T0.1 Machine and storage profile from docs/07-phases-and-tasks.md, then proceeds through T0.4 and stops for T0.5 owner/Planner review.
+### [T0.1] DONE — Machine and storage profile
+Timestamp: 2026-10-15T17:42:37Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - scripts/p0/system.mjs (new)
+  - data/p0/system.json (generated; gitignored local evidence, not committed)
+Spec files read:
+  - AGENTS.md §§2.1, 3, 5
+  - STATE.md (resume point: [R0.2] DONE)
+  - docs/00-read-first.md §0.2
+  - docs/07-phases-and-tasks.md §T0.1
+  - docs/09-research-system.md §§9.2-9.3
+Summary: Implemented scripts/p0/system.mjs, a read-only profiler (no downloads, no secrets) that prints and saves data/p0/system.json. Measured: Windows 11 Pro 10.0.22000 build 22000 64-bit; Intel Core i5-8400, 6 cores/6 threads at 2808 MHz; 15.91 GiB RAM (6.53 GiB free at capture); disks C: 118.54 GiB total/12.21 GiB free, D: 931.51/611.48, Z: (repo root) 465.76/37.90; GPU NVIDIA GeForce RTX 2060 with 6144 MiB VRAM (5093 MiB free), driver 610.88, driver UMD CUDA 13.3 via nvidia-smi; Python 3.11.9; CUDA available via torch 2.7.1+cu118 (cudaAvailable=true, CUDA 11.8), no nvcc toolkit; model caches: huggingface 96 B, torch absent, ollama 2.98 GiB. One parse fix on the first run: this nvidia-smi release prints "CUDA UMD Version:" so the header regex was widened and the script re-run. Acceptance: report prints and saves, zero null/undefined fields, all values populated or explicitly unknown.
+Deviations from spec: none
+Open questions for Planner: none
+Next step: T0.2 Real launch and shallow-data coverage — capture 24 hours of real launch responses, save dated real fixtures under fixtures/gt/ for launch discovery, pool snapshot, trades, OHLCV and token metadata, compare a two-hour launch sample against an independent public reference, and write data/p0/coverage.json.
+
