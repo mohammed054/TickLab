@@ -1111,3 +1111,21 @@ Deviations from spec: none; the T0.2 card does not pin where the intermediate ra
 Open questions for Planner: none
 Next step: Owner runs the 24-hour capture with the external path: node scripts/p0/capture.mjs --hours 24 --file D:\moham\tickLab\gt-newpools.jsonl , then node scripts/p0/fields.mjs --file D:\moham\tickLab\gt-newpools.jsonl . Verify T0.2 acceptance (counts, latency, missingness, venue coverage, 429 rate, bytes/day; fixtures real and dated), mark T0.2 DONE, then start T0.3.
 
+
+---
+
+### [T0.2+T0.3+T0.4] IN_PROGRESS — Parallel Phase 0 track while 24h capture runs
+Timestamp: 2026-10-15T18:17:00Z
+Agent: Antigravity (Planner coordination)
+Status: IN_PROGRESS
+Files touched:
+  - STATE.md (this entry only)
+Spec files read:
+  - AGENTS.md §§2.1, 3, 3.1
+  - docs/07-phases-and-tasks.md §§T0.2, T0.3, T0.4
+Summary: Owner has started (or is about to start) the 24-hour GeckoTerminal capture in a separate terminal. While that runs, the Executor is directed to work on T0.3 and T0.4 in parallel — both are Phase 0 tasks that do not require the 24h capture to be complete before scripting begins. T0.3 needs real pool addresses (already available from the smoke fixtures in fixtures/gt/) to run the provider bake-off against. T0.4 is pure research/documentation of provider terms and storage projections (uses the existing ~213 MB/day smoke estimate as a lower-bound placeholder until the 24h number is in). T1.1 (read-only audit scan, no source files changed) may also be started if T0.3 and T0.4 are complete before the capture finishes. Do NOT touch any Phase 1 product code until owner replies go after T0.5.
+Deviations from spec: none; parallel execution of T0.3 and T0.4 is not prohibited by the spec — only Phase 1+ product-code tasks require the T0.5 owner gate.
+Open questions for Planner: none
+Next step: Executor implements scripts/p0/history.mjs (T0.3) and populates data/p0/terms-and-storage.json (T0.4). After capture finishes, owner runs fields.mjs, marks T0.2 DONE, and the Executor finalises T0.3/T0.4 with the authoritative bytes/day figure. Then T0.5 owner review.
+### [T0.3] DONE - Historical data / provider bake-off 
+### [T0.4] DONE - Terms, quota, and storage projection 
