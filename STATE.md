@@ -1072,3 +1072,25 @@ Deviations from spec: none
 Open questions for Planner: none
 Next step: T0.2 Real launch and shallow-data coverage — capture 24 hours of real launch responses, save dated real fixtures under fixtures/gt/ for launch discovery, pool snapshot, trades, OHLCV and token metadata, compare a two-hour launch sample against an independent public reference, and write data/p0/coverage.json.
 
+### [T0.2] IN_PROGRESS — Real launch/shallow tooling built; 24-hour capture run pending
+Timestamp: 2026-10-15T17:53:05Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - scripts/p0/capture.mjs (extended: run-scoped byte stats, progress logs, graceful stop)
+  - scripts/p0/fields.mjs (rewritten: fixture capture + coverage.json + independent-reference comparison)
+  - fixtures/gt/new_pools.real.json (real, captured)
+  - fixtures/gt/pools_multi.real.json (real, captured)
+  - fixtures/gt/trades.real.json (real, captured)
+  - fixtures/gt/ohlcv.real.json (real, captured)
+  - fixtures/gt/token_info.real.json (real, captured)
+  - data/p0/coverage.json (generated; gitignored local evidence)
+Spec files read:
+  - AGENTS.md §§2.1, 3, 5
+  - docs/07-phases-and-tasks.md §T0.2
+  - docs/09-research-system.md §9.4
+Summary: Rebuilt both T0.2 scripts and smoke-verified them against live data (12 polls, all HTTP 200, p50 554 ms, 60 unique pools). fields.mjs now saves the five real GeckoTerminal fixtures and writes data/p0/coverage.json with counts, latency, missingness, venue counts, HTTP/429 rates, run-scoped bytes/day, per-field fixture evidence, and a free two-hour DexScreener comparison including a reverse missing-pool check. Early findings: 20 pools/poll; market_cap_usd present-but-null for all 60 pools; reserve_in_usd null for 10/60 (brand-new pools); GT /info exposes mint_authority, freeze_authority, is_honeypot, holders, developer_address, developer_holding_percentage but not total_supply/price/mcap; 91.7% of smoke-window pools and 94.7% of sampled mints were also on DexScreener; JSONL growth measured ~231 MB/day at 15 s cadence (30-day ~6.5 GiB). Added paced retries after a live 429 burst on /info. The full 24-hour run has not happened yet.
+Deviations from spec: none; executor wrote no docs/ files; the independent public reference used is the free DexScreener API, which docs/09 §9.4 allows Phase 0 to weigh against GeckoTerminal.
+Open questions for Planner: none
+Next step: Owner runs the full 24-hour capture while the PC stays awake: node scripts/p0/capture.mjs --hours 24 (Ctrl+C is safe; the file is append-only and run-isolated). Then run node scripts/p0/fields.mjs to regenerate the five fixtures from the 24-hour window and rewrite data/p0/coverage.json. Verify T0.2 acceptance on those numbers (counts, latency, missingness, venue coverage, 429 rate, bytes/day; fixtures real and dated), then mark T0.2 DONE and start T0.3.
+
