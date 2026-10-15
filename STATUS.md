@@ -8,6 +8,12 @@ Authoritative specs: `docs/00-read-first.md`, `docs/09-research-system.md`, `doc
 
 ## Planning complete; execution not started
 
+**Executor handoff: start at T0.1 now.** Read `AGENTS.md` (especially §2.1), then
+`STATE.md`, then the full T0.1 card and cited sections in `docs/07-phases-and-tasks.md`
+and `docs/09-research-system.md`. Implement only T0.1's listed files and acceptance
+check. Continue T0.2–T0.4 one card at a time. Stop for T0.5 owner/Planner review; do not
+start Phase 1 until the owner explicitly replies `go`.
+
 The repo currently contains a substantial TickLab Radar implementation: Electron/TypeScript/React UI, SQLite, GeckoTerminal/RPC collection, risk rules, Rules Lab, journal, and a local-data explanatory AI integration. The old implementation and documentation are not evidence that the transformed data/model pipeline is complete.
 
 **Current blocker/gate:** Phase 0 is not complete. Real provider field fixtures, historical coverage comparison, terms for local storage/research, measured storage growth, GPU VRAM/CUDA profile, and owner `go` are required before implementation tasks begin. Existing P0 capture/RPC smoke notes do not satisfy the full Phase 0 gate.

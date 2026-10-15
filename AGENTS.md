@@ -65,6 +65,40 @@ Never let an implementation detail exist only in someone's head, only in a chat
 message, or only in code comments. If it matters, it goes in `docs/`, written by the
 Planner, before an Executor builds it.
 
+## 2.1 Current product override — read before using legacy instructions
+
+The repository is being transformed into a **local-first Solana new-launch research
+workstation**. Older roadmap and examples elsewhere in this file describe a different
+TickLab product and are superseded wherever they conflict with this section or the
+current transformation specs. The controlling documents are:
+
+1. `docs/00-read-first.md` — owner-approved scope and safety boundaries.
+2. `docs/07-phases-and-tasks.md` — canonical task IDs, order, exact files, and
+   acceptance criteria.
+3. `docs/09-research-system.md` and `docs/09-analytics-and-investigation-suite.md` —
+   data, model, research, and financial calculation contracts.
+4. `docs/08-qa-and-done.md` — verification and completion gates.
+
+`docs/16-implementation-roadmap.md` is only an index to the canonical task cards in
+`docs/07-phases-and-tasks.md`; it does not define a second roadmap. Existing legacy
+files under `docs/01`–`docs/06` and examples mentioning Rust/HFT, monitors, execution
+modes, `LIVE`, or old `frontend/` and `backend/` paths do not authorize work in those
+areas. Follow the current task card's exact paths and specs.
+
+**Fresh-executor starting point:** planning is complete, implementation is not started,
+and the current task is **T0.1 — Machine and storage profile** in
+`docs/07-phases-and-tasks.md`. Read its full card and referenced sections, then create
+only its listed files and run its acceptance check. Continue with T0.2, T0.3, and T0.4
+one task at a time, logging each task in `STATE.md`. Stop after T0.4 for the T0.5
+Planner/owner feasibility review. Do not begin Phase 1 or download models until the
+owner reviews the evidence and explicitly replies `go`. Do not use paid data without
+separate owner approval.
+
+For this project, capture may use approved hosted data APIs, but data and model
+workloads remain local. There must be no transaction signing, wallet-secret handling,
+order submission, live-trading implementation, or cloud model inference. Do not infer
+a live-trading stage from the legacy directory map or examples below.
+
 ---
 
 ## 3. Resuming Work — Read `STATE.md` First, Every Time
@@ -79,8 +113,9 @@ doc — it is a diary. Before writing any code in a new session, every Executor 
 2. Read from the bottom up until you find the most recent entry with status
    `IN_PROGRESS` or `BLOCKED`, or, if none exists, the most recent `DONE` entry.
 3. Identify the exact **Phase.Block.Task** ID of that entry (e.g. `2.1.A`).
-4. Open the corresponding section of `docs/16-implementation-roadmap.md` and re-read
-   the full task definition, not just the `STATE.md` summary.
+4. Open the corresponding task in `docs/07-phases-and-tasks.md` and re-read the full
+   task definition, not just the `STATE.md` summary. `docs/16-implementation-roadmap.md`
+   is an index only.
 5. Open every doc file referenced by that task (each task lists its "Spec files" —
    see the roadmap template).
 6. Resume from exactly where the log says work stopped. Do not restart the task from
@@ -214,13 +249,13 @@ These apply to every Executor, on every task, with no exceptions:
 
 ## 7. Reading Order for a New Agent on a Fresh Task
 
-1. `AGENTS.md` (this file)
+1. `AGENTS.md` (this file, including §2.1)
 2. `STATE.md` (find where to resume)
-3. `docs/16-implementation-roadmap.md` (find the current Phase/Block/Task)
-4. The specific numbered doc(s) that task references
-5. `docs/03-tech-stack-and-repo-structure.md` (if you need to know where a file goes
-   or which library to use)
-6. `docs/11-design-system.md` (if you are touching anything visual)
+3. `docs/00-read-first.md` (current product scope)
+4. `docs/07-phases-and-tasks.md` (canonical current task cards)
+5. The spec docs named by the active task
+6. Legacy docs only if the active task explicitly references them and they do not
+   conflict with the transformation specs
 
 Do not read every doc in the repo before starting a small task — read what the task
 tells you to read. The docs are organized so that each task's "Spec files" list is

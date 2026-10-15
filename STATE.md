@@ -1031,3 +1031,26 @@ Summary: Replaced the old product direction with an owner-approved plan for a lo
 Deviations from spec: No implementation code changed. Provider, terms, data-capture, GPU/VRAM, disk-growth and owner go evidence remain Phase 0 blockers by design.
 Open questions for Planner: Owner should confirm the proposed default 150 GiB managed storage allocation and, before Phase 9, set minimum forward-paper duration and completed-signal count. Phase 0 must determine whether historical data can support venue-specific executable quote reconstruction.
 Next step: Owner reviews the new authority docs; after that, run Phase 0 T0.1-T0.4 and stop before T1 until the T0.5 owner go gate.
+
+---
+
+### [R0.2] DONE - Make fresh-executor handoff unambiguous
+Timestamp: 2026-10-15T17:35:28Z
+Agent: Codex GPT-6 (Planner)
+Status: DONE
+Files touched:
+  - AGENTS.md
+  - STATUS.md
+  - docs/16-implementation-roadmap.md
+  - STATE.md
+Spec files read:
+  - AGENTS.md Sections 1-9
+  - docs/00-read-first.md
+  - docs/07-phases-and-tasks.md T0.1-T0.5
+  - docs/09-research-system.md
+  - docs/16-implementation-roadmap.md
+  - STATUS.md
+Summary: Added an explicit current-product override because AGENTS.md contained stale trading, HFT, and multi-instance directions. Named docs/07 as the canonical task source, identified T0.1 as the first executor task, ordered T0.1-T0.4, and made the T0.5 owner go gate and live-trading exclusions prominent. Updated STATUS and the docs/16 index so a fresh executor can find the same handoff immediately.
+Deviations from spec: No product code changed. No task implementation or test run performed.
+Open questions for Planner: none.
+Next step: Executor begins T0.1 Machine and storage profile from docs/07-phases-and-tasks.md, then proceeds through T0.4 and stops for T0.5 owner/Planner review.
