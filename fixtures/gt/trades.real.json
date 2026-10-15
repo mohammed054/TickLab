@@ -1,15 +1,1595 @@
 {
   "fixtureVersion": 1,
   "provenance": {
-    "capturedAt": "2026-10-15T17:52:34.837Z",
+    "capturedAt": "2026-10-15T18:00:08.029Z",
     "captureMethod": "live-fetch",
     "accept": "application/json;version=20230302",
-    "latencyMs": 815,
+    "latencyMs": 535,
     "endpoint": "GET /networks/solana/pools/FshTuD2pTP5wtZDwknYNWyf3SrBh4d4KKoiCAJH8ykZ5/trades",
     "httpStatus": 200
   },
   "responseBody": {
     "data": [
+      {
+        "id": "solana_457328387_4d1joG5qG2KdCYbTKo97BBqMu7h5gGxNkt1bVjBRBxvByz8m6bPeB8C19zJeZfqEmyjbrSGw3yo9buePLsViGjWf_80_1792086929",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328387,
+          "block_timestamp": "2026-10-15T17:55:25Z",
+          "tx_hash": "4d1joG5qG2KdCYbTKo97BBqMu7h5gGxNkt1bVjBRBxvByz8m6bPeB8C19zJeZfqEmyjbrSGw3yo9buePLsViGjWf",
+          "tx_from_address": "EnqYGN3Zbj2g9SHb1bXUspuT9x8sTT2XCT8TyyH4QTd",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.055910934",
+          "to_token_amount": "1150.076344",
+          "price_from_in_usd": "105.86996778993794121556034536020412257108305715",
+          "price_to_in_usd": "0.09720159635908767505887435872945440122121720567288493387592153",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000918122470311414",
+          "volume_in_usd": "111.7892565716232873109594196026557014946827922668318781"
+        }
+      },
+      {
+        "id": "solana_457328379_3ErCijsjCJWzR5zUCfMpwLCUztQN8qJEHcJ8KgWwxk9MrPZyMNH1XtWgjHT998NfRneGTM6ok5L3GGzEAQzZW55e_20_1792086930",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328379,
+          "block_timestamp": "2026-10-15T17:55:23Z",
+          "tx_hash": "3ErCijsjCJWzR5zUCfMpwLCUztQN8qJEHcJ8KgWwxk9MrPZyMNH1XtWgjHT998NfRneGTM6ok5L3GGzEAQzZW55e",
+          "tx_from_address": "FXpAa7nNLYaMRgZyMns25qK3kQy4fH322z6MEBv37zht",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "64.036476",
+          "to_token_amount": "0.058375201",
+          "price_from_in_usd": "0.0965103212992565364701634250113522399444726677776693114153243569",
+          "price_to_in_usd": "105.869971627714462753004931337996329078133698561",
+          "price_from_in_currency_token": "0.000911592964609733",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "6.180180873632129050411531889251892739116215209278294751657266436149170246756431"
+        }
+      },
+      {
+        "id": "solana_457328369_5tujHACvgsqcHDhriXtB9wSh9yW1cCifzPjofkZQtqRCv12GBBWsDmrZRvCS3tx1S6RPE9VqtbMm32zmkCSybngp_80_1792086925",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328369,
+          "block_timestamp": "2026-10-15T17:55:21Z",
+          "tx_hash": "5tujHACvgsqcHDhriXtB9wSh9yW1cCifzPjofkZQtqRCv12GBBWsDmrZRvCS3tx1S6RPE9VqtbMm32zmkCSybngp",
+          "tx_from_address": "ENAf6q8yXJ46KoEQRSiEpGnvxxST2qdaX8dAiydByNY7",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.309644674",
+          "to_token_amount": "337.94968",
+          "price_from_in_usd": "105.869968334831746165471803021621674338346601359",
+          "price_to_in_usd": "0.0970028195660055035125054847408367295738346100762695487244440639",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000916244909597192",
+          "volume_in_usd": "32.782071831429298886258266502822258301831499076815511966"
+        }
+      },
+      {
+        "id": "solana_457328367_3tRMye6N9TQb1j3gTB5G4v5vt1zZdMM7F92tjJEUBByReyHn7FiEnN7zUP9ajb8vYnDFXW9DZg5jy5T1USiJcG9u_80_1792086936",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328367,
+          "block_timestamp": "2026-10-15T17:55:21Z",
+          "tx_hash": "3tRMye6N9TQb1j3gTB5G4v5vt1zZdMM7F92tjJEUBByReyHn7FiEnN7zUP9ajb8vYnDFXW9DZg5jy5T1USiJcG9u",
+          "tx_from_address": "AN8hF5UjsEcKS5vq1pYpz8mogsTt1BfuDHz5EeRGTMk7",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.040599958",
+          "to_token_amount": "44.336731",
+          "price_from_in_usd": "105.869971666403900908170908218378554734038601148",
+          "price_to_in_usd": "0.0969470753970830192248629515559121604088298034676936201348997368",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000915718346487927",
+          "volume_in_usd": "4.298316403117188387907900730488024150302668376987551784"
+        }
+      },
+      {
+        "id": "solana_457328360_5ZwTVR6DBYEYkFLpmtCNGpzPvYWfyJV1wSHtTksju9w27QUA2akRiynvFqhotJNqG2zhkAh4qpd6kB8cGbdcxxv2_80_1792086923",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328360,
+          "block_timestamp": "2026-10-15T17:55:19Z",
+          "tx_hash": "5ZwTVR6DBYEYkFLpmtCNGpzPvYWfyJV1wSHtTksju9w27QUA2akRiynvFqhotJNqG2zhkAh4qpd6kB8cGbdcxxv2",
+          "tx_from_address": "8ogDipsA1qogRRa84TaLK89X9AQwnZrqpSLpEHvRMsH3",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.225095936",
+          "to_token_amount": "245.920591",
+          "price_from_in_usd": "105.804095204335847876140049877668182721079361956",
+          "price_to_in_usd": "0.096844561676631173270131958319107760843857534365967308407131844",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000915319595991049",
+          "volume_in_usd": "23.816071842653088936033356594300405087020385909768610816"
+        }
+      },
+      {
+        "id": "solana_457328346_49xQXQUdCvXyQNw12hUjiXE4xnz9Q4b8aMxs1ebwYnAxyhWX8MswnqYkvUv2gSrqWLtyJ84jJbabCa3fWTVKuAcT_20_1792086922",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328346,
+          "block_timestamp": "2026-10-15T17:55:17Z",
+          "tx_hash": "49xQXQUdCvXyQNw12hUjiXE4xnz9Q4b8aMxs1ebwYnAxyhWX8MswnqYkvUv2gSrqWLtyJ84jJbabCa3fWTVKuAcT",
+          "tx_from_address": "CEnw4FYhPRvUzGczyHvKaAWtNMrqno1arAApxx9DqN8B",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "115.808068",
+          "to_token_amount": "0.105399159",
+          "price_from_in_usd": "0.09629435017681957112497974006191158330318420156043745875778399",
+          "price_to_in_usd": "105.804095204335847876140049877668182721079361956",
+          "price_from_in_currency_token": "0.000910119310512977",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "11.15166265329293291657249023571218084916282063083684733356864384323132"
+        }
+      },
+      {
+        "id": "solana_457328339_3H87cbXuuVqUepRbjDGSyFz6ytDv2rMEBQwSG9xve6iUQpqYBagfAw1o8Bb3hPPDMMEfQdWCjRUkTPgBkc2GJhXZ_80_1792086919",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328339,
+          "block_timestamp": "2026-10-15T17:55:15Z",
+          "tx_hash": "3H87cbXuuVqUepRbjDGSyFz6ytDv2rMEBQwSG9xve6iUQpqYBagfAw1o8Bb3hPPDMMEfQdWCjRUkTPgBkc2GJhXZ",
+          "tx_from_address": "FpDMzm7gFy2TXE5H6TYvYLMFJGc99kJvbbU4M41TaQDL",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.163413899",
+          "to_token_amount": "178.583995",
+          "price_from_in_usd": "105.803932719246154425389805201407515339847243992",
+          "price_to_in_usd": "0.0968162526277099403364766747745211520998764015135550705110623824",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000915053440259302",
+          "volume_in_usd": "17.289833175185686435409052662812482369586748205137044808"
+        }
+      },
+      {
+        "id": "solana_457328324_5qSymysKnFab9F6QKboBAAc8NdDD4v529SysYDBadbAYxKKkRZvjkBEGmhSht873yvvTqsRkfwnFki8SzKQbTMP_80_1792086915",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328324,
+          "block_timestamp": "2026-10-15T17:55:12Z",
+          "tx_hash": "5qSymysKnFab9F6QKboBAAc8NdDD4v529SysYDBadbAYxKKkRZvjkBEGmhSht873yvvTqsRkfwnFki8SzKQbTMP",
+          "tx_from_address": "4suu2qBGieLQii6Hm1BeQEHA1vHdeHJd9c7qcvejxs46",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.516420215",
+          "to_token_amount": "1661.768302",
+          "price_from_in_usd": "105.869796437258760327058271158126128025190133169",
+          "price_to_in_usd": "0.0966097976969319776675188941336419185131999999021254139394368097",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000912534083828011",
+          "volume_in_usd": "160.543099475394163345791173867133922057076347156013611335"
+        }
+      },
+      {
+        "id": "solana_457328310_RWyQAa2eKSrs6Z7D7cBa2JPTaJ4QXVrK11b4BTWqLb7ay3ZeUoMhLLgdTvUuG7UmLyjrNNQmVFWRCxiVwDS55rn_20_1792086911",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328310,
+          "block_timestamp": "2026-10-15T17:55:09Z",
+          "tx_hash": "RWyQAa2eKSrs6Z7D7cBa2JPTaJ4QXVrK11b4BTWqLb7ay3ZeUoMhLLgdTvUuG7UmLyjrNNQmVFWRCxiVwDS55rn",
+          "tx_from_address": "36pGKyRhkK2HeATYTPuW3nFTEmMftWKmHSZ3tQzFZscE",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "393.118429",
+          "to_token_amount": "0.356086164",
+          "price_from_in_usd": "0.0958431541644953718994570901948371804520262747913392279148065125",
+          "price_to_in_usd": "105.810654849120237559335411575039087653846063795",
+          "price_from_in_currency_token": "0.000905798705254797",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "37.6777101955512281788853172503056962900900790126935800839416820329688625"
+        }
+      },
+      {
+        "id": "solana_457328298_5KgGqJWYQFw3H93Kdk2J2tqRmMWjtAeGLPtb6q5CQUwcpYi9porCJSkRwtjrXb29ymNamwQpDvzAiLzMJifRLeuS_80_1792086909",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328298,
+          "block_timestamp": "2026-10-15T17:55:06Z",
+          "tx_hash": "5KgGqJWYQFw3H93Kdk2J2tqRmMWjtAeGLPtb6q5CQUwcpYi9porCJSkRwtjrXb29ymNamwQpDvzAiLzMJifRLeuS",
+          "tx_from_address": "DbgF1MAxBn6vfytuU5ZWxsSd5kGRqNhg1sgWb3gvtwrA",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.232562188",
+          "to_token_amount": "255.287416",
+          "price_from_in_usd": "105.809999800381556378125987955465286648351579412",
+          "price_to_in_usd": "0.0963909833528821417636476870746414156411987571971796508620948716",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000910981793164454",
+          "volume_in_usd": "24.607405065856297986142335098584653620987829901310473456"
+        }
+      },
+      {
+        "id": "solana_457328295_2K1PfLxTkczoGWzuszUbdvTNTtEgFC5ig3zCPReoaezeJjR3mJaZXZehP4unn7L3jHDhxYLpZk8DYchcz1kryTrN_80_1792086911",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328295,
+          "block_timestamp": "2026-10-15T17:55:05Z",
+          "tx_hash": "2K1PfLxTkczoGWzuszUbdvTNTtEgFC5ig3zCPReoaezeJjR3mJaZXZehP4unn7L3jHDhxYLpZk8DYchcz1kryTrN",
+          "tx_from_address": "79ANFkrKchNBzZ77geKjK5JYhvL9CuYYmYLLPu5chS99",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.808338645",
+          "to_token_amount": "888.847074",
+          "price_from_in_usd": "105.810891440754159503429240958508527710867894053",
+          "price_to_in_usd": "0.0962269383737222210590551668803138707733568026432709851256630834",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000909423756509998",
+          "volume_in_usd": "85.531032613461315071115865489779284510747905252805578185"
+        }
+      },
+      {
+        "id": "solana_457328293_5ay9CFL5xiZV9Y7PFY7hTrmL8PW3KSfpbhVbP6UTEchuJn5wkYMnMhTKmrhc4PThPem1Fx2qn7Ez1zCXYDHn3xxp_20_1792086911",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328293,
+          "block_timestamp": "2026-10-15T17:55:05Z",
+          "tx_hash": "5ay9CFL5xiZV9Y7PFY7hTrmL8PW3KSfpbhVbP6UTEchuJn5wkYMnMhTKmrhc4PThPem1Fx2qn7Ez1zCXYDHn3xxp",
+          "tx_from_address": "BzxKe5h8dkW9Cn44XFx9QVR2f2BRfRmhopr6aTyXHFXB",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1434.151519",
+          "to_token_amount": "1.298149226",
+          "price_from_in_usd": "0.0957767188518279835612798723903632076344455200657671192778792728",
+          "price_to_in_usd": "105.810891440754159503429240958508527710867894053",
+          "price_from_in_currency_token": "0.000905168811524998",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "137.3583268261850385511165585727655551906524393250648940126247421847353832"
+        }
+      },
+      {
+        "id": "solana_457328290_uy7yjNnWtUoneXMZxV8X6UJXoD4Cpa5uweFiWrDAPjG7dSnVxa9uYZh8yddfAZ16o4oWTUjxHDTgQLLKmrcgaGM_80_1792086909",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328290,
+          "block_timestamp": "2026-10-15T17:55:04Z",
+          "tx_hash": "uy7yjNnWtUoneXMZxV8X6UJXoD4Cpa5uweFiWrDAPjG7dSnVxa9uYZh8yddfAZ16o4oWTUjxHDTgQLLKmrcgaGM",
+          "tx_from_address": "BLzBDDpE2RaXBV6q9aJNgH7vDHTgPk4PwPDjwfKsE57W",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.052169867",
+          "to_token_amount": "57.201758",
+          "price_from_in_usd": "105.809722490037479024341322988341091528159151983",
+          "price_to_in_usd": "0.0965019143224962482164209697425757936177417374471574851541699677",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000912032581236402",
+          "volume_in_usd": "5.520079149612164105715176582905797295658889713785896261"
+        }
+      },
+      {
+        "id": "solana_457328286_5d8rdrPXPWJ3xZPfEEtpP7EMxS9uJaBQW9pDm32pKcEReJEzhsZZhKaYML1CQVj3SfYC2ibAUm1nDFJqLNDmoVDr_80_1792086911",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328286,
+          "block_timestamp": "2026-10-15T17:55:04Z",
+          "tx_hash": "5d8rdrPXPWJ3xZPfEEtpP7EMxS9uJaBQW9pDm32pKcEReJEzhsZZhKaYML1CQVj3SfYC2ibAUm1nDFJqLNDmoVDr",
+          "tx_from_address": "ErUNje2m64k2j44nXcokn8y67anMauE5KDBgskRM5nHW",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.037669402",
+          "to_token_amount": "41.308793",
+          "price_from_in_usd": "105.810891440754159503429240958508527710867894053",
+          "price_to_in_usd": "0.0964887307566727325906554078331376250138597991310800188246322354",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000911897909967982",
+          "volume_in_usd": "3.985833005660127617506796456220923050768822469975866306"
+        }
+      },
+      {
+        "id": "solana_457328283_5oHdYt3KcTmoms4sBL3Zi1e68V3HWR88yTapDZj321FUAPcHqy7waRtNkUiXx6WdcuNB4ijQ13S6VVZbsWwFHZPs_20_1792086912",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328283,
+          "block_timestamp": "2026-10-15T17:55:03Z",
+          "tx_hash": "5oHdYt3KcTmoms4sBL3Zi1e68V3HWR88yTapDZj321FUAPcHqy7waRtNkUiXx6WdcuNB4ijQ13S6VVZbsWwFHZPs",
+          "tx_from_address": "B4PuRbMUsyuLqUYg38e45mczh4fgqrnbc6akMZ4ox1TK",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "15393.175375",
+          "to_token_amount": "14.288208445",
+          "price_from_in_usd": "0.0982145258010068186263713990635000351181685595707846157305609319",
+          "price_to_in_usd": "105.809865935740153268616727824390104389451195137",
+          "price_from_in_currency_token": "0.000928217089516529",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "1511.8334200273603106865515456685668018926274862842223162925081718601319625"
+        }
+      },
+      {
+        "id": "solana_457328271_3CWTvLbz1zyPX5J4KhPgzEWhEaD8BG4gfmfiMFuCLEjqykeRptgjfNtDAPgajdovYRJp31uuiwMP1UfMBPrnwxT3_80_1792086904",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328271,
+          "block_timestamp": "2026-10-15T17:55:00Z",
+          "tx_hash": "3CWTvLbz1zyPX5J4KhPgzEWhEaD8BG4gfmfiMFuCLEjqykeRptgjfNtDAPgajdovYRJp31uuiwMP1UfMBPrnwxT3",
+          "tx_from_address": "6AsydHG9bJo5oek6w6ex3PARJ7r4WGPevNDZaQCM3juk",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.418604779",
+          "to_token_amount": "438.492872",
+          "price_from_in_usd": "105.888630885143620155006716561457174595640637172",
+          "price_to_in_usd": "0.1010859919526539608595273044192672130108820950661715797900739504",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000954644432623753",
+          "volume_in_usd": "44.325486930288119498246532329724420489572563286804244988"
+        }
+      },
+      {
+        "id": "solana_457328265_4WaLZofN53rsnBumrVVqK3bu318ayMXjisZeYkpTqf1BwQQEsj7MVeVtiWR7F73s8SnBMQ5rtsjLjWJ75RGWrWEj_80_1792086902",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328265,
+          "block_timestamp": "2026-10-15T17:54:58Z",
+          "tx_hash": "4WaLZofN53rsnBumrVVqK3bu318ayMXjisZeYkpTqf1BwQQEsj7MVeVtiWR7F73s8SnBMQ5rtsjLjWJ75RGWrWEj",
+          "tx_from_address": "AY8Rsm7JT4Fu9GyPCSV3r3tQZgwYFgsCiArzgMFY1tAE",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.023367543",
+          "to_token_amount": "24.495149",
+          "price_from_in_usd": "105.81307241451649489065780685578377860347289507",
+          "price_to_in_usd": "0.100942089374852473903810661382558802760683866734998368041655447",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000953966150603942",
+          "volume_in_usd": "2.47259151960832801856672659998822224521913282488271301"
+        }
+      },
+      {
+        "id": "solana_457328258_52PvtwYm7McdoLWTS1TCBYdBQXtvUVzPENxA319JyJhzgLRP8pJTLpbwTjFLxKzXZQNvHxQAzDkpJD1UxwdpNVV4_80_1792086902",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328258,
+          "block_timestamp": "2026-10-15T17:54:57Z",
+          "tx_hash": "52PvtwYm7McdoLWTS1TCBYdBQXtvUVzPENxA319JyJhzgLRP8pJTLpbwTjFLxKzXZQNvHxQAzDkpJD1UxwdpNVV4",
+          "tx_from_address": "BeXBQqw4e3PfctmxUdTjarWBKQwQ5yWpvz91EfCVXxiz",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.375247922",
+          "to_token_amount": "1444.854603",
+          "price_from_in_usd": "105.81307241451649489065780685578377860347289507",
+          "price_to_in_usd": "0.100715468294424173535093426389945337855800600700309181576043138",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000951824439043573",
+          "volume_in_usd": "145.51920795849933223310076609149399520573416092834154454"
+        }
+      },
+      {
+        "id": "solana_457328244_5JS77kSmbxM8FSqv3iAYx7vQkiLY3jjRxE1JMXfaCG4wNeREY5hxzvzkhwi1MNCf9seSYAMWQ18DzxLqPJutTzTc_80_1792086899",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328244,
+          "block_timestamp": "2026-10-15T17:54:53Z",
+          "tx_hash": "5JS77kSmbxM8FSqv3iAYx7vQkiLY3jjRxE1JMXfaCG4wNeREY5hxzvzkhwi1MNCf9seSYAMWQ18DzxLqPJutTzTc",
+          "tx_from_address": "2kiz4n6Yx42sxvcZNQ3MTkS1QgHBgmSAmZUN3QqAF3Ga",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.047260054",
+          "to_token_amount": "49.765975",
+          "price_from_in_usd": "105.88823092443366738598349336155160514850491238",
+          "price_to_in_usd": "0.100556324104033034958181915412054484473189125083235086742155592",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000949645897623828",
+          "volume_in_usd": "5.00428351145320504007961873937557038310502017834406852"
+        }
+      },
+      {
+        "id": "solana_457328240_359Jjjjo9dRcdJV3Ryy89L2sVvjXoRzhuYNiZcGWk9SApTUzHUMVaX8UzMCrHXuLYGC72bGcuJnJuGYDxytjCshx_80_1792086897",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328240,
+          "block_timestamp": "2026-10-15T17:54:52Z",
+          "tx_hash": "359Jjjjo9dRcdJV3Ryy89L2sVvjXoRzhuYNiZcGWk9SApTUzHUMVaX8UzMCrHXuLYGC72bGcuJnJuGYDxytjCshx",
+          "tx_from_address": "49JmQj9g4dz1HCdcrW9XUwLgH9U3UxsYHXGN7Xok2vvX",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.117453981",
+          "to_token_amount": "123.714678",
+          "price_from_in_usd": "105.88823092443366738598349336155160514850491238",
+          "price_to_in_usd": "0.100529657953133451532593496334357617268892118071232925791239772",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000949394064623439",
+          "volume_in_usd": "12.43699426312204440491362489560130836163199815708718478"
+        }
+      },
+      {
+        "id": "solana_457328237_2tAUWPch9j2BZK8U3uBz6b56nhhT2chYuZRoqWbhcRpC5eXbdLGk3VwUn6hXfRynjdoLbj3ni4QtvQqzPPHKbwiv_20_1792086895",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328237,
+          "block_timestamp": "2026-10-15T17:54:52Z",
+          "tx_hash": "2tAUWPch9j2BZK8U3uBz6b56nhhT2chYuZRoqWbhcRpC5eXbdLGk3VwUn6hXfRynjdoLbj3ni4QtvQqzPPHKbwiv",
+          "tx_from_address": "69dtYvoDMYSfvk6CXyhcmqRwsoxDUDZFeMpCbHSon92K",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "73.707117",
+          "to_token_amount": "0.069587829",
+          "price_from_in_usd": "0.09995421485716753483449629068731490336684664163139010871943719",
+          "price_to_in_usd": "105.871056979236782709259854005488085186043915604",
+          "price_from_in_currency_token": "0.000944112751011548",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "7.36733700912038577864779373375592999830385933578194161602627713748123"
+        }
+      },
+      {
+        "id": "solana_457328235_4rETSDfBBKsbF7P2gn9H3LiTXjYd2h9n8S1hfap51qZcL7bUcxriKapw1bcs8v9cCX1TJh8Jg5f8mACjQEm1ab4e_80_1792086896",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328235,
+          "block_timestamp": "2026-10-15T17:54:51Z",
+          "tx_hash": "4rETSDfBBKsbF7P2gn9H3LiTXjYd2h9n8S1hfap51qZcL7bUcxriKapw1bcs8v9cCX1TJh8Jg5f8mACjQEm1ab4e",
+          "tx_from_address": "BSP1xB7zAFpcK7FmKTaEXsjBHWMQQ8SVo6iX6TLNTyAZ",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.058357305",
+          "to_token_amount": "61.471547",
+          "price_from_in_usd": "105.871056979236782709259854005488085186043915604",
+          "price_to_in_usd": "0.1005074683220466072551021772780795417495214698926504276755791732",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000949338480126423",
+          "volume_in_usd": "6.17834956280969959578300362445373986106794652629688722"
+        }
+      },
+      {
+        "id": "solana_457328225_2eUENuZ54iMqT9bPPTyDihE4Z1GdbG9TzdW8jeFNBUFAW8CoFa8m7AkrHZLyydB3wdj6hKtEkoA3mHCvnw7QBQcY_80_1792086895",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328225,
+          "block_timestamp": "2026-10-15T17:54:49Z",
+          "tx_hash": "2eUENuZ54iMqT9bPPTyDihE4Z1GdbG9TzdW8jeFNBUFAW8CoFa8m7AkrHZLyydB3wdj6hKtEkoA3mHCvnw7QBQcY",
+          "tx_from_address": "AQWvi4zAxv9UzVo65kzTA9k5yzfBASVHXJgLAx2aF827",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.610032728",
+          "to_token_amount": "643.279122",
+          "price_from_in_usd": "105.871056979236782709259854005488085186043915604",
+          "price_to_in_usd": "0.100399356199356410519241572398977915491590728518834191492276576",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000948317312247544",
+          "volume_in_usd": "64.584809705287253914073019599849623577538757363709887712"
+        }
+      },
+      {
+        "id": "solana_457328211_2Su2e15Ggxv62sd33LxxNiPJmvEWgUNQzvf3eW6AN14zEsMcSa7SCRKnk3bbWBu9T3qKCY1cJxHkRWsiVvcyCqJL_80_1792086890",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328211,
+          "block_timestamp": "2026-10-15T17:54:46Z",
+          "tx_hash": "2Su2e15Ggxv62sd33LxxNiPJmvEWgUNQzvf3eW6AN14zEsMcSa7SCRKnk3bbWBu9T3qKCY1cJxHkRWsiVvcyCqJL",
+          "tx_from_address": "Dc4E8pKDX9ULdZ9kJdamc9VzqwGtsktRQmbQVFJo6bvv",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.337447665",
+          "to_token_amount": "356.382555",
+          "price_from_in_usd": "105.805227211452804720123044281745072448281596362",
+          "price_to_in_usd": "0.1001837109206964642247481600897383808520602010152972209123225272",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000946869200710456",
+          "volume_in_usd": "35.70372686729921021050649980556647682292845795482939473"
+        }
+      },
+      {
+        "id": "solana_457328203_47EytG8u3pnKXaBjZv9S368bMicgZ3zhi58mb9W5EG7wG64x52qarJbqaBva713As6TW159GbNB83HfbyJGgc7S_80_1792086890",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328203,
+          "block_timestamp": "2026-10-15T17:54:44Z",
+          "tx_hash": "47EytG8u3pnKXaBjZv9S368bMicgZ3zhi58mb9W5EG7wG64x52qarJbqaBva713As6TW159GbNB83HfbyJGgc7S",
+          "tx_from_address": "7UUj7JbWnHkQA2wwsmKXoJBsJyx27bCLDfLH69KMyxFP",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.480226909",
+          "to_token_amount": "1567.877897",
+          "price_from_in_usd": "105.805227211452804720123044281745072448281596362",
+          "price_to_in_usd": "0.099890268707099115075672166507387342568284607362786680214737777",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000944095781841359",
+          "volume_in_usd": "156.615744431251474530248343936837633716100929744508905058"
+        }
+      },
+      {
+        "id": "solana_457328188_3dEcbgYvBZZqsU4kjBHFS1TFrRWx4KWcVM8NFVS8fUHdVuPzqj466DFgL4HumcogRuagL8Q6auBa7aUfEqj8pNj3_20_1792086885",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328188,
+          "block_timestamp": "2026-10-15T17:54:41Z",
+          "tx_hash": "3dEcbgYvBZZqsU4kjBHFS1TFrRWx4KWcVM8NFVS8fUHdVuPzqj466DFgL4HumcogRuagL8Q6auBa7aUfEqj8pNj3",
+          "tx_from_address": "GfebZydszCJa7fQjmbwExoSng1TFyKDAUnXJ8wZC3unD",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "81.116364",
+          "to_token_amount": "0.075988704",
+          "price_from_in_usd": "0.0991783425994647652989775891257635429052539218305155497900964126",
+          "price_to_in_usd": "105.870821789708244599215564893096117978860341249",
+          "price_from_in_currency_token": "0.000936786367791337",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "8.0449865392148901071664349473678773242321946356316456444335841995557864"
+        }
+      },
+      {
+        "id": "solana_457328178_4XHHaQpRRpgm3BzjFNWDnu3j6oGn5bt2RrQ3CCW5Zugqcu4QDr9nrFhYBFPbDaKTS6gaDXXG8ALye9bc4o1dSgVA_80_1792086887",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328178,
+          "block_timestamp": "2026-10-15T17:54:39Z",
+          "tx_hash": "4XHHaQpRRpgm3BzjFNWDnu3j6oGn5bt2RrQ3CCW5Zugqcu4QDr9nrFhYBFPbDaKTS6gaDXXG8ALye9bc4o1dSgVA",
+          "tx_from_address": "52aYRkfcpvAKMLKqBPHjkCUrGGLEDiNqmAbYc6hG1zZZ",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.067859823",
+          "to_token_amount": "72.040559",
+          "price_from_in_usd": "105.870821789708244599215564893096117978860341249",
+          "price_to_in_usd": "0.0997268112191376065417664530131301242462272086625784947168042933",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000941966913388332",
+          "volume_in_usd": "7.184375227514144700143474172490516488032580498876738927"
+        }
+      },
+      {
+        "id": "solana_457328173_5y9y27695B9ZbAw6RA4zFBw74EknyYRxSTDND6Pi71C4RPf1koSWygfCdSMBym1hnucVHEXsxZ5oK9VVVvouSnoe_80_1792086882",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328173,
+          "block_timestamp": "2026-10-15T17:54:38Z",
+          "tx_hash": "5y9y27695B9ZbAw6RA4zFBw74EknyYRxSTDND6Pi71C4RPf1koSWygfCdSMBym1hnucVHEXsxZ5oK9VVVvouSnoe",
+          "tx_from_address": "9YorbANY7UJ6UH5Larq59eCbqQyX9ds9etKFFiY5S8VJ",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.210923296",
+          "to_token_amount": "1288.187505",
+          "price_from_in_usd": "105.811040145115635143783130364859598730360995526",
+          "price_to_in_usd": "0.099464598894484490664837109173292200666132160102981174257432992",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000940020991742192",
+          "volume_in_usd": "128.129053485711743209443302130613467871806151972185173696"
+        }
+      },
+      {
+        "id": "solana_457328158_2Q7sA2T2viNXye3DoxrLmByL5zQ9CE4F2YfNuEhVCymeGqauH7Mu2BDQWBEA8MNmPQeXK5xM2K4TheAyjCGj1TjM_80_1792086882",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328158,
+          "block_timestamp": "2026-10-15T17:54:35Z",
+          "tx_hash": "2Q7sA2T2viNXye3DoxrLmByL5zQ9CE4F2YfNuEhVCymeGqauH7Mu2BDQWBEA8MNmPQeXK5xM2K4TheAyjCGj1TjM",
+          "tx_from_address": "EV7c2HP8Dr7Qf8WUgw1VkCPTPCBJ1wcaywtEfthngpS3",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.025272142",
+          "to_token_amount": "26.938582",
+          "price_from_in_usd": "105.81103664080322138652620062658026441487624227",
+          "price_to_in_usd": "0.099265490037804582949619219642041474885404840492243135839791747",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000938139282906576",
+          "volume_in_usd": "2.67407154315358200493772702895542541669029930707384234"
+        }
+      },
+      {
+        "id": "solana_457328145_4Hbvr3n2Dzj97LLmYMRRC17uXSjckJ8DVhL5kB4wFT7dTEFpDyKytAYrBhf47mkiKKTpWt6r56NonPvZQ8G9PraK_80_1792086879",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328145,
+          "block_timestamp": "2026-10-15T17:54:32Z",
+          "tx_hash": "4Hbvr3n2Dzj97LLmYMRRC17uXSjckJ8DVhL5kB4wFT7dTEFpDyKytAYrBhf47mkiKKTpWt6r56NonPvZQ8G9PraK",
+          "tx_from_address": "Dy1XWeRc5TN5CWb1n1umY6JZ5k2qgerxixRzerGTqdif",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.477638134",
+          "to_token_amount": "509.548352",
+          "price_from_in_usd": "105.886196379901917558773759376722558432230387214",
+          "price_to_in_usd": "0.0992551247722491033156474532694536967087966364067021537047931376",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000937375485810618",
+          "volume_in_usd": "50.575285255253907005794533756862765845276487606992418676"
+        }
+      },
+      {
+        "id": "solana_457328142_32ksn3Chno7VyVeSnjKPD3QMSkLW1MW7727R1mtkZKqQLs1hp1pugDoQZ3SwaSpQn93axuW75vpfuqeKF6JEat19_20_1792086879",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328142,
+          "block_timestamp": "2026-10-15T17:54:32Z",
+          "tx_hash": "32ksn3Chno7VyVeSnjKPD3QMSkLW1MW7727R1mtkZKqQLs1hp1pugDoQZ3SwaSpQn93axuW75vpfuqeKF6JEat19",
+          "tx_from_address": "DrQeRZ7fnV99NMGG5UZfDKY2akXRTgzHCEK3AkFTK1Yt",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1987.311293",
+          "to_token_amount": "1.856796771",
+          "price_from_in_usd": "0.0989322348361826491586593240125194447101728538947672000551409652",
+          "price_to_in_usd": "105.886196379901917558773759376722558432230387214",
+          "price_from_in_currency_token": "0.000934326080438572",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "196.6091475316737836836606233498259658546156245271098902755718628488800036"
+        }
+      },
+      {
+        "id": "solana_457328132_4aBdFD3RVf3VgrF8LeMx4ArEUMU3rrJopJkoqgFHehHbBHSmwV7XPcmejcLo1Upe7TyYF4p5fTvx5gC6fc9yp8Zw_80_1792086879",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328132,
+          "block_timestamp": "2026-10-15T17:54:29Z",
+          "tx_hash": "4aBdFD3RVf3VgrF8LeMx4ArEUMU3rrJopJkoqgFHehHbBHSmwV7XPcmejcLo1Upe7TyYF4p5fTvx5gC6fc9yp8Zw",
+          "tx_from_address": "4A5zCxsqaSNgXY3vYnUEMYW3wz1mh5JreiNtUkaGgWes",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.141559394",
+          "to_token_amount": "1213.681306",
+          "price_from_in_usd": "105.879665765787813636637860858219514385473610498",
+          "price_to_in_usd": "0.099587862555835796678306277439627145070415819006909248666452031",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000940575906011359",
+          "volume_in_usd": "120.867927088515282467625252638765388760855537203088918212"
+        }
+      },
+      {
+        "id": "solana_457328123_QGW1BbFbW75yistgPkL3pcnfbSvbfoT6UGqxss3SiEgKB1xHnUCUxdKakmsdKpV2AhZNpS9fvK3LgdV1VtJSSS4_20_1792086875",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328123,
+          "block_timestamp": "2026-10-15T17:54:27Z",
+          "tx_hash": "QGW1BbFbW75yistgPkL3pcnfbSvbfoT6UGqxss3SiEgKB1xHnUCUxdKakmsdKpV2AhZNpS9fvK3LgdV1VtJSSS4",
+          "tx_from_address": "8q5jDMa4cW5JTWzm3gRnQPdtfTsXULiKJApr3jEBLeyj",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1131.516519",
+          "to_token_amount": "1.058300099",
+          "price_from_in_usd": "0.0990279270305996602774040460923093279374629775322946153541454031",
+          "price_to_in_usd": "105.878980247029289110881817639740708305224017171",
+          "price_from_in_currency_token": "0.000935293547402466",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "112.0517352774501340796708005908854034190275580287172132479665587355638089"
+        }
+      },
+      {
+        "id": "solana_457328109_VyoCJEVFhm1M7Ss2ryShiqKD1oaF8vdfqaTAVnEMpQxudKmPr8PWiZ6d5aQGQubE3JMjAiEu6k2DT1dxb5uaHg6_80_1792086879",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328109,
+          "block_timestamp": "2026-10-15T17:54:24Z",
+          "tx_hash": "VyoCJEVFhm1M7Ss2ryShiqKD1oaF8vdfqaTAVnEMpQxudKmPr8PWiZ6d5aQGQubE3JMjAiEu6k2DT1dxb5uaHg6",
+          "tx_from_address": "5nAXBM3ih33oPrQR69bXiCZqjZcq5egojBJgrFkaVb8N",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.281215469",
+          "to_token_amount": "1362.824134",
+          "price_from_in_usd": "105.88100148802026041492413150649647174596285689",
+          "price_to_in_usd": "0.09954063300999891635989873645110295055273592795434221124472978",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000940117977834402",
+          "volume_in_usd": "135.65637697966357582900915574751355359484905054690123141"
+        }
+      },
+      {
+        "id": "solana_457328101_2f33mq37pTkFU8xbsc9yWKjCjFXsmVihcWtf3GecGEjFQVXk35FTJcAqTTnAAsN6Sc4wYP2usQXGNcheHCxWQWwu_80_1792086872",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328101,
+          "block_timestamp": "2026-10-15T17:54:22Z",
+          "tx_hash": "2f33mq37pTkFU8xbsc9yWKjCjFXsmVihcWtf3GecGEjFQVXk35FTJcAqTTnAAsN6Sc4wYP2usQXGNcheHCxWQWwu",
+          "tx_from_address": "9xWx5pNTfefNcD6vBc7nN2MCkiQonzHpiCVUNERZQ9Db",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.900428932",
+          "to_token_amount": "961.174947",
+          "price_from_in_usd": "105.879241182304307840010238129571901242444743264",
+          "price_to_in_usd": "0.0991876997588376449091938092608499962220727423730262976395325376",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000936800251411463",
+          "volume_in_usd": "95.336732058752685207379645588076104652943993246217714048"
+        }
+      },
+      {
+        "id": "solana_457328087_4SyNbsN8dsXmNrDZ4QzyLZn8v1tFURhY334vze5fnPCauHJLLfKP8GaeMDxvrkGZyLnAEzSrQ12AaQM8fUSrxMUC_20_1792086873",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328087,
+          "block_timestamp": "2026-10-15T17:54:19Z",
+          "tx_hash": "4SyNbsN8dsXmNrDZ4QzyLZn8v1tFURhY334vze5fnPCauHJLLfKP8GaeMDxvrkGZyLnAEzSrQ12AaQM8fUSrxMUC",
+          "tx_from_address": "9XNqUUd6MhGki2FotZJrVtob96MBEeSHgaT5Z7kciLUY",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1420.994543",
+          "to_token_amount": "1.324803522",
+          "price_from_in_usd": "0.0986506450282937594234464937293922602665660951883340288228893488",
+          "price_to_in_usd": "105.813447745827712112798890505259971379982926372",
+          "price_from_in_currency_token": "0.0009323072551729",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "140.1820282486355127416722938419501205452261466114412122185304781376235984"
+        }
+      },
+      {
+        "id": "solana_457328083_2zTr6qfeyh5hD1gUJREx9bZ4Sxn3SSM9kASmNsrfyABWmWC2Vk9vRF7ff11UVVXwPFSQQHRADSgJsSF4fkqCichm_80_1792086868",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328083,
+          "block_timestamp": "2026-10-15T17:54:18Z",
+          "tx_hash": "2zTr6qfeyh5hD1gUJREx9bZ4Sxn3SSM9kASmNsrfyABWmWC2Vk9vRF7ff11UVVXwPFSQQHRADSgJsSF4fkqCichm",
+          "tx_from_address": "9dGqjqmLYQbJLJc86GfFnqjQ67mcwCZygDAL45MfoKUe",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.045297069",
+          "to_token_amount": "48.219162",
+          "price_from_in_usd": "105.821162394814037384329628062746480088078975788",
+          "price_to_in_usd": "0.099408374095304620232030974590048541336448316519051564833032632",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000939399755640714",
+          "volume_in_usd": "4.793388494658096693566558681102563638056839443718365372"
+        }
+      },
+      {
+        "id": "solana_457328070_itMfFZAXX5yDPyLEKKpsrVahUoPGRouBgFo5bFaZD8Bn5eFqjLCjaKQSqhBCKGDfYM22WETsVmH72kcEkz7ijVe_80_1792086868",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328070,
+          "block_timestamp": "2026-10-15T17:54:16Z",
+          "tx_hash": "itMfFZAXX5yDPyLEKKpsrVahUoPGRouBgFo5bFaZD8Bn5eFqjLCjaKQSqhBCKGDfYM22WETsVmH72kcEkz7ijVe",
+          "tx_from_address": "2NbKCDiSh71QQGDuiyoz3AXZhhDpY6j5TYcqxWydLyCS",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.452197054",
+          "to_token_amount": "481.755844",
+          "price_from_in_usd": "105.821511826084281670625734640659726780956174383",
+          "price_to_in_usd": "0.0993286879516950199579013576999592480347381308467009676393569569",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000938643629614174",
+          "volume_in_usd": "47.852175897581472527163155541092077066793285359102867682"
+        }
+      },
+      {
+        "id": "solana_457328068_4u8N45L8ceLTfa25wYQAYmpzkGPCuz9BNmcXiLXx1zNH5mXCgd9KAAtiCHNkQWKLkMwg7CoZ7Rm6d4sfwC3MThvQ_40_1792086869",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328068,
+          "block_timestamp": "2026-10-15T17:54:15Z",
+          "tx_hash": "4u8N45L8ceLTfa25wYQAYmpzkGPCuz9BNmcXiLXx1zNH5mXCgd9KAAtiCHNkQWKLkMwg7CoZ7Rm6d4sfwC3MThvQ",
+          "tx_from_address": "5TkNPK9CoJxPZi6gUTfj9KTCkeoMwASStS7vpQ6otx1x",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "13.962763",
+          "to_token_amount": "0.013024871",
+          "price_from_in_usd": "0.098709983164539809039883996870045492861618183229243576368486236",
+          "price_to_in_usd": "105.81786957125788077604140154789774404750010418",
+          "price_from_in_currency_token": "0.00093282905396303",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "1.378264100660459357689157795789187016044966488920502726105573982030068"
+        }
+      },
+      {
+        "id": "solana_457328064_5fEZL8CaEHBDwfMuXkygFWeaGwFNp3VVRdcyPQNeuyyjXNKu7yqdNuJbQ8cDtgMrcEzX6bo6T3itd7A39BrRHNuq_80_1792086870",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328064,
+          "block_timestamp": "2026-10-15T17:54:15Z",
+          "tx_hash": "5fEZL8CaEHBDwfMuXkygFWeaGwFNp3VVRdcyPQNeuyyjXNKu7yqdNuJbQ8cDtgMrcEzX6bo6T3itd7A39BrRHNuq",
+          "tx_from_address": "GTsgywujSYHnCe7bkvcobVQnTqBeHCMB3SPpLP7choVD",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.42386073",
+          "to_token_amount": "452.189768",
+          "price_from_in_usd": "105.817869571163686573521191694865520980458522301",
+          "price_to_in_usd": "0.0991885323762527698036039491942961436630117596171333718316051796",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.0009373514395841",
+          "volume_in_usd": "44.85203944347822714054389098225563697460746499722313973"
+        }
+      },
+      {
+        "id": "solana_457328058_4YtcW4NLW6ktizmnmsi8fEVPtVszgEKBioDkJ1ju1kjMULVVU2zknb26DAaRemRqzVxZzEJGSRKfm6oyCxCxBn7s_80_1792086867",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328058,
+          "block_timestamp": "2026-10-15T17:54:13Z",
+          "tx_hash": "4YtcW4NLW6ktizmnmsi8fEVPtVszgEKBioDkJ1ju1kjMULVVU2zknb26DAaRemRqzVxZzEJGSRKfm6oyCxCxBn7s",
+          "tx_from_address": "EmtwVRGndiptT5GT1hdVF2mN85JtkygQCBfRm1U1nVCV",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.047832474",
+          "to_token_amount": "51.068471",
+          "price_from_in_usd": "105.821529499738511353307128806941588260232342409",
+          "price_to_in_usd": "0.0991160584861934700289527458195474399489295347401552607883084489",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000936634151431712",
+          "volume_in_usd": "5.061705558436475351105768052672684539976268752237589866"
+        }
+      },
+      {
+        "id": "solana_457328039_4CLav4WpbX64MESaKaiRqRWRRmxB1gQuE9HqqWtEz6RijUT6tgdN4ZQocLKByDr5cCuxYBusTWrSwx8J8iDopc3x_20_1792086855",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328039,
+          "block_timestamp": "2026-10-15T17:54:09Z",
+          "tx_hash": "4CLav4WpbX64MESaKaiRqRWRRmxB1gQuE9HqqWtEz6RijUT6tgdN4ZQocLKByDr5cCuxYBusTWrSwx8J8iDopc3x",
+          "tx_from_address": "8yqVcCTqavLmrnTyFK8DL2ES1BkzJQ2B9od8itFHtzX2",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1184.895748",
+          "to_token_amount": "1.105625919",
+          "price_from_in_usd": "0.098742479402220622800312659695778963540876238220300861359830057",
+          "price_to_in_usd": "105.82199818225208023977442660418164449407171029",
+          "price_from_in_currency_token": "0.000933099743894093",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "116.999543990668797714002323544099467447431278861469577906000132541897636"
+        }
+      },
+      {
+        "id": "solana_457328035_4a5yDwAgzvApiVowYMYUg4uMyhoDE87YybkPuu7Pc1UwuxsAB4g81pkxR7HfMU3WYBqChdJWcWNkcF8kHBy6mqoj_80_1792086854",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328035,
+          "block_timestamp": "2026-10-15T17:54:09Z",
+          "tx_hash": "4a5yDwAgzvApiVowYMYUg4uMyhoDE87YybkPuu7Pc1UwuxsAB4g81pkxR7HfMU3WYBqChdJWcWNkcF8kHBy6mqoj",
+          "tx_from_address": "2tdCdiiwTH4SB7Pe4HDmWz4pZrafhG3sfQ7buohjzdKM",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.145749194",
+          "to_token_amount": "155.100114",
+          "price_from_in_usd": "105.82199818225208023977442660418164449407171029",
+          "price_to_in_usd": "0.09944203485583966528664988838861066272085938649534672608554727",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000939710424713163",
+          "volume_in_usd": "15.42347094253270579977044941937163171460548955296900626"
+        }
+      },
+      {
+        "id": "solana_457328021_M1uMaAxPhpZxDGcCbtHSoKNasekNHVhRvBd48Kbfrv5TPomR2jRGRAxknvXxUDeByj9eHM3Gjg5EDNkQfQbXjqC_80_1792086851",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328021,
+          "block_timestamp": "2026-10-15T17:54:05Z",
+          "tx_hash": "M1uMaAxPhpZxDGcCbtHSoKNasekNHVhRvBd48Kbfrv5TPomR2jRGRAxknvXxUDeByj9eHM3Gjg5EDNkQfQbXjqC",
+          "tx_from_address": "4tuNXRX5oJsiZgooRhxwLtkrSFYreEn4DEqzkQyq8wiR",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.57687234",
+          "to_token_amount": "614.601647",
+          "price_from_in_usd": "105.826867672380865309051986141869134541030169537",
+          "price_to_in_usd": "0.0993303436250581778521740861791935685358586169184674615734624455",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000938611770430221",
+          "volume_in_usd": "61.04859278903670314205764242730761961645889991140590658"
+        }
+      },
+      {
+        "id": "solana_457328006_4HfDPadf5kGEzHXF7d2WW3jWSRD6oj9cHnwtQBc36RpWJJeAS2BBFqHPCGipi43kkFfeh7bSLfRY6wEJ57igm8Go_80_1792086849",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457328006,
+          "block_timestamp": "2026-10-15T17:54:02Z",
+          "tx_hash": "4HfDPadf5kGEzHXF7d2WW3jWSRD6oj9cHnwtQBc36RpWJJeAS2BBFqHPCGipi43kkFfeh7bSLfRY6wEJ57igm8Go",
+          "tx_from_address": "H3PpSVX3mA8h1NDAkjfGSXi62PVTovbNMJiv7g2eNbM5",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.03985956",
+          "to_token_amount": "42.509006",
+          "price_from_in_usd": "105.83092448276321456305525179914615314078184468",
+          "price_to_in_usd": "0.099234832361786334096119296385659751080663449904113962405978992",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000937673301511684",
+          "volume_in_usd": "4.2183740842761693166689745924031740398841823849331408"
+        }
+      },
+      {
+        "id": "solana_457327983_4uh4VddkRQUMNkHrv3gpy2jhKhZVhq9KF1bbU1m7bCn4GaRtX6UpddpXVJ9Mzn4cziyU4ZF1oP7T8R5vMzWYNWFm_80_1792086857",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327983,
+          "block_timestamp": "2026-10-15T17:53:57Z",
+          "tx_hash": "4uh4VddkRQUMNkHrv3gpy2jhKhZVhq9KF1bbU1m7bCn4GaRtX6UpddpXVJ9Mzn4cziyU4ZF1oP7T8R5vMzWYNWFm",
+          "tx_from_address": "5n8gMVmTakzmQvxE6iGUXsVGHvspNVH6oxsx3ANF3jLm",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.044368983",
+          "to_token_amount": "47.32463",
+          "price_from_in_usd": "105.849055190488741682365004846532052678390908697",
+          "price_to_in_usd": "0.0992382810032082096282256210306117942939926792141564409242871473",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000937545269767561",
+          "volume_in_usd": "4.696414930312856741396244299830698254242630695331745151"
+        }
+      },
+      {
+        "id": "solana_457327963_z9PM6ER35Xdn4fFHYuKvcz4rs76gF5PhDiQtywSvJzMxvWkCtj2Zft5WCU1Gt9eciU6UQaXSKqFde5rkAW2EmuS_80_1792086843",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327963,
+          "block_timestamp": "2026-10-15T17:53:53Z",
+          "tx_hash": "z9PM6ER35Xdn4fFHYuKvcz4rs76gF5PhDiQtywSvJzMxvWkCtj2Zft5WCU1Gt9eciU6UQaXSKqFde5rkAW2EmuS",
+          "tx_from_address": "F5LGCCrv36fSHZFQCgMKv4PzZDY6QvarQMPe8epgri2R",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.025329021",
+          "to_token_amount": "27.019371",
+          "price_from_in_usd": "105.919232238759940102327562374798453933777216466",
+          "price_to_in_usd": "0.0992928539187469548879891629762741432184458036631786014754347722",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000937439328250832",
+          "volume_in_usd": "2.682830457679427536810596976270079910456175725188859786"
+        }
+      },
+      {
+        "id": "solana_457327958_Q3q76o16PuKyT48dEBW2dpmhcQveNnQpsiBD5h7mMffaUyjKhmGkYP7sRm9m2wieV49nWozHM53gjBQB2G7oe3j_20_1792086846",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327958,
+          "block_timestamp": "2026-10-15T17:53:52Z",
+          "tx_hash": "Q3q76o16PuKyT48dEBW2dpmhcQveNnQpsiBD5h7mMffaUyjKhmGkYP7sRm9m2wieV49nWozHM53gjBQB2G7oe3j",
+          "tx_from_address": "19zrw1pRUkRHAUkhA2TMr3gAhZ99MkKLKqskmMSW5dt",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "120.994961",
+          "to_token_amount": "0.112819215",
+          "price_from_in_usd": "0.098763316660751063043843980877086754314367938322068536798866357",
+          "price_to_in_usd": "105.920464413781167985221645004890272863294055985",
+          "price_from_in_currency_token": "0.000932429037272056",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "11.949863647598225103698443756307857631883530436929088049305899709427077"
+        }
+      },
+      {
+        "id": "solana_457327948_3qk1Y5N5LD9QNF5xbhdbe1tj19j1syFsHkquMyUK1g4Wqu29xmfQQ6WFWXKKwd1Epxni4AZ7AbWuAWwMddXPG1aU_80_1792086843",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327948,
+          "block_timestamp": "2026-10-15T17:53:50Z",
+          "tx_hash": "3qk1Y5N5LD9QNF5xbhdbe1tj19j1syFsHkquMyUK1g4Wqu29xmfQQ6WFWXKKwd1Epxni4AZ7AbWuAWwMddXPG1aU",
+          "tx_from_address": "8cDiS446P5EAcaEZ4foB1wzfwEL92LsQ3KE7oTVdQo8s",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.834705706",
+          "to_token_amount": "1962.33786",
+          "price_from_in_usd": "105.919232238759940102327562374798453933777216466",
+          "price_to_in_usd": "0.0990301536370459747260473313819265606660633351482030710089754104",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000934959133897564",
+          "volume_in_usd": "194.330619763592016469958602570113634032279205182967354996"
+        }
+      },
+      {
+        "id": "solana_457327934_3vviuUKcB1DwwcUtGsk3VxZLxxSxhHsgVGL2MF8dyVChh1FMuFYZ5KZE9N2DA3XGMmjn8GHZsHZytw7THBoK4iwm_80_1792086845",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327934,
+          "block_timestamp": "2026-10-15T17:53:47Z",
+          "tx_hash": "3vviuUKcB1DwwcUtGsk3VxZLxxSxhHsgVGL2MF8dyVChh1FMuFYZ5KZE9N2DA3XGMmjn8GHZsHZytw7THBoK4iwm",
+          "tx_from_address": "9XNqUUd6MhGki2FotZJrVtob96MBEeSHgaT5Z7kciLUY",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.322431344",
+          "to_token_amount": "1421.704269",
+          "price_from_in_usd": "105.919232238759940102327562374798453933777216466",
+          "price_to_in_usd": "0.0985232412247553169669294449597731232510703471502828075453758388",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000930173294710702",
+          "volume_in_usd": "140.070912644951436482880535839548551164767091367711310304"
+        }
+      },
+      {
+        "id": "solana_457327908_5UmSdoU7ag4jYCKECKbWp9e8zAzo1u3Wp1k8x7A4z4tiCHbvgGSg1kgL1GvxcTkR4KjgoKei6F213mrhsvgmCwsB_80_1792086845",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327908,
+          "block_timestamp": "2026-10-15T17:53:41Z",
+          "tx_hash": "5UmSdoU7ag4jYCKECKbWp9e8zAzo1u3Wp1k8x7A4z4tiCHbvgGSg1kgL1GvxcTkR4KjgoKei6F213mrhsvgmCwsB",
+          "tx_from_address": "7ePJYwqL8Zps7U5JULNq2mjRKhkPzvdYNM92ieMWKiT5",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.361791367",
+          "to_token_amount": "390.019243",
+          "price_from_in_usd": "105.936313179162825535172000168946537487749126852",
+          "price_to_in_usd": "0.098269109147595136267319159681979429896626783318422956071151274",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000927624401855475",
+          "volume_in_usd": "38.326843560029434565952384521247398747609502356841486684"
+        }
+      },
+      {
+        "id": "solana_457327900_3jkQ4mNzPiazSTAbxuqhCH2mmfpyoHpCohidtFviba4P6YbQj8QkYiPrqk8EU9rJDrxMj4BGw3kzcr5zEwise4h7_80_1792086827",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327900,
+          "block_timestamp": "2026-10-15T17:53:39Z",
+          "tx_hash": "3jkQ4mNzPiazSTAbxuqhCH2mmfpyoHpCohidtFviba4P6YbQj8QkYiPrqk8EU9rJDrxMj4BGw3kzcr5zEwise4h7",
+          "tx_from_address": "FU4huKSUKYtisnRQwhzcLNtuKnpzwNmqKnVftbw1bGMX",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.564429067",
+          "to_token_amount": "609.386648",
+          "price_from_in_usd": "105.853444035482533055549053171784576187279668718",
+          "price_to_in_usd": "0.0980440921240599789788846703950909090020872967927003073601990558",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000926224867007588",
+          "volume_in_usd": "59.746760655684121027340211254483759062376680682569826106"
+        }
+      },
+      {
+        "id": "solana_457327893_5RhF2h9fNoqPTeKeR9RWBBBVKtLkYPDKbqK5UgssAeQvWqUWbq4Kbzp9jmHoQVWPujCsTuohvCEzX2xCvPFrXEpC_80_1792086826",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327893,
+          "block_timestamp": "2026-10-15T17:53:38Z",
+          "tx_hash": "5RhF2h9fNoqPTeKeR9RWBBBVKtLkYPDKbqK5UgssAeQvWqUWbq4Kbzp9jmHoQVWPujCsTuohvCEzX2xCvPFrXEpC",
+          "tx_from_address": "3B9qwaGwZ4bs6XEgoL83i293xbR9AKvrgFCofTA7MNpU",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.243387581",
+          "to_token_amount": "263.120449",
+          "price_from_in_usd": "105.853444035482533055549053171784576187279668718",
+          "price_to_in_usd": "0.0979149046842610505966864175621568745938039713051116641150419174",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000925004430195389",
+          "volume_in_usd": "25.763413684314971888142622678321025451332201539755391158"
+        }
+      },
+      {
+        "id": "solana_457327880_2KCejP9KMeGUkc5txKZpq4bSWW6SBW5WJDGnesf5KRnSTYZG2G7HtUQUezBRsTQqUGvs1Qm7JeQAN278JXcGM1mg_20_1792086826",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327880,
+          "block_timestamp": "2026-10-15T17:53:35Z",
+          "tx_hash": "2KCejP9KMeGUkc5txKZpq4bSWW6SBW5WJDGnesf5KRnSTYZG2G7HtUQUezBRsTQqUGvs1Qm7JeQAN278JXcGM1mg",
+          "tx_from_address": "RKgjTtvyEEsQoSVQewjmYKjJVebcTTD3zYocjduLMg8",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "535.457721",
+          "to_token_amount": "0.492785108",
+          "price_from_in_usd": "0.09741792025077194191374202623640390886388645417485702790976767",
+          "price_to_in_usd": "105.853802631629232482840932024822822201129953453",
+          "price_from_in_currency_token": "0.00092030628875739",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "52.16317756203809250787668395046704427574833995523987966539759021768007"
+        }
+      },
+      {
+        "id": "solana_457327876_5qWKxdBxTqULFZXy2BGSppFnehxMW5qQ9inJHQSYsobopWFGDkyXi113cSWCn34xz26iA836g1XU36ydyNwyWbdK_80_1792086829",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327876,
+          "block_timestamp": "2026-10-15T17:53:34Z",
+          "tx_hash": "5qWKxdBxTqULFZXy2BGSppFnehxMW5qQ9inJHQSYsobopWFGDkyXi113cSWCn34xz26iA836g1XU36ydyNwyWbdK",
+          "tx_from_address": "8BVGj4zyKFggkwBSDMhfojqfXivBYWHjih3unUuMADr4",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.404168514",
+          "to_token_amount": "436.694018",
+          "price_from_in_usd": "105.853802631629232482840932024822822201129953453",
+          "price_to_in_usd": "0.0979696820826954281952413391237263393715136185397588610342408997",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000925518778230665",
+          "volume_in_usd": "42.782774110874876291550349994847651162316902407988178842"
+        }
+      },
+      {
+        "id": "solana_457327851_3wPTNTVbMCF5dNj57qgcpk3WtwH439dA1uaSX8YBFHp32xoWxNfyaoyth8Aags2YLyn5wRXf11RAkyyitoSMBQs6_80_1792086819",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327851,
+          "block_timestamp": "2026-10-15T17:53:29Z",
+          "tx_hash": "3wPTNTVbMCF5dNj57qgcpk3WtwH439dA1uaSX8YBFHp32xoWxNfyaoyth8Aags2YLyn5wRXf11RAkyyitoSMBQs6",
+          "tx_from_address": "J5UXQoC3SNNWELaQNqkMhMPZZAAueA4ixzcTnHXLrGEh",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.312999866",
+          "to_token_amount": "338.584707",
+          "price_from_in_usd": "105.853805551943877516596201503102052451112958927",
+          "price_to_in_usd": "0.0978550603980719375245514915429530163948014925222270802434660261",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000924435922618324",
+          "volume_in_usd": "33.132226953348489702215023846579941001523327695014503782"
+        }
+      },
+      {
+        "id": "solana_457327837_5trArfLq6hp7vhfxAmaSdJz61ZahirqyZdPYcBTMpqRZuVuPpaTs1iKVoAcoZoazngKx4d8MpFZYFJLw4jRP2p4v_80_1792086812",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327837,
+          "block_timestamp": "2026-10-15T17:53:26Z",
+          "tx_hash": "5trArfLq6hp7vhfxAmaSdJz61ZahirqyZdPYcBTMpqRZuVuPpaTs1iKVoAcoZoazngKx4d8MpFZYFJLw4jRP2p4v",
+          "tx_from_address": "BHnRsesUn9ofe5fcqztpDNG1tioAhXkJGUv6Za7NVM1c",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.683464174",
+          "to_token_amount": "740.534933",
+          "price_from_in_usd": "105.853821986632332485871848209358127751633268146",
+          "price_to_in_usd": "0.0976959921603545898630526956972081392589688933597112724399353278",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000922933063037554",
+          "volume_in_usd": "72.347295008836706164149769406262331853956508764326401404"
+        }
+      },
+      {
+        "id": "solana_457327825_4pDDQkbAEDrq5hivsddxyAFbmpTBwhxo6xWyEyuditK8DDHzHmJ3CXqQnWQS7CzuwDzQgTQGrjHAkYN6EE1JxCcY_80_1792086813",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327825,
+          "block_timestamp": "2026-10-15T17:53:23Z",
+          "tx_hash": "4pDDQkbAEDrq5hivsddxyAFbmpTBwhxo6xWyEyuditK8DDHzHmJ3CXqQnWQS7CzuwDzQgTQGrjHAkYN6EE1JxCcY",
+          "tx_from_address": "5GeWwYYDainis3QRqvgQrbike8BJQALtWV8GiRuKZcDn",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.107440681",
+          "to_token_amount": "116.562902",
+          "price_from_in_usd": "105.853821986632332485871848209358127751633268146",
+          "price_to_in_usd": "0.097569694350064750534967718140178013343515024957790895424957198",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000921739928884063",
+          "volume_in_usd": "11.373006720696550698900494250342067818520477191861847426"
+        }
+      },
+      {
+        "id": "solana_457327813_5gvHTixab4EV7XsWSBW9B3zTubuX8oeGGzF4ySdk2XEVfBJzNKgLb1mSNKzsYrV5F49T9emif3WxGE7b9DET64Jy_80_1792086805",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327813,
+          "block_timestamp": "2026-10-15T17:53:21Z",
+          "tx_hash": "5gvHTixab4EV7XsWSBW9B3zTubuX8oeGGzF4ySdk2XEVfBJzNKgLb1mSNKzsYrV5F49T9emif3WxGE7b9DET64Jy",
+          "tx_from_address": "BJMFpTS1ZtC6oS8LYGSwrefSfXMG7tD1yr8ApFAr2Gfd",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.117461984",
+          "to_token_amount": "127.481933",
+          "price_from_in_usd": "105.855753336524141137064719528481763083312145929",
+          "price_to_in_usd": "0.0975355998463150510676097079358132485082764406412415978870370444",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000921401027077304",
+          "volume_in_usd": "12.434026804722745281855637892219012399583801952117863136"
+        }
+      },
+      {
+        "id": "solana_457327799_NaBYTN42wQF4F4BTbv7MmzaRr6zfi4NNgN25PCMiHn3HLhUwBtVR1QGXSbFGjBEmKzN6TCQ42PL2N4VUyskgyH2_80_1792086801",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327799,
+          "block_timestamp": "2026-10-15T17:53:18Z",
+          "tx_hash": "NaBYTN42wQF4F4BTbv7MmzaRr6zfi4NNgN25PCMiHn3HLhUwBtVR1QGXSbFGjBEmKzN6TCQ42PL2N4VUyskgyH2",
+          "tx_from_address": "72EBcTaJN2tTuQQ8MFXwSZsRSGsJnrK994WkK62LqZj8",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.081870614",
+          "to_token_amount": "88.883462",
+          "price_from_in_usd": "105.909918418637089453064606543110942718935544913",
+          "price_to_in_usd": "0.0975536939551671355290719791438326929655215503989848173988574258",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000921100642997007",
+          "volume_in_usd": "8.67091004962372649759613933298201581987201705734245939264455087"
+        }
+      },
+      {
+        "id": "solana_457327782_5pT8q8teeL6yx9KafgweUthvuPZYtZDLyAY4KMmXyJC8qr2j3RLZ32KHtFfPkpxwNQzGzj1t4gXoK769fL38Cueh_20_1792086801",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327782,
+          "block_timestamp": "2026-10-15T17:53:14Z",
+          "tx_hash": "5pT8q8teeL6yx9KafgweUthvuPZYtZDLyAY4KMmXyJC8qr2j3RLZ32KHtFfPkpxwNQzGzj1t4gXoK769fL38Cueh",
+          "tx_from_address": "4Pm27iVkCp8ZRhJyYND2W5aqok1JauitSgYZyh7WxVqU",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1277.683691",
+          "to_token_amount": "1.172514528",
+          "price_from_in_usd": "0.0971922228325185490134966122226083876435030335191417341941429425",
+          "price_to_in_usd": "105.909918418637089453064606543110942718935544913",
+          "price_from_in_currency_token": "0.000917687637604822",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "124.1809180051467745295287603205779983719097480364337300973134653550007675"
+        }
+      },
+      {
+        "id": "solana_457327768_2EnyLHNaz7paDyPChS4CgoJ1xkmYA6stt4SBT2K6WWUBJKASiSmFVpXcXq7Q6epgKZR3XK5FJggV24YfhCkZZxjk_80_1792086803",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327768,
+          "block_timestamp": "2026-10-15T17:53:11Z",
+          "tx_hash": "2EnyLHNaz7paDyPChS4CgoJ1xkmYA6stt4SBT2K6WWUBJKASiSmFVpXcXq7Q6epgKZR3XK5FJggV24YfhCkZZxjk",
+          "tx_from_address": "C3TgeFu6hJBTJnaV6tZe2pbQYGURCmWKzmjGx4jijLW5",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.042524552",
+          "to_token_amount": "45.999443",
+          "price_from_in_usd": "105.892788011563288259783122291321882413488770401",
+          "price_to_in_usd": "0.0978934325405353210223453828870934977115086286506395092959779374",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000924457976588977",
+          "volume_in_usd": "4.503043370222699652894136892599676537430288718333385352"
+        }
+      },
+      {
+        "id": "solana_457327762_2jpFdkWM23XzRpoQWe6D89qy63ChT3V8HnaoWEtAZkSgdYKpQf9r7TvMj9gSg19LXms89cRSJyyB8J4ArU57MsbJ_80_1792086799",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327762,
+          "block_timestamp": "2026-10-15T17:53:10Z",
+          "tx_hash": "2jpFdkWM23XzRpoQWe6D89qy63ChT3V8HnaoWEtAZkSgdYKpQf9r7TvMj9gSg19LXms89cRSJyyB8J4ArU57MsbJ",
+          "tx_from_address": "7qe5c7o3VTqmgHqAXZFmogW8dGSbawMVb3dVhW6oeH5Z",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.700716496",
+          "to_token_amount": "1844.93486",
+          "price_from_in_usd": "105.89278800765982589238879207445992723550504511",
+          "price_to_in_usd": "0.097615159904376267277243166152341405748906201817453367515780706",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000921830105156125",
+          "volume_in_usd": "180.09361137205804025167353952654805854038310710980113456"
+        }
+      },
+      {
+        "id": "solana_457327755_2jbiSeZBbvjyXoRSPHhuc1dBP7jV4eTzusYsx8MPcuSXGfU8pgMHNV1bf7Ah7DmtoeokVd1pGC7c7JrvzuU5cCLU_20_1792086796",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327755,
+          "block_timestamp": "2026-10-15T17:53:08Z",
+          "tx_hash": "2jbiSeZBbvjyXoRSPHhuc1dBP7jV4eTzusYsx8MPcuSXGfU8pgMHNV1bf7Ah7DmtoeokVd1pGC7c7JrvzuU5cCLU",
+          "tx_from_address": "8y6EbqPYT7ZT93HENN6tGTtkHwJJisXn9SpjQpSXGK6f",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1134.985243",
+          "to_token_amount": "1.039403001",
+          "price_from_in_usd": "0.096975667183689502721935227564048784744205323656642306527968029",
+          "price_to_in_usd": "105.893432169883616155581010301560813015811080695",
+          "price_from_in_currency_token": "0.000915785475987902",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "110.065951183566955883404815687042208016756572112327816838726279690796047"
+        }
+      },
+      {
+        "id": "solana_457327751_2oSdUjYTUa5mGPYGuUYvLEkGTxVqPEkethsz1YuKnWPTCQMqGhvD8wSQP5L1wecXwmMbaahPUT5SksjAJeBYxbpS_80_1792086797",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327751,
+          "block_timestamp": "2026-10-15T17:53:07Z",
+          "tx_hash": "2oSdUjYTUa5mGPYGuUYvLEkGTxVqPEkethsz1YuKnWPTCQMqGhvD8wSQP5L1wecXwmMbaahPUT5SksjAJeBYxbpS",
+          "tx_from_address": "6N5xyMHKXZA7qVzeyeNa6oCsZ5udQpcT2heYu88QhzB6",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.018222114",
+          "to_token_amount": "19.755558",
+          "price_from_in_usd": "105.893297674038144495286363804419768774600366598",
+          "price_to_in_usd": "0.097673765633562857401812052609178739847958209825068753285291559",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000922379109716871",
+          "volume_in_usd": "1.929599742052257909341580583889610730464408184590548172"
+        }
+      },
+      {
+        "id": "solana_457327743_3CVLRsfcuFMvdc993Ex5FMNJeJ6FiTvXK23HoaouWFSqdS7xXEvfacecUJ2NhGaZojri9o7sP8nw7VcfM6gwyZyR_20_1792086791",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327743,
+          "block_timestamp": "2026-10-15T17:53:06Z",
+          "tx_hash": "3CVLRsfcuFMvdc993Ex5FMNJeJ6FiTvXK23HoaouWFSqdS7xXEvfacecUJ2NhGaZojri9o7sP8nw7VcfM6gwyZyR",
+          "tx_from_address": "BJJwzSDRXoJjzbBnnXr14XSgghvM5TPjYitBX6uj5kse",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "721.995846",
+          "to_token_amount": "0.663000851",
+          "price_from_in_usd": "0.097257815755223438741580982878259390003780841655425002054750341",
+          "price_to_in_usd": "105.911989193366322927914404127645046855944732895",
+          "price_from_in_currency_token": "0.000918289010488296",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "70.219738966304675573256937110700403293223691969600614848071210769083486"
+        }
+      },
+      {
+        "id": "solana_457327740_2gbJJ6gx8647cageMoCfPBdnnu9qcEwSQQLsgqUtTxECyAgPp2LuzD3u7LUjJqcZwAVLUKhcCR4UzXWzTB4F9FGm_80_1792086791",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327740,
+          "block_timestamp": "2026-10-15T17:53:05Z",
+          "tx_hash": "2gbJJ6gx8647cageMoCfPBdnnu9qcEwSQQLsgqUtTxECyAgPp2LuzD3u7LUjJqcZwAVLUKhcCR4UzXWzTB4F9FGm",
+          "tx_from_address": "GCzsn19tPvUdM7K4Lhwr9uxoMRwUwQ2M2PjW7Dh6tr1R",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.942555397",
+          "to_token_amount": "1021.257678",
+          "price_from_in_usd": "105.911989193366322927914404127645046855944732895",
+          "price_to_in_usd": "0.097749979433900614947930335498193925438801470769632583397100024",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000922935922348091",
+          "volume_in_usd": "99.827917021213104273750563564550915814388589523905684315"
+        }
+      },
+      {
+        "id": "solana_457327726_56nkezyFN5achYtoFfC97E8hY2nQpdPbYZKFMyhvrpdUYJeinskKxRLcttu52zW5qagUrHPtQQjvJcea8gMTUtZ8_80_1792086797",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327726,
+          "block_timestamp": "2026-10-15T17:53:02Z",
+          "tx_hash": "56nkezyFN5achYtoFfC97E8hY2nQpdPbYZKFMyhvrpdUYJeinskKxRLcttu52zW5qagUrHPtQQjvJcea8gMTUtZ8",
+          "tx_from_address": "Enxmz8LfFtLXpauCRoUhkx5RzJzmAC36VHpn4r6JWo4v",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.116224157",
+          "to_token_amount": "126.147022",
+          "price_from_in_usd": "105.913693820074484694989171983482426837296234224",
+          "price_to_in_usd": "0.0975824049099967277689938738214311325359307471574060401104971568",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000921338888206176",
+          "volume_in_usd": "12.309729778994266660884518637908262983478930981958949168"
+        }
+      },
+      {
+        "id": "solana_457327723_39Zzn6gNrbKW8pCV7qtf7XmfhEep715nxjMEpTGqvvKjNJLfc538efhBrj3dfudARNEXb5iGH8j1GERimbQNv4hS_80_1792086794",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327723,
+          "block_timestamp": "2026-10-15T17:53:01Z",
+          "tx_hash": "39Zzn6gNrbKW8pCV7qtf7XmfhEep715nxjMEpTGqvvKjNJLfc538efhBrj3dfudARNEXb5iGH8j1GERimbQNv4hS",
+          "tx_from_address": "AatomaEaJaScYVf9tGmvYX5MqZ7PRgVMS383NVXHnMBD",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.270511497",
+          "to_token_amount": "293.792654",
+          "price_from_in_usd": "105.911989291424113226210278160643336242714935333",
+          "price_to_in_usd": "0.0975191529924063568613098584922576880405305384793809940990262419",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000920756504007074",
+          "volume_in_usd": "28.650410773471106130719641982022035370091172501188023501"
+        }
+      },
+      {
+        "id": "solana_457327712_RARk8DMtURorWeg17rBBkhKzFe6oo4Cv2HjMU4cNJS82AN4sfEXjKw1P66LMQERAP4RFM2775k1NrB69yoNPxya_80_1792086784",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327712,
+          "block_timestamp": "2026-10-15T17:52:59Z",
+          "tx_hash": "RARk8DMtURorWeg17rBBkhKzFe6oo4Cv2HjMU4cNJS82AN4sfEXjKw1P66LMQERAP4RFM2775k1NrB69yoNPxya",
+          "tx_from_address": "B4PuRbMUsyuLqUYg38e45mczh4fgqrnbc6akMZ4ox1TK",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "13.853256971",
+          "to_token_amount": "15400.85377",
+          "price_from_in_usd": "105.895418293456239949086904983417531595157169167",
+          "price_to_in_usd": "0.0952542283420942787650865278562402933435408431429638565664182018",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000899512272364105",
+          "volume_in_usd": "1466.996441670783579758136851546343558974223803603369013157"
+        }
+      },
+      {
+        "id": "solana_457327683_4ojxFVuTDqNNBQ4BWsFjEpHdyEHkmMBTM4qHVquX5vs64VuNhn7YM3F2C8EKG7q4KnVBASdNsVt7R3KijUwm9Zqd_80_1792086783",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327683,
+          "block_timestamp": "2026-10-15T17:52:53Z",
+          "tx_hash": "4ojxFVuTDqNNBQ4BWsFjEpHdyEHkmMBTM4qHVquX5vs64VuNhn7YM3F2C8EKG7q4KnVBASdNsVt7R3KijUwm9Zqd",
+          "tx_from_address": "EuSpH5Zcs7KyVJJK3Zt5WfZfdQMVUfjWkK5ZoxyZ5Hps",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.400020827",
+          "to_token_amount": "455.340829",
+          "price_from_in_usd": "105.91102986564695250517231219084801194583975698",
+          "price_to_in_usd": "0.09304374889535283929217643107578059271338527128510919962460123",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000878508584170914",
+          "volume_in_usd": "42.36661775527779283114875010008520356988069879661862246"
+        }
+      },
+      {
+        "id": "solana_457327671_AQqgTnYTbgj2rxrFdNXeEgmeAnpyw3CxtdpPNpUyym7oeqkEgLZVCVdMyTLN2z5pPho9zXFrdtMEeBowL5jWYZ6_80_1792086779",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327671,
+          "block_timestamp": "2026-10-15T17:52:50Z",
+          "tx_hash": "AQqgTnYTbgj2rxrFdNXeEgmeAnpyw3CxtdpPNpUyym7oeqkEgLZVCVdMyTLN2z5pPho9zXFrdtMEeBowL5jWYZ6",
+          "tx_from_address": "GuaGVPD7Up7k7KatTJZM7KpBmhGzL8doKAgv3SUhEQrR",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.216407956",
+          "to_token_amount": "246.590214",
+          "price_from_in_usd": "105.911348169345171290174643819235606486124090613",
+          "price_to_in_usd": "0.0929479641658948011502250165840283530274601197628269266551032504",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000877601558024521",
+          "volume_in_usd": "22.920058374532330377376577551948811082082456811918117028"
+        }
+      },
+      {
+        "id": "solana_457327646_2bwp7ehZqJ4FUmMC5YwVP3rx1tHcM5nQ71dxJbnAt6eiXi4Z5xDJRrNPHHBGW1NXm2Yip7Gk71q99735VLbNqpMM_20_1792086768",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327646,
+          "block_timestamp": "2026-10-15T17:52:45Z",
+          "tx_hash": "2bwp7ehZqJ4FUmMC5YwVP3rx1tHcM5nQ71dxJbnAt6eiXi4Z5xDJRrNPHHBGW1NXm2Yip7Gk71q99735VLbNqpMM",
+          "tx_from_address": "8fpCLxG1uMryE2LZ87DhenfCfLiqPbMV9Dbu5emiRWm2",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "99.053669",
+          "to_token_amount": "0.086433913",
+          "price_from_in_usd": "0.092417023155245632576464389527394813897240456813046425858816262",
+          "price_to_in_usd": "105.91034125210826305859696009962016545467598422",
+          "price_from_in_currency_token": "0.000872596783870772",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "9.154245221585036502924720830533632328093856222568295548652226747965278"
+        }
+      },
+      {
+        "id": "solana_457327632_2ady5k5Ao68ggPhatXsCFuD41CuAvcov3gFfWAN5gHVbhPSbN2mGpz3V6JvFo7aco5v2SAbVGxD5rSVnaR8am5Me_80_1792086769",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327632,
+          "block_timestamp": "2026-10-15T17:52:42Z",
+          "tx_hash": "2ady5k5Ao68ggPhatXsCFuD41CuAvcov3gFfWAN5gHVbhPSbN2mGpz3V6JvFo7aco5v2SAbVGxD5rSVnaR8am5Me",
+          "tx_from_address": "E5GTk3h38wDJLt5434XkjwUvD67wDVPMwxCVBLWP74TG",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.611516901",
+          "to_token_amount": "697.5693",
+          "price_from_in_usd": "105.91034125210826305859696009962016545467598422",
+          "price_to_in_usd": "0.092845203575245787135541402753975303562418699712302903166946758",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000876639641394769",
+          "volume_in_usd": "64.76596366634170474208599444814037485595071382933930222"
+        }
+      },
+      {
+        "id": "solana_457327624_y74A86oYfLeGtekt2PPXTCUAiFoKkv4htkqGSmVqEcCHZTdzGwGV4KM49Hshr4o982BNJ3uMPmxCJM9y21GWnJh_80_1792086774",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327624,
+          "block_timestamp": "2026-10-15T17:52:40Z",
+          "tx_hash": "y74A86oYfLeGtekt2PPXTCUAiFoKkv4htkqGSmVqEcCHZTdzGwGV4KM49Hshr4o982BNJ3uMPmxCJM9y21GWnJh",
+          "tx_from_address": "G3wvNnvcVZTRj1pGFjHjVDMYKeo4yjNdiQgeeg8Ewdkp",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "1.080735697",
+          "to_token_amount": "1236.321169",
+          "price_from_in_usd": "105.910828128046573583219479746553216054728479725",
+          "price_to_in_usd": "0.09258242560822123204966374006419911437888878763294773305620311",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.0008741544867942",
+          "volume_in_usd": "114.461612656811618949922491947868573300498573681348243325"
+        }
+      },
+      {
+        "id": "solana_457327615_3D3mmAuby9268ALyG4fowhmsgmqtzr9NneUVPpaDiCTkmJ96p6sTypC6E41FYBW8zv9KX8U4CGUNHN4ej6AgnV4G_20_1792086768",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327615,
+          "block_timestamp": "2026-10-15T17:52:38Z",
+          "tx_hash": "3D3mmAuby9268ALyG4fowhmsgmqtzr9NneUVPpaDiCTkmJ96p6sTypC6E41FYBW8zv9KX8U4CGUNHN4ej6AgnV4G",
+          "tx_from_address": "7w7SpmEXF1ySfLSv2jtdqYHSXBH6EHYg8TMNJod4fEoS",
+          "kind": "sell",
+          "from_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "to_token_address": "So11111111111111111111111111111111111111112",
+          "from_token_amount": "1282.5077",
+          "to_token_amount": "1.11502857",
+          "price_from_in_usd": "0.09207980299420447092104963811160791914331742383628168767099909",
+          "price_to_in_usd": "105.91034125210826305859696009962016545467598422",
+          "price_from_in_currency_token": "0.000869412768437959",
+          "price_to_in_currency_token": "1.0",
+          "volume_in_usd": "118.093056354550289330672252960350615682281999614194803807051399617993"
+        }
+      },
+      {
+        "id": "solana_457327602_sGNJsaHHrJkppYqyEmcPsSzqSPby9vBqwY9xcJCoUixiyS5f1tM64CpDVMnHAhUf3tfn9rCPQtqF9GUMCREY8MS_80_1792086760",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327602,
+          "block_timestamp": "2026-10-15T17:52:35Z",
+          "tx_hash": "sGNJsaHHrJkppYqyEmcPsSzqSPby9vBqwY9xcJCoUixiyS5f1tM64CpDVMnHAhUf3tfn9rCPQtqF9GUMCREY8MS",
+          "tx_from_address": "HgbmmgGpLaeoJZb1mR5U5jtDt4QrcYJdyXyAjQmATJuy",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.503778126",
+          "to_token_amount": "575.674106",
+          "price_from_in_usd": "105.911011245113225825808263043107255591910242349",
+          "price_to_in_usd": "0.0926837775257309641741393747380727779559058545203419590103216307",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000875109928949974",
+          "volume_in_usd": "53.355650767828067564340489191171630439095562650785057974"
+        }
+      },
+      {
+        "id": "solana_457327583_4Qv6pVsaxQcGSXe1KeycBqrC7cc5waA7mqiZsdCaANc2MfY12VKTbhcvxCs7ofAFD3nQsY5QQcYTP3MBJ8i2y9rR_80_1792086761",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327583,
+          "block_timestamp": "2026-10-15T17:52:31Z",
+          "tx_hash": "4Qv6pVsaxQcGSXe1KeycBqrC7cc5waA7mqiZsdCaANc2MfY12VKTbhcvxCs7ofAFD3nQsY5QQcYTP3MBJ8i2y9rR",
+          "tx_from_address": "9EV6ZTVU3xoKDTQSm7xsfELSKD3CLsV5oo6F1y89mTVz",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "2.337121705",
+          "to_token_amount": "2683.437892",
+          "price_from_in_usd": "105.911011245113225825808263043107255591910242349",
+          "price_to_in_usd": "0.0922424640113314760024582055571079229311488507561131509534214231",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.000870943095783042",
+          "volume_in_usd": "247.526923179453195260063040726395317686836049805658085045"
+        }
+      },
+      {
+        "id": "solana_457327574_54JACpvzDm2ac1hQFSUsp4ahWfXhMT2DH15yN5Zh5FWSMDhFyR9atDt7JG4p66pcLS7Zg556wQQfD2QvYup6ota3_80_1792086755",
+        "type": "trade",
+        "attributes": {
+          "block_number": 457327574,
+          "block_timestamp": "2026-10-15T17:52:29Z",
+          "tx_hash": "54JACpvzDm2ac1hQFSUsp4ahWfXhMT2DH15yN5Zh5FWSMDhFyR9atDt7JG4p66pcLS7Zg556wQQfD2QvYup6ota3",
+          "tx_from_address": "46gzeWZNH32fLXDQtxq3ihDarcH76exfvGJf8B8cfzdz",
+          "kind": "buy",
+          "from_token_address": "So11111111111111111111111111111111111111112",
+          "to_token_address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+          "from_token_amount": "0.301068512",
+          "to_token_amount": "347.220383",
+          "price_from_in_usd": "105.89343595870685935188388029885580809384736232",
+          "price_to_in_usd": "0.091818282438376213705746951272681521028921079582107766246722528",
+          "price_from_in_currency_token": "1.0",
+          "price_to_in_currency_token": "0.00086708190745818",
+          "volume_in_usd": "31.88117919465516758926496423836263344537218172880726784"
+        }
+      },
       {
         "id": "solana_457327545_kN1d7oTdLrGBk7Ywue7pGRGmMh3emdmTGt1AQJHCQhaJqG73Xh4vHoUs3ZPSepGM5Lw5GXA1pkTCNRpeS3c313R_80_1792086749",
         "type": "trade",

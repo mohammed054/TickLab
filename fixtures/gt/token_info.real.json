@@ -1,10 +1,10 @@
 {
   "fixtureVersion": 1,
   "provenance": {
-    "capturedAt": "2026-10-15T17:52:35.030Z",
+    "capturedAt": "2026-10-15T18:00:08.560Z",
     "captureMethod": "live-fetch",
     "accept": "application/json;version=20230302",
-    "latencyMs": 192,
+    "latencyMs": 530,
     "endpoint": "GET /networks/solana/tokens/3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk/info",
     "httpStatus": 200
   },

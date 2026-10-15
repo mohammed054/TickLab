@@ -1,12 +1,13 @@
-// P0.2 / T0.2 — poll new_pools every 15 s for --hours, append raw responses to data/p0/gt-newpools.jsonl.
-// T0.2 24-hour capture: node scripts/p0/capture.mjs --hours 24
+// P0.2 / T0.2 — poll new_pools every 15 s for --hours, append raw responses to the capture JSONL.
+// T0.2 24-hour capture: node scripts/p0/capture.mjs --hours 24 --file D:\moham\tickLab\gt-newpools.jsonl
+// The raw JSONL is the only large artifact; --file or TICKLAB_CAPTURE_FILE moves it off the repo drive.
 // Safe to stop early (Ctrl+C) or re-run: lines append and fields.mjs analyzes the latest contiguous run.
 import { statSync } from 'node:fs';
 import { GT_BASE, GT_ACCEPT, getJson, appendJsonl, arg, sleep } from './lib.mjs';
 
 const hours = Number(arg('hours', '0.05'));
 const every = Number(arg('every', '15')) * 1000;
-const file = 'data/p0/gt-newpools.jsonl';
+const file = arg('file', process.env.TICKLAB_CAPTURE_FILE || 'data/p0/gt-newpools.jsonl');
 let startBytes = 0;
 try { startBytes = statSync(file).size; } catch { /* file not written yet */ }
 const start = Date.now();

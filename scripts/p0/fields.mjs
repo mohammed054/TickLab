@@ -1,12 +1,13 @@
-// T0.2 — real GeckoTerminal fixtures + coverage report from data/p0/gt-newpools.jsonl.
-// Usage: node scripts/p0/fields.mjs [--hours 2] [--ref-cap 300] [--no-reference] [--file data/p0/gt-newpools.jsonl]
+// T0.2 — real GeckoTerminal fixtures + coverage report from the capture JSONL.
+// Usage: node scripts/p0/fields.mjs [--hours 2] [--ref-cap 300] [--no-reference] [--file D:\moham\tickLab\gt-newpools.jsonl]
+// The raw JSONL may live outside the repo (--file or TICKLAB_CAPTURE_FILE); fixtures and coverage.json stay in the repo.
 // Writes fixtures/gt/*.real.json and data/p0/coverage.json. Never writes to docs/ (Planner-owned).
 // Independent-reference comparison uses the free public DexScreener API (no key).
 import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { GT_BASE, GT_ACCEPT, getJson, arg, sleep } from './lib.mjs';
 
-const file = arg('file', 'data/p0/gt-newpools.jsonl');
+const file = arg('file', process.env.TICKLAB_CAPTURE_FILE || 'data/p0/gt-newpools.jsonl');
 const windowHours = Number(arg('hours', '2'));
 const refCap = Number(arg('ref-cap', '300'));
 const useReference = !process.argv.includes('--no-reference');
