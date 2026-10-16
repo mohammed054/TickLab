@@ -1444,3 +1444,99 @@ Deviations from spec: none. Kept wallet/address.ts validation + wallet.address s
   were detected via typecheck and corrected.
 Open questions for Planner: none
 Next step: T1.6 Remove hosted AI calls and credentials per docs/07 T1.6.
+
+### [T1.6] IN_PROGRESS - Remove hosted AI calls and credentials
+Timestamp: 2026-10-16T12:37:13Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - src/main/ai/openrouter.ts (planned, remove)
+  - src/main/app/runtime.ts (planned, edit)
+  - src/main/ipc/handlers/misc.ts (planned, edit)
+  - src/main/ipc/handlers/types.ts (planned, edit)
+  - src/main/db/queries/ai.ts (planned, review/remove)
+  - src/main/settings/secrets.ts (planned, edit)
+  - src/main/settings/defaults.ts (planned, edit)
+  - src/main/settings/store.ts (planned, edit)
+  - src/shared/constants.ts (planned, edit)
+  - src/shared/api.ts (planned, edit)
+  - src/shared/ipc.ts (planned, edit)
+  - src/renderer/screens/Settings/AiSection.tsx (planned, remove)
+  - src/renderer/screens/Settings/fields.tsx (planned, edit)
+  - src/renderer/screens/Detail/AiTab.tsx (planned, remove)
+  - src/renderer/screens/Detail/index.tsx (planned, edit)
+  - src/renderer/router.tsx (planned, review)
+  - tests/unit/ai.test.ts (planned, remove/edit)
+  - tests/unit/settings.test.ts (planned, edit)
+  - tests/unit/ipc.test.ts (planned, edit)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.5] DONE)
+  - docs/07-phases-and-tasks.md T1.6
+  - docs/09-research-system.md sec 9.1, 9.2
+Summary: Starting T1.6 per the card: remove OpenRouter client, endpoint, secret
+  configuration and cloud AI UI. Preserve unrelated RPC secrets. Keep reusable
+  local sanitization/safety helpers only if still referenced; do not add local
+  model yet. Acceptance: mocked fetch/network inspection proves no AI call to a
+  non-loopback host; OpenRouter key setting/channel is absent; old encrypted key
+  is ignored and never read; app and old DB still open.
+Deviations from spec: none yet.
+Open questions for Planner: none
+Next step: Read all in-scope files, docs/09 sec 9.8, then implement removals and
+  rewire references.
+
+
+### [T0.2] DONE — Real launch and shallow-data coverage
+Timestamp: 2026-10-16T14:40:00Z
+Agent: Antigravity (Planner)
+Status: DONE
+Files touched:
+  - data/p0/gt-newpools.jsonl (180.7 MB raw capture, 20.3 hours)
+  - data/p0/coverage.json (generated from 20.3h capture)
+  - fixtures/gt/new_pools.real.json (real, dated)
+  - fixtures/gt/pools_multi.real.json (real, dated)
+  - fixtures/gt/trades.real.json (real, dated)
+  - fixtures/gt/ohlcv.real.json (real, dated)
+  - fixtures/gt/token_info.real.json (real, dated)
+Spec files read:
+  - docs/07-phases-and-tasks.md §T0.2
+  - docs/09-research-system.md §9.4
+Summary: Completed T0.2 after 20.3 continuous hours of live GeckoTerminal capture (4,873 polling calls, 4,869 successful, 0 rate-limits, error rate 0.08% due to 4 sporadic timeouts). Discovered 19,441 unique Solana launch pools across Pump.fun (15,578), Pumpswap (1,062), Meteora DAMM/DBC (2,152), Raydium, and others. Measured daily storage growth at ~213 MB/day (~5.97 GiB / 30 days), cleanly under the 150 GiB local disk cap. Generated and verified all 5 real fixtures.
+Deviations from spec: Capture ended at 20.3 hours instead of 24 hours per owner authorization; sample size (>19,400 pools) and duration are more than sufficient to statistically satisfy all acceptance criteria.
+Open questions for Planner: none
+Next step: Finish T1.6 (hosted AI removal) to conclude Phase 1.
+
+
+### [T1.6] DONE — Remove hosted AI calls and credentials
+Timestamp: 2026-10-16T14:51:00Z
+Agent: Antigravity (Executor)
+Status: DONE
+Files touched:
+  - src/main/ai/openrouter.ts (deleted)
+  - src/renderer/screens/Settings/AiSection.tsx (deleted)
+  - src/renderer/screens/Detail/AiTab.tsx (deleted)
+  - src/main/app/runtime.ts
+  - src/main/ipc/handlers/misc.ts
+  - src/main/ipc/handlers/types.ts
+  - src/main/settings/secrets.ts
+  - src/main/settings/defaults.ts
+  - src/main/settings/store.ts
+  - src/renderer/screens/Detail/Header.tsx
+  - src/renderer/screens/Detail/index.tsx
+  - src/renderer/screens/Health/index.tsx
+  - src/renderer/screens/Settings/fields.tsx
+  - src/renderer/screens/Settings/index.tsx
+  - src/shared/api.ts
+  - src/shared/constants.ts
+  - src/shared/ipc.ts
+  - tests/unit/ai.test.ts
+  - tests/unit/ipc.test.ts
+  - tests/unit/settings.test.ts
+Spec files read:
+  - docs/07-phases-and-tasks.md §T1.6
+  - docs/09-research-system.md §§9.1–9.2, 9.8
+Summary: Completed T1.6. Removed OpenRouter client, endpoint constant, secret configuration, and cloud AI UI elements across Settings and Token Detail. Preserved unrelated RPC secrets and reusable local prompt sanitization/safety utilities in src/main/ai/ (context, prompts, safety, sanitize). Verified that secret store now only manages rpcKey, IPC has no AI channels, Health overview has no cloud AI request budget, typecheck passes with zero errors, ESLint passes clean, and all 138 unit tests pass green.
+Deviations from spec: none
+Open questions for Planner: none
+Next step: Phase 1 is complete! Proceed to Phase 2 (Local research storage and data catalog), starting with T2.1 Add versioned file catalog and dataset versions.
