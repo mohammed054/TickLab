@@ -16,7 +16,6 @@ import { JournalService } from '../journal/service';
 import { JobService } from '../research/jobs';
 import { OpenRouterClient } from '../ai/openrouter';
 import { addUsage } from '../db/queries/usage';
-import { refreshSolUsd } from '../wallet/solUsd';
 import { buildHandlers, createDispatcher, type Dispatch } from '../ipc/register';
 import type { Services, Platform } from '../ipc/handlers/types';
 import type { EventMap } from '../../shared/api';
@@ -58,16 +57,12 @@ export function createRuntime(a: { db: Db; secrets: SecretStore; os: OsHooks; em
   // Startup recovery: any research job left running when the app was killed is
   // marked interrupted so it can be re-claimed or retried (docs/09 sec 9.2).
   services.jobs.markRunningJobsInterrupted();
-  let solTimer: ReturnType<typeof setInterval> | null = null;
-  const refreshSol = (): void => { void refreshSolUsd(db, gt, settings.get('wallet.solUsdPool')); };
   return {
     services, settings, scheduler, dispatch: createDispatcher(buildHandlers(services)),
     async start() {
-      journal.ensureInitialDeposits();
-      solTimer = setInterval(refreshSol, 3_600_000); (solTimer as { unref?: () => void }).unref?.();
       void scheduler.startAll();
     },
-    async stop() { if (solTimer) clearInterval(solTimer); await scheduler.stopAll(); },
+    async stop() { await scheduler.stopAll(); },
     suspend: () => scheduler.suspend(),
     resume() { void scheduler.resume(); },
     backup() { backupDb(db, dirs.backups, now()); },

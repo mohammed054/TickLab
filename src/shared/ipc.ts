@@ -2,7 +2,6 @@
 import { z } from 'zod';
 
 const band = z.enum(['LOW', 'MEDIUM', 'HIGH', 'EXTREME']);
-const account = z.enum(['paper', 'real']);
 const id = z.number().int().positive();
 const empty = z.object({}).strict();
 
@@ -41,28 +40,6 @@ export const Schemas = {
   'watchlist:add': z.object({ tokenId: id }),
   'watchlist:remove': z.object({ tokenId: id }),
   'watchlist:setNote': z.object({ tokenId: id, note: z.string().max(200) }),
-  'journal:summary': z.object({ account }),
-  'journal:decisions': z.object({ account, status: z.enum(['open', 'closed', 'pending', 'cancelled']).optional(), tokenId: id.optional() }),
-  'journal:decision:create': z.object({
-    account, tokenId: id, poolId: id, sizeUsd: z.number().positive(), stopRule: z.string().min(1).max(200),
-    targetRule: z.string().min(1).max(200), thesis: z.string().max(2000), acknowledgedFlags: z.literal(true),
-  }),
-  'journal:fill:create': z.object({
-    decisionId: id, kind: z.enum(['entry', 'exit']), occurredAt: z.number().int(), priceUsd: z.number().min(0),
-    tokenAmount: z.number().min(0), usdValue: z.number().min(0), feeUsd: z.number().min(0),
-    slippagePct: z.number().optional(), txSig: z.string().max(100).optional(), note: z.string().max(500).optional(),
-  }),
-  'journal:fill:void': z.object({ fillId: id, reason: z.string().min(1).max(500) }),
-  'journal:paperExit': z.object({ decisionId: id }),
-  'journal:note:add': z.object({ decisionId: id, kind: z.enum(['cancel', 'review', 'note']), text: z.string().min(1).max(1000) }),
-  'journal:equity:add': z.object({ account, kind: z.enum(['deposit', 'withdraw', 'adjust']), amountUsd: z.number().finite(), note: z.string().max(200) }),
-  'journal:equity:list': z.object({ account }),
-  'journal:risk:ack': z.object({ account, reason: z.string().min(1).max(500) }),
-  'journal:export': z.object({ account }),
-  'wallet:sync': empty,
-  'wallet:unlinked:list': empty,
-  'wallet:unlinked:link': z.object({ id, decisionId: id, kind: z.enum(['entry', 'exit']) }),
-  'wallet:unlinked:dismiss': z.object({ id }),
   'lab:run': labParams,
   'lab:freeze': z.object({ name: z.string().min(1).max(100), params: labParams }),
   'lab:configs': empty,
@@ -96,6 +73,10 @@ export const Schemas = {
   'research:jobs:pause': z.object({ jobId: z.string().min(1) }),
   'research:jobs:resume': z.object({ jobId: z.string().min(1) }),
   'research:jobs:interrupt': z.object({ jobId: z.string().min(1) }),
+  'journal:summary': z.object({ account: z.enum(['paper', 'real']) }),
+  'journal:decisions': z.object({ account: z.enum(['paper', 'real']), status: z.enum(['open', 'closed', 'pending', 'cancelled']).optional(), tokenId: z.number().int().positive().optional() }),
+  'journal:equity:list': z.object({ account: z.enum(['paper', 'real']) }),
+  'journal:export': z.object({ account: z.enum(['paper', 'real']) }),
 } as const;
 
 export type InvokeChannel = keyof typeof Schemas;

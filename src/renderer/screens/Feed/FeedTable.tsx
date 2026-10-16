@@ -3,7 +3,6 @@ import type { KeyboardEvent } from 'react';
 import type { LaunchRow } from '@shared/types';
 import { Table } from '../../components/Table';
 import { Chip } from '../../components/Chip';
-import { NewDecisionModal } from '../Journal/NewDecisionModal';
 import { useIpcEvent, useInvoke, useNow, useThrottledCall } from '../../state/hooks';
 import { useStore } from '../../state/store';
 import { openInDetail, openPoolPage, toggleWatch } from '../../state/actions';
@@ -32,7 +31,6 @@ export function FeedTable() {
   const resetFilters = useStore((s) => s.resetFilters);
   const sources = useStore((s) => s.sources);
   const [menu, setMenu] = useState<Menu | null>(null);
-  const [decisionFor, setDecisionFor] = useState<number | null>(null);
   const stats = useInvoke('launches:stats', {}, { intervalMs: 10000 });
   const refreshStats = useThrottledCall(stats.reload, 2000);
   useIpcEvent('evt:launches-updated', refreshStats);
@@ -50,14 +48,12 @@ export function FeedTable() {
     if (action === 'search') { e.preventDefault(); document.getElementById('global-search')?.focus(); }
     else if (action === 'reset') { e.preventDefault(); resetFilters(); }
     else if (action === 'watch' && current) { e.preventDefault(); void toggleWatch(current.tokenId, watched(current)); }
-    else if (action === 'paper' && current) { e.preventDefault(); setDecisionFor(current.tokenId); }
   };
   const items = (r: LaunchRow): MenuItem[] => [
     { label: watched(r) ? 'Remove from watchlist' : 'Add to watchlist', onClick: () => { void toggleWatch(r.tokenId, watched(r)); } },
     { label: 'Open in Detail', onClick: () => openInDetail(r.tokenId) },
     { label: 'Copy mint', onClick: () => { void copyText(r.mint).then((ok) => toast(ok ? 'Copied' : 'Copy failed', ok ? 'info' : 'bad')); } },
     { label: 'Open on GeckoTerminal', onClick: () => { void openPoolPage(r.tokenId); } },
-    { label: 'New paper decision', onClick: () => setDecisionFor(r.tokenId) },
   ];
   const view = pickFeedState(rows.length, loaded, stats.data?.total ?? null);
   const gaps = stats.data?.gaps24h ?? 0;
@@ -81,10 +77,6 @@ export function FeedTable() {
         ) : view === 'waiting' ? <WaitingState /> : <NoMatchState onReset={resetFilters} />}
       </div>
       {menu ? <ContextMenu x={menu.x} y={menu.y} items={items(menu.row)} onClose={() => setMenu(null)} /> : null}
-      {decisionFor !== null ? (
-        <NewDecisionModal tokenId={decisionFor} onClose={() => setDecisionFor(null)}
-          onCreated={(id, account) => { if (account === 'real') { useStore.getState().setPendingDrawer({ decisionId: id, fill: 'entry' }); nav('/journal'); } }} />
-      ) : null}
     </div>
   );
 }

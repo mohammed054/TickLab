@@ -1368,3 +1368,79 @@ Deviations from spec: none.
 Open questions for Planner: none
 Next step: T1.5 Remove real-money workflow and archive existing records per
   docs/07 T1.5 (wallet/journal removal, Legacy Archive read-only route).
+
+### [T1.5] IN_PROGRESS - Remove real-money workflow and archive existing records
+Timestamp: 2026-10-16T12:12:44Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - src/main/wallet/import.ts (planned, remove)
+  - src/main/wallet/parseSwap.ts (planned, remove)
+  - src/main/wallet/solUsd.ts (planned, remove)
+  - src/main/journal/service.ts (planned, convert to read-only archive)
+  - src/main/journal/exportCsv.ts (planned, keep read-only export)
+  - src/main/ipc/handlers/journal.ts (planned, remove insert/mutate channels)
+  - src/shared/api.ts (planned, edit)
+  - src/shared/ipc.ts (planned, edit)
+  - src/renderer/screens/Journal/* (planned, convert to Legacy Archive)
+  - src/renderer/screens/Settings/index.tsx (planned, edit - link archive)
+  - src/renderer/screens/Detail/JournalTab.tsx (planned, edit/remove)
+  - src/renderer/router.tsx (planned, edit)
+  - tests/unit/journal.test.ts, tests/unit/wallet.test.ts (planned, edit)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.4] DONE)
+  - docs/07-phases-and-tasks.md T1.5
+  - docs/09-research-system.md sec 9.1, 9.9
+Summary: Starting T1.5 per card: remove all new decision/fill entry, wallet
+  import, account mutation, real-trade workflows; turn Journal into read-only
+  Legacy Archive linked from Settings; preserve DB tables/rows byte-for-byte;
+  no insert/mutate IPC remains; no signing/order submission code.
+Deviations from spec: none yet.
+Open questions for Planner: none
+Next step: Explore all in-scope files to understand current write paths before removing them.
+
+### [T1.5] DONE - Remove real-money workflow and archive existing records
+Timestamp: 2026-10-16T12:33:29Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - src/main/wallet/import.ts (deleted), src/main/wallet/parseSwap.ts (deleted), src/main/wallet/solUsd.ts (deleted) — wallet import workflow removed
+  - src/main/journal/service.ts (rewritten read-only archive; writes removed)
+  - src/main/ipc/handlers/journal.ts (rewritten; only journal:summary/decisions/equity:list/export remain)
+  - src/shared/api.ts (edit; write/mutate channels removed from ApiMap)
+  - src/shared/ipc.ts (edit; write/mutate channel schemas removed)
+  - src/main/app/runtime.ts (edit; removed wallet SOL/USD refresh + ensureInitialDeposits)
+  - src/shared/types.ts (unchanged; Job/JobStatus from T1.4 retained)
+  - src/renderer/screens/Journal/index.tsx (rewritten Legacy Archive, read-only)
+  - src/renderer/screens/Journal/DecisionDrawer.tsx (rewritten view-only)
+  - src/renderer/screens/Journal/EquityTab.tsx (rewritten read-only)
+  - src/renderer/screens/Journal/RiskPanel.tsx (rewritten read-only)
+  - src/renderer/screens/Journal/FillForm.tsx (deleted), NewDecisionModal.tsx (deleted), UnlinkedTrades.tsx (deleted)
+  - src/renderer/screens/Detail/JournalTab.tsx (edit; read-only list)
+  - src/renderer/screens/Detail/index.tsx (edit; removed NewDecisionModal/paper flow)
+  - src/renderer/screens/Feed/FeedTable.tsx (edit; removed NewDecisionModal)
+  - src/renderer/screens/Settings/index.tsx (edit; Legacy Archive link, WalletSection sync removed)
+  - src/renderer/screens/Settings/WalletSection.tsx (edit; read-only address field)
+  - src/renderer/components/Sidebar.tsx (edit; Journal -> Legacy Archive)
+  - tests/unit/journal.test.ts (rewritten for read-only archive), tests/unit/wallet.test.ts (rewritten, address validation only), tests/unit/runtime.test.ts (edit)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.4] DONE)
+  - docs/07-phases-and-tasks.md T1.5
+  - docs/09-research-system.md sec 9.1, 9.9
+Summary: Implemented T1.5 per the card. Removed all new decision/fill entry, wallet
+  import/sync/link, and account mutation workflows (wallet/*, paperFill usage, journal
+  write methods, journal:*/wallet:* IPC write channels). Turned the Journal route into a
+  read-only Legacy Archive linked from Settings: decisions, summary, risk state, equity
+  timeline and CSV export all display existing rows; nothing can insert, edit, void or
+  mutate. DB tables and rows are preserved byte-for-byte (no migration touched; 002_research_jobs from T1.4 retained). Verified: typecheck (node + web), eslint, full suite 145/145
+  green (wallet test count reduced as sync/link tests removed with the workflow).
+Deviations from spec: none. Kept wallet/address.ts validation + wallet.address setting
+  (unrelated to signing, not in the deletion list); paperFill.ts pure math retained (its
+  tests still pass). Two write-tool truncations (dropped trailing } in 7 .tsx files)
+  were detected via typecheck and corrected.
+Open questions for Planner: none
+Next step: T1.6 Remove hosted AI calls and credentials per docs/07 T1.6.

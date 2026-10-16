@@ -5,7 +5,6 @@ import type { TabItem } from '../../components/Tabs';
 import { Spinner } from '../../components/Spinner';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { ToastHost } from '../../components/Toast';
-import { NewDecisionModal } from '../Journal/NewDecisionModal';
 import { DecisionDrawer } from '../Journal/DecisionDrawer';
 import { invoke, useIpcEvent } from '../../state/hooks';
 import { AiTab } from './AiTab';
@@ -30,7 +29,6 @@ export default function DetailScreen() {
   const [tokenId, setTokenId] = useState<number | null>(fromRoute);
   const [pinned, setPinned] = useState(false);
   const [tab, setTab] = useState<DetailTab>('overview');
-  const [paper, setPaper] = useState(false);
   const [drawerId, setDrawerId] = useState<number | null>(null);
   useEffect(() => { if (fromRoute !== null) setTokenId(fromRoute); }, [fromRoute]);
   useIpcEvent('evt:detail-selected', (p) => { if (!pinned) setTokenId(p.tokenId); });
@@ -45,7 +43,7 @@ export default function DetailScreen() {
   const tok = detail.token.id;
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-      <Header detail={detail} pinned={pinned} onPin={togglePin} onPaper={() => setPaper(true)} onAsk={() => setTab('ai')} />
+      <Header detail={detail} pinned={pinned} onPin={togglePin} onPaper={() => {}} onAsk={() => setTab('ai')} />
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 16 }}>
         <ErrorBoundary key={`${tok}-${tab}`}>
@@ -54,11 +52,10 @@ export default function DetailScreen() {
           {tab === 'trades' ? <Trades tokenId={tok} /> : null}
           {tab === 'holders' ? <Holders tokenId={tok} /> : null}
           {tab === 'chart' ? <ChartTab tokenId={tok} /> : null}
-          {tab === 'journal' ? <JournalTab tokenId={tok} onNew={() => setPaper(true)} onOpen={setDrawerId} /> : null}
+          {tab === 'journal' ? <JournalTab tokenId={tok} onOpen={setDrawerId} /> : null}
           {tab === 'ai' ? <AiTab tokenId={tok} /> : null}
         </ErrorBoundary>
       </div>
-      {paper ? <NewDecisionModal tokenId={tok} onClose={() => setPaper(false)} onCreated={(id) => { setTab('journal'); setDrawerId(id); }} /> : null}
       {drawerId !== null ? <DecisionDrawer decisionId={drawerId} onClose={() => setDrawerId(null)} /> : null}
       <ToastHost />
     </div>

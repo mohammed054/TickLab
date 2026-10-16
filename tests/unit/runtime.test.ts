@@ -14,9 +14,8 @@ describe('runtime composition', () => {
     const db = openDb(':memory:'); migrate(db);
     const dir = mkdtempSync(join(tmpdir(), 'tl-'));
     const rt = createRuntime({ db, secrets: createMemorySecretStore(), emit: () => undefined, os: { version: '0.1.0', dataDir: dir, openExternal: () => undefined, openDataFolder: () => undefined, focusDetail: () => undefined, setPin: () => undefined } });
-    rt.services.journal.ensureInitialDeposits();
     const s = await rt.dispatch('journal:summary', { account: 'paper' });
-    expect(s).toMatchObject({ ok: true, value: { equity: 200 } });
+    expect(s).toMatchObject({ ok: true, value: { equity: 0 } });
     expect(await rt.dispatch('health:overview', {})).toMatchObject({ ok: true });
     expect(await rt.dispatch('app:backupNow', {})).toMatchObject({ ok: true });
     expect(readdirSync(join(dir, 'backups'))).toHaveLength(1);

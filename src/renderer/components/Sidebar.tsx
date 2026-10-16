@@ -7,7 +7,7 @@ export interface ScreenDef { path: string; title: string; icon: LucideIcon; shor
 export const SCREENS: ScreenDef[] = [
   { path: '/feed', title: 'Feed', icon: Radar, shortcut: 'Ctrl+1' },
   { path: '/watchlist', title: 'Watchlist', icon: Star, shortcut: 'Ctrl+2' },
-  { path: '/journal', title: 'Journal', icon: BookOpen, shortcut: 'Ctrl+3' },
+  { path: '/journal', title: 'Legacy Archive', icon: BookOpen, shortcut: 'Ctrl+3' },
   { path: '/lab', title: 'Rules Lab', icon: FlaskConical, shortcut: 'Ctrl+4' },
   { path: '/health', title: 'Data Health', icon: Activity, shortcut: 'Ctrl+5' },
   { path: '/settings', title: 'Settings', icon: Settings, shortcut: 'Ctrl+6' },

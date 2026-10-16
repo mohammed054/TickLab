@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import type { Schemas, EventChannel } from './ipc';
 import type {
   Result, LaunchRow, TokenDetail, Trade, HolderSnapshot, Candle, StoredJudgement, WatchRow, RiskState, DecisionRow,
-  EquityPoint, UnlinkedTrade, LabResult, FrozenConfig, SourceStatus, Gap, ErrorRow, AlertRow, Account, DecisionStatus,
+  EquityPoint, LabResult, FrozenConfig, SourceStatus, Gap, ErrorRow, AlertRow, Account, DecisionStatus,
   Job,
 } from './types';
 
@@ -39,19 +39,8 @@ export interface ApiMap {
   'watchlist:setNote': { req: Req<'watchlist:setNote'>; res: void };
   'journal:summary': { req: Req<'journal:summary'>; res: JournalSummary };
   'journal:decisions': { req: Req<'journal:decisions'>; res: DecisionRow[] };
-  'journal:decision:create': { req: Req<'journal:decision:create'>; res: { decisionId: number } };
-  'journal:fill:create': { req: Req<'journal:fill:create'>; res: { fillId: number } };
-  'journal:fill:void': { req: Req<'journal:fill:void'>; res: void };
-  'journal:paperExit': { req: Req<'journal:paperExit'>; res: { fillId: number } };
-  'journal:note:add': { req: Req<'journal:note:add'>; res: void };
-  'journal:equity:add': { req: Req<'journal:equity:add'>; res: void };
   'journal:equity:list': { req: Req<'journal:equity:list'>; res: EquityPoint[] };
-  'journal:risk:ack': { req: Req<'journal:risk:ack'>; res: RiskState };
   'journal:export': { req: Req<'journal:export'>; res: { path: string } };
-  'wallet:sync': { req: Req<'wallet:sync'>; res: { imported: number; unlinked: number } };
-  'wallet:unlinked:list': { req: Req<'wallet:unlinked:list'>; res: UnlinkedTrade[] };
-  'wallet:unlinked:link': { req: Req<'wallet:unlinked:link'>; res: { fillId: number } };
-  'wallet:unlinked:dismiss': { req: Req<'wallet:unlinked:dismiss'>; res: void };
   'lab:run': { req: Req<'lab:run'>; res: LabResult };
   'lab:freeze': { req: Req<'lab:freeze'>; res: { configId: number; sha256: string } };
   'lab:configs': { req: Req<'lab:configs'>; res: FrozenConfig[] };
