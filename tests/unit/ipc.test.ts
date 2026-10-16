@@ -15,7 +15,7 @@ function setup() {
     db, settings, secrets, journal: new JournalService(db, settings, () => 1_700_000_000_000),
     now: () => 1_700_000_000_000, emit: () => undefined, state: { selected: null }, counters: { skippedQuote: 0, rejected: 0 },
     scheduler: { deep: { activeTokenIds: () => [], setSelected: () => undefined, refresh: async () => undefined }, intervalMultiplier: 1, backfillNow: async () => ({}) },
-    monitor: { status: () => [], callsLastMinute: () => 0 }, ai: { usage: () => ({ today: 0, limit: 10, remaining: 10 }) },
+    monitor: { status: () => [], callsLastMinute: () => 0 },
     platform: { version: '0', dataDir: 'd', openExternal: (u: string) => opened.push(u), openDataFolder: () => undefined, focusDetail: () => undefined, setPin: () => undefined },
   } as unknown as Services;
   return { d: createDispatcher(buildHandlers(svc)), opened, secrets, settings };
@@ -44,10 +44,10 @@ describe('ipc dispatcher', () => {
   });
   it('secrets are stored but never returned by settings', async () => {
     const { d, secrets } = setup();
-    expect(await d('secret:set', { name: 'openrouterKey', value: 'sk-or-v1-abcdefghijkl' })).toMatchObject({ ok: true });
-    expect(secrets.has('openrouterKey')).toBe(true);
-    expect(await d('secret:has', { name: 'openrouterKey' })).toEqual({ ok: true, value: true });
-    expect(JSON.stringify(await d('settings:get', {}))).not.toContain('sk-or-v1');
+    expect(await d('secret:set', { name: 'rpcKey', value: 'rpc-api-key-value-12345' })).toMatchObject({ ok: true });
+    expect(secrets.has('rpcKey')).toBe(true);
+    expect(await d('secret:has', { name: 'rpcKey' })).toEqual({ ok: true, value: true });
+    expect(JSON.stringify(await d('settings:get', {}))).not.toContain('rpc-api-key-value');
   });
   it('settings validation errors surface as VALIDATION', async () => {
     const { d } = setup();

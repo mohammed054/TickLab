@@ -25,7 +25,6 @@ export const SETTING_SCHEMAS: Record<SettingKey, z.ZodTypeAny> = {
   'risk.maxPositionPct': z.number().gt(0).max(100), 'risk.maxOpenPositions': z.number().int().min(1).max(100),
   'risk.maxDrawdownPct': z.number().gt(0).max(100), 'risk.maxLosingTradesPerDay': z.number().int().min(1).max(100),
   'risk.loosenCooldownHours': z.number().min(0).max(24 * 30),
-  'ai.enabled': z.boolean(), 'ai.models': z.array(z.string().endsWith(':free')).max(3), 'ai.dailyLimit': z.number().int().min(1).max(1000),
   'wallet.address': z.string().min(32).max(44).nullable(), 'wallet.solUsdPool': z.string().min(32).max(44).nullable(),
   'ui.feedMaxRows': z.number().int().min(100).max(50000),
   'window.feed': winBounds, 'window.detail': winBounds, 'app.firstRunDone': z.boolean(),

@@ -14,7 +14,7 @@ export interface JournalSummary {
 }
 export interface HealthOverview {
   sources: SourceStatus[];
-  budgets: { gtCallsLastMinute: number; gtCap: number; rpcCreditsMonth: number; rpcBudget: number; aiToday: number; aiLimit: number };
+  budgets: { gtCallsLastMinute: number; gtCap: number; rpcCreditsMonth: number; rpcBudget: number };
   gaps24h: number; intervalMultiplier: number; dbBytes: number; trackedCount: number; deepCount: number; skippedQuote: number;
 }
 export interface LaunchStats { total: number; tracked: number; deep: number; alertsToday: number; gaps24h: number }
@@ -53,9 +53,6 @@ export interface ApiMap {
   'settings:set': { req: Req<'settings:set'>; res: { effectiveAt: number } };
   'secret:set': { req: Req<'secret:set'>; res: void };
   'secret:has': { req: Req<'secret:has'>; res: boolean };
-  'ai:explain': { req: Req<'ai:explain'>; res: AiAnswer };
-  'ai:models': { req: Req<'ai:models'>; res: { id: string; name: string }[] };
-  'ai:usage': { req: Req<'ai:usage'>; res: { today: number; limit: number; remaining: number } };
   'alerts:list': { req: Req<'alerts:list'>; res: AlertRow[] };
   'alerts:markSeen': { req: Req<'alerts:markSeen'>; res: void };
   'app:openExternal': { req: Req<'app:openExternal'>; res: void };

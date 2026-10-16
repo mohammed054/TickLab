@@ -6,7 +6,7 @@ export interface SecretCrypto {
   encrypt(plain: string): Buffer;
   decrypt(buf: Buffer): string;
 }
-export type SecretName = 'rpcKey' | 'openrouterKey';
+export type SecretName = 'rpcKey';
 export interface SecretStore {
   set(name: SecretName, value: string): void;
   get(name: SecretName): string | null;

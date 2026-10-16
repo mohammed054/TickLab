@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoke } from '../../state/hooks';
 import { Button } from '../../components/Button';
-import { AiSection } from './AiSection';
 import { AlertsSection, CostsSection, DataSourcesSection, TrackingSection } from './DataSections';
 import { saveSetting } from './fields';
 import type { SettingsCtx } from './fields';
@@ -25,7 +24,6 @@ export default function SettingsScreen() {
         <AlertsSection ctx={ctx} />
         <CostsSection ctx={ctx} />
         <RiskSection ctx={ctx} pending={q.data.__pending ?? []} />
-        <AiSection ctx={ctx} />
         <StorageSection ctx={ctx} />
         <section style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 16, lineHeight: '24px', fontWeight: 600, margin: 0 }}>Legacy Archive</h2>

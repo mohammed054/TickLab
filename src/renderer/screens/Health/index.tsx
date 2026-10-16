@@ -55,7 +55,6 @@ export default function HealthScreen() {
         <h3 className="section-title">Budgets</h3>
         <Budget label="GeckoTerminal calls, last minute" used={o?.budgets.gtCallsLastMinute ?? 0} cap={o?.budgets.gtCap ?? 24} />
         <Budget label="RPC credits, this month" used={o?.budgets.rpcCreditsMonth ?? 0} cap={o?.budgets.rpcBudget ?? 0} />
-        <Budget label="AI requests today" used={o?.budgets.aiToday ?? 0} cap={o?.budgets.aiLimit ?? 0} />
         <div className="meta">Database {fmtBytes(o?.dbBytes)} · tracked {o?.trackedCount ?? 0} · deep {o?.deepCount ?? 0} · skipped quote pairs {o?.skippedQuote ?? 0}</div>
       </section>
       <section>

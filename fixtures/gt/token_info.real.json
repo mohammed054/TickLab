@@ -1,65 +1,59 @@
 {
   "fixtureVersion": 1,
   "provenance": {
-    "capturedAt": "2026-10-15T18:00:08.560Z",
+    "capturedAt": "2026-10-16T14:37:50.425Z",
     "captureMethod": "live-fetch",
     "accept": "application/json;version=20230302",
-    "latencyMs": 530,
-    "endpoint": "GET /networks/solana/tokens/3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk/info",
+    "latencyMs": 418,
+    "endpoint": "GET /networks/solana/tokens/DPcz93J8vKiEL2W6dSSUuyonSmMxo8Bm8xS47ADCpbBE/info",
     "httpStatus": 200
   },
   "responseBody": {
     "data": {
-      "id": "solana_3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
+      "id": "solana_DPcz93J8vKiEL2W6dSSUuyonSmMxo8Bm8xS47ADCpbBE",
       "type": "token",
       "attributes": {
-        "address": "3rVxVgCodTyfgXb6Ft9qzMnAtr2PXH7x9NV2rL8fbonk",
-        "name": "INFANTINO SORRY CROWN",
-        "symbol": "FIFASRY",
-        "decimals": 6,
-        "image_url": "https://assets.geckoterminal.com/zlfep5jvjtg4uvtpeto3ef5tk31j",
+        "address": "DPcz93J8vKiEL2W6dSSUuyonSmMxo8Bm8xS47ADCpbBE",
+        "name": "Derive",
+        "symbol": "DRV",
+        "decimals": 9,
+        "image_url": "https://assets.geckoterminal.com/7jinn7oe6lmktcve25s39b8m5o10",
         "image": {
-          "thumb": "https://assets.geckoterminal.com/7rx6ax6f38eire9p3nw2rqcxypuv",
-          "small": "https://assets.geckoterminal.com/lz0nml5xx0be8w1spfvm0cx8os8k",
-          "large": "https://assets.geckoterminal.com/zlfep5jvjtg4uvtpeto3ef5tk31j"
+          "thumb": "https://assets.geckoterminal.com/55e18oroau5w21esks8rrecawq6u",
+          "small": "https://assets.geckoterminal.com/3zsl971kz5886thmnlqs9217z0vx",
+          "large": "https://assets.geckoterminal.com/7jinn7oe6lmktcve25s39b8m5o10"
         },
         "banner_image_url": null,
         "coingecko_coin_id": null,
-        "websites": [],
+        "websites": [
+          "https://x.com/DeriveXYZ"
+        ],
         "discord_url": null,
         "farcaster_url": null,
         "zora_url": null,
         "telegram_handle": null,
         "twitter_handle": null,
-        "description": "Gianni Infantino apologized to FIFA's Council over the abandoned FIFA Forward Enterprise project on October 15. England and Germany's football leaders remain unconvinced, turning his apology into a striking symbol of a leadership crisis.",
-        "gt_score": 25.39220779220779,
+        "description": null,
+        "gt_score": 22.69090909090909,
         "gt_score_details": {
-          "pool": 34.286,
+          "pool": 57.143,
           "transaction": 32,
           "creation": 0,
-          "info": 20,
-          "holders": 31.25
+          "info": 40,
+          "holders": 0
         },
         "gt_verified": false,
-        "categories": [
-          "Pump Fun"
-        ],
-        "gt_category_ids": [
-          "pump-fun"
-        ],
+        "categories": [],
+        "gt_category_ids": [],
         "holders": {
-          "count": 46,
-          "distribution_percentage": {
-            "top_10": "97.6485",
-            "11_20": "1.9132",
-            "21_40": "0.2472",
-            "rest": "0.1911"
-          },
-          "last_updated": "2026-10-15T17:47:22Z"
+          "count": null,
+          "distribution_percentage": null,
+          "last_updated": null
         },
         "mint_authority": null,
         "freeze_authority": null,
         "is_honeypot": "unknown",
+        "is_nsfw": false,
         "developer_address": null,
         "developer_holding_percentage": null
       }

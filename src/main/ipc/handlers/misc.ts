@@ -12,11 +12,11 @@ import { validateAddress } from '../../wallet/address';
 import { MS } from '../../../shared/constants';
 
 type Keys = 'lab:run' | 'lab:freeze' | 'lab:configs' | 'health:overview' | 'health:gaps' | 'health:errors' | 'health:backfill' | 'health:diagnostics'
-  | 'settings:get' | 'settings:set' | 'secret:set' | 'secret:has' | 'ai:explain' | 'ai:models' | 'ai:usage' | 'app:openExternal' | 'app:info'
+  | 'settings:get' | 'settings:set' | 'secret:set' | 'secret:has' | 'app:openExternal' | 'app:info'
   | 'app:openDataFolder' | 'app:backupNow' | 'app:firstRun';
 
 /** Only https links to these hosts may be opened in the OS browser. */
-export const EXTERNAL_HOSTS = ['www.geckoterminal.com', 'geckoterminal.com', 'solscan.io', 'www.solscan.io', 'openrouter.ai', 'www.helius.dev', 'dancesafe.org'];
+export const EXTERNAL_HOSTS = ['www.geckoterminal.com', 'geckoterminal.com', 'solscan.io', 'www.solscan.io', 'www.helius.dev', 'dancesafe.org'];
 export function isAllowedExternal(url: string): boolean {
   try { const u = new URL(url); return u.protocol === 'https:' && !u.username && !u.password && EXTERNAL_HOSTS.includes(u.hostname); } catch { return false; }
 }
@@ -58,12 +58,11 @@ export function miscHandlers(s: Services): Pick<Handlers, Keys> {
     'health:overview': () => {
       const now = s.now();
       const c = (sql: string): number => (db.prepare(sql).get() as { c: number }).c;
-      const ai = s.ai.usage();
       return ok({
         sources: s.monitor.status(),
         budgets: {
           gtCallsLastMinute: s.monitor.callsLastMinute('geckoterminal'), gtCap: s.settings.get('sources.gt.callsPerMinuteCap'),
-          rpcCreditsMonth: creditsThisMonth(db, 'rpc', now), rpcBudget: s.settings.get('sources.rpc.monthlyCreditBudget'), aiToday: ai.today, aiLimit: ai.limit,
+          rpcCreditsMonth: creditsThisMonth(db, 'rpc', now), rpcBudget: s.settings.get('sources.rpc.monthlyCreditBudget'),
         },
         gaps24h: gapsSince(db, now - MS.day), intervalMultiplier: s.scheduler.intervalMultiplier, dbBytes: dbBytes(),
         trackedCount: c('SELECT COUNT(*) c FROM pools WHERE tier>=2'), deepCount: s.scheduler.deep.activeTokenIds().length, skippedQuote: s.counters.skippedQuote,
@@ -92,9 +91,6 @@ export function miscHandlers(s: Services): Pick<Handlers, Keys> {
       try { s.secrets.set(r.name, r.value.trim()); return ok(undefined); } catch (e) { return err('VALIDATION', e instanceof Error ? e.message : 'Could not store the key.'); }
     },
     'secret:has': (r) => ok(s.secrets.has(r.name)),
-    'ai:explain': (r) => s.ai.explain(r.tokenId, r.preset, r.question),
-    'ai:models': () => s.ai.listModels(),
-    'ai:usage': () => ok(s.ai.usage()),
     'app:openExternal': (r) => {
       if (!isAllowedExternal(r.url)) return err('VALIDATION', 'That link is not on the allowed list.');
       s.platform.openExternal(r.url); return ok(undefined);

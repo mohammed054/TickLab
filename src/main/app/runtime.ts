@@ -14,7 +14,6 @@ import { LaunchBatcher } from '../ipc/events';
 import { JudgeRunner } from '../judge/runner';
 import { JournalService } from '../journal/service';
 import { JobService } from '../research/jobs';
-import { OpenRouterClient } from '../ai/openrouter';
 import { addUsage } from '../db/queries/usage';
 import { buildHandlers, createDispatcher, type Dispatch } from '../ipc/register';
 import type { Services, Platform } from '../ipc/handlers/types';
@@ -45,7 +44,6 @@ export function createRuntime(a: { db: Db; secrets: SecretStore; os: OsHooks; em
   const ctx: PipelineCtx = { db, settings, gt, rpc, judge, monitor, batcher, now, emit: a.emit, sleep: (ms) => new Promise((r) => setTimeout(r, ms)), counters };
   const scheduler = new Scheduler(ctx);
   const journal = new JournalService(db, settings, now);
-  const ai = new OpenRouterClient({ db, settings, now, getKey: () => a.secrets.get('openrouterKey') });
   const dirs = { backups: join(a.os.dataDir, 'backups'), exports: join(a.os.dataDir, 'exports'), diag: join(a.os.dataDir, 'diagnostics') };
   const platform: Platform = {
     version: a.os.version, dataDir: a.os.dataDir, openExternal: a.os.openExternal, openDataFolder: a.os.openDataFolder, focusDetail: a.os.focusDetail, setPin: a.os.setPin,
@@ -53,7 +51,7 @@ export function createRuntime(a: { db: Db; secrets: SecretStore; os: OsHooks; em
     writeExport: (name, content) => writeTextFile(dirs.exports, name, content),
     writeDiagnostics: () => writeDiagnostics(db, dirs.diag, now(), { version: a.os.version, sources: monitor.status() }),
   };
-  const services: Services = { db, settings, secrets: a.secrets, journal, judge, jobs: new JobService(db, now), gt, rpc, scheduler, monitor, ai, platform, now, emit: a.emit, state: { selected: null }, counters };
+  const services: Services = { db, settings, secrets: a.secrets, journal, judge, jobs: new JobService(db, now), gt, rpc, scheduler, monitor, platform, now, emit: a.emit, state: { selected: null }, counters };
   // Startup recovery: any research job left running when the app was killed is
   // marked interrupted so it can be re-claimed or retried (docs/09 sec 9.2).
   services.jobs.markRunningJobsInterrupted();

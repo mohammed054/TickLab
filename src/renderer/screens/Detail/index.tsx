@@ -7,7 +7,6 @@ import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { ToastHost } from '../../components/Toast';
 import { DecisionDrawer } from '../Journal/DecisionDrawer';
 import { invoke, useIpcEvent } from '../../state/hooks';
-import { AiTab } from './AiTab';
 import { ChartTab } from './ChartTab';
 import { Evidence } from './Evidence';
 import { Header } from './Header';
@@ -17,10 +16,10 @@ import { Overview } from './Overview';
 import { Trades } from './Trades';
 import { useTokenDetail } from './useTokenDetail';
 
-export type DetailTab = 'overview' | 'evidence' | 'trades' | 'holders' | 'chart' | 'journal' | 'ai';
+export type DetailTab = 'overview' | 'evidence' | 'trades' | 'holders' | 'chart' | 'journal';
 const TABS: TabItem<DetailTab>[] = [
   { id: 'overview', label: 'Overview' }, { id: 'evidence', label: 'Evidence' }, { id: 'trades', label: 'Trades' }, { id: 'holders', label: 'Holders' },
-  { id: 'chart', label: 'Chart' }, { id: 'journal', label: 'Journal' }, { id: 'ai', label: 'AI' },
+  { id: 'chart', label: 'Chart' }, { id: 'journal', label: 'Journal' },
 ];
 
 export default function DetailScreen() {
@@ -43,7 +42,7 @@ export default function DetailScreen() {
   const tok = detail.token.id;
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-      <Header detail={detail} pinned={pinned} onPin={togglePin} onPaper={() => {}} onAsk={() => setTab('ai')} />
+      <Header detail={detail} pinned={pinned} onPin={togglePin} />
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 16 }}>
         <ErrorBoundary key={`${tok}-${tab}`}>
@@ -53,7 +52,6 @@ export default function DetailScreen() {
           {tab === 'holders' ? <Holders tokenId={tok} /> : null}
           {tab === 'chart' ? <ChartTab tokenId={tok} /> : null}
           {tab === 'journal' ? <JournalTab tokenId={tok} onOpen={setDrawerId} /> : null}
-          {tab === 'ai' ? <AiTab tokenId={tok} /> : null}
         </ErrorBoundary>
       </div>
       {drawerId !== null ? <DecisionDrawer decisionId={drawerId} onClose={() => setDrawerId(null)} /> : null}

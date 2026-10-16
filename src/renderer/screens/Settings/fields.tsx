@@ -67,7 +67,7 @@ export function TextSetting({ ctx, k, label, help, placeholder }: { ctx: Setting
 }
 
 /** Write-only: the stored value is never read back. Shows `•••• saved` when a secret exists. */
-export function SecretField({ name, label, help }: { name: 'rpcKey' | 'openrouterKey'; label: string; help?: string }) {
+export function SecretField({ name, label, help }: { name: 'rpcKey'; label: string; help?: string }) {
   const [has, setHas] = useState(false);
   const [value, setValue] = useState('');
   const refresh = () => { void invoke('secret:has', { name }).then((r) => setHas(r.ok && r.value)); };

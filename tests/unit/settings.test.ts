@@ -61,10 +61,10 @@ describe('secrets', () => {
     const dir = mkdtempSync(join(tmpdir(), 'sec-'));
     const f = join(dir, 'secrets.bin');
     const st = createFileSecretStore(f, fake);
-    const canary = 'sk-or-CANARY-1234567890';
-    st.set('openrouterKey', canary);
-    expect(st.get('openrouterKey')).toBe(canary);
-    expect(st.has('rpcKey')).toBe(false);
+    const canary = 'rpc-secret-canary-12345';
+    st.set('rpcKey', canary);
+    expect(st.get('rpcKey')).toBe(canary);
+    expect(st.has('rpcKey')).toBe(true);
     expect(readFileSync(f, 'utf8')).not.toContain(canary);
     db = openDb(':memory:'); migrate(db);
     const dump = JSON.stringify(db.prepare("SELECT * FROM settings").all());

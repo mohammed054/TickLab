@@ -13,8 +13,6 @@ import type { GeckoTerminalClient } from '../../sources/geckoterminal';
 import type { RpcLike } from '../../pipeline/context';
 import type { Scheduler } from '../../pipeline/scheduler';
 import type { SourceMonitor } from '../../pipeline/status';
-import type { OpenRouterClient } from '../../ai/openrouter';
-
 /** OS-specific actions injected by the Electron entry, so handlers stay testable without Electron. */
 export interface Platform {
   version: string;
@@ -31,7 +29,7 @@ export interface Platform {
 export interface Services {
   db: Db; settings: SettingsStore; secrets: SecretStore; journal: JournalService; judge: JudgeRunner;
   jobs: JobService;
-  gt: Pick<GeckoTerminalClient, 'poolOhlcv'>; rpc: RpcLike; scheduler: Scheduler; monitor: SourceMonitor; ai: OpenRouterClient;
+  gt: Pick<GeckoTerminalClient, 'poolOhlcv'>; rpc: RpcLike; scheduler: Scheduler; monitor: SourceMonitor;
   platform: Platform; now: () => number;
   emit: <E extends keyof EventMap>(channel: E, payload: EventMap[E]) => void;
   /** Mutable selection state for the Detail window. */

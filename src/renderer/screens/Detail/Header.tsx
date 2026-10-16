@@ -12,10 +12,10 @@ import { Tooltip } from '../../components/Tooltip';
 import { openExternal, toggleWatch } from '../../state/actions';
 import { useStore } from '../../state/store';
 
-export interface HeaderProps { detail: TokenDetail; pinned: boolean; onPin: () => void; onPaper: () => void; onAsk: () => void }
+export interface HeaderProps { detail: TokenDetail; pinned: boolean; onPin: () => void }
 
 /** 56px header: identity on the left, score and actions on the right. */
-export function Header({ detail, pinned, onPin, onPaper, onAsk }: HeaderProps) {
+export function Header({ detail, pinned, onPin }: HeaderProps) {
   const { token, pool, judgement } = detail;
   const watched = useStore((s) => s.watchOverrides[token.id]) ?? detail.watchlisted;
   return (
@@ -40,8 +40,6 @@ export function Header({ detail, pinned, onPin, onPaper, onAsk }: HeaderProps) {
       <Button variant="ghost" iconOnly aria-label={watched ? 'Remove from watchlist' : 'Add to watchlist'} aria-pressed={watched} style={{ color: watched ? 'var(--warn)' : undefined }}
         onClick={() => { void toggleWatch(token.id, watched); }} icon={<Star size={16} strokeWidth={1.5} fill={watched ? 'currentColor' : 'none'} />} />
       <Button variant="ghost" iconOnly aria-label="Open on GeckoTerminal" onClick={() => { void openExternal(`https://www.geckoterminal.com/solana/pools/${encodeURIComponent(pool.address)}`); }} icon={<ExternalLink size={16} strokeWidth={1.5} />} />
-      <Button variant="secondary" onClick={onPaper}>Paper decision</Button>
-      <Button variant="primary" onClick={onAsk}>Ask AI</Button>
     </header>
   );
 }
