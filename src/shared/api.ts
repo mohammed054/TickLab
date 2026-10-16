@@ -4,6 +4,7 @@ import type { Schemas, EventChannel } from './ipc';
 import type {
   Result, LaunchRow, TokenDetail, Trade, HolderSnapshot, Candle, StoredJudgement, WatchRow, RiskState, DecisionRow,
   EquityPoint, UnlinkedTrade, LabResult, FrozenConfig, SourceStatus, Gap, ErrorRow, AlertRow, Account, DecisionStatus,
+  Job,
 } from './types';
 
 type Req<C extends keyof typeof Schemas> = z.infer<(typeof Schemas)[C]>;
@@ -73,6 +74,17 @@ export interface ApiMap {
   'app:openDataFolder': { req: Req<'app:openDataFolder'>; res: void };
   'app:backupNow': { req: Req<'app:backupNow'>; res: { path: string } };
   'app:firstRun': { req: Req<'app:firstRun'>; res: { firstRunDone: boolean } };
+  'research:jobs:list': { req: Req<'research:jobs:list'>; res: Job[] };
+  'research:jobs:get': { req: Req<'research:jobs:get'>; res: Job | null };
+  'research:jobs:create': { req: Req<'research:jobs:create'>; res: { id: number; jobId: string } };
+  'research:jobs:claim': { req: Req<'research:jobs:claim'>; res: void };
+  'research:jobs:progress': { req: Req<'research:jobs:progress'>; res: void };
+  'research:jobs:complete': { req: Req<'research:jobs:complete'>; res: void };
+  'research:jobs:fail': { req: Req<'research:jobs:fail'>; res: void };
+  'research:jobs:cancel': { req: Req<'research:jobs:cancel'>; res: void };
+  'research:jobs:pause': { req: Req<'research:jobs:pause'>; res: void };
+  'research:jobs:resume': { req: Req<'research:jobs:resume'>; res: void };
+  'research:jobs:interrupt': { req: Req<'research:jobs:interrupt'>; res: void };
 }
 
 export interface EventMap {

@@ -85,6 +85,17 @@ export const Schemas = {
   'app:openDataFolder': empty,
   'app:backupNow': empty,
   'app:firstRun': z.object({ done: z.boolean().optional() }),
+  'research:jobs:list': z.object({ limit: z.number().int().min(1).max(1000).optional() }),
+  'research:jobs:get': z.object({ jobId: z.string().min(1) }),
+  'research:jobs:create': z.object({ jobId: z.string().min(1), command: z.string().min(1), payload: z.record(z.unknown()) }),
+  'research:jobs:claim': z.object({ jobId: z.string().min(1), pid: z.number().int().positive() }),
+  'research:jobs:progress': z.object({ jobId: z.string().min(1), completed: z.number().int().min(0), total: z.number().int().positive(), message: z.string().max(500).optional() }),
+  'research:jobs:complete': z.object({ jobId: z.string().min(1), resultPath: z.string().min(1) }),
+  'research:jobs:fail': z.object({ jobId: z.string().min(1), errorCode: z.string().min(1), errorMessage: z.string().max(500) }),
+  'research:jobs:cancel': z.object({ jobId: z.string().min(1) }),
+  'research:jobs:pause': z.object({ jobId: z.string().min(1) }),
+  'research:jobs:resume': z.object({ jobId: z.string().min(1) }),
+  'research:jobs:interrupt': z.object({ jobId: z.string().min(1) }),
 } as const;
 
 export type InvokeChannel = keyof typeof Schemas;

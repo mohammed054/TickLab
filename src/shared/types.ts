@@ -121,3 +121,15 @@ export interface LabResult {
   params: LabParams;
 }
 export interface FrozenConfig { id: number; name: string; configJson: string; sha256: string; frozenAt: number }
+
+export type JobStatus = 'queued' | 'running' | 'paused' | 'cancelled' | 'interrupted' | 'failed' | 'completed';
+export interface JobProgress { completed: number; total: number }
+export interface JobError { code: string; message: string }
+export interface Job {
+  id: number; jobId: string; command: string; payload: unknown; configSha256: string;
+  status: JobStatus; progress: JobProgress; message: string | null;
+  error: JobError | null; resultPath: string | null;
+  createdAt: number; startedAt: number | null; updatedAt: number; completedAt: number | null;
+  pid: number | null; attempts: number;
+}
+export interface CreateJobInput { jobId: string; command: string; payload: unknown; }

@@ -21,9 +21,9 @@ function seeded() {
 describe('db migrations', () => {
   it('is idempotent', () => {
     const db = openDb(':memory:');
-    expect(migrate(db)).toBe(1);
-    expect(migrate(db)).toBe(1);
-    expect(schemaVersion(db)).toBe(1);
+    expect(migrate(db)).toBe(2);
+    expect(migrate(db)).toBe(2);
+    expect(schemaVersion(db)).toBe(2);
   });
   const tables: [string, string][] = [
     ['decisions', 'id=1'], ['fills', 'id=1'], ['fill_voids', 'fill_id=1'], ['decision_notes', 'id=1'],

@@ -6,9 +6,10 @@ import type { Handlers, Services } from './handlers/types';
 import { launchHandlers } from './handlers/launches';
 import { journalHandlers } from './handlers/journal';
 import { miscHandlers } from './handlers/misc';
+import { researchJobsHandlers } from './handlers/researchJobs';
 
 export function buildHandlers(s: Services): Handlers {
-  return { ...launchHandlers(s), ...journalHandlers(s), ...miscHandlers(s) };
+  return { ...launchHandlers(s), ...journalHandlers(s), ...miscHandlers(s), ...researchJobsHandlers(s) };
 }
 
 export type Dispatch = (channel: string, payload: unknown) => Promise<Result<unknown>>;

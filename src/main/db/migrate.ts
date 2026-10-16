@@ -1,8 +1,12 @@
 import type { Db } from './open';
 import init001 from './migrations/001_init.sql?raw';
+import init002 from './migrations/002_research_jobs.sql?raw';
 
 export interface Migration { version: number; name: string; sql: string }
-export const MIGRATIONS: Migration[] = [{ version: 1, name: '001_init', sql: init001 }];
+export const MIGRATIONS: Migration[] = [
+  { version: 1, name: '001_init', sql: init001 },
+  { version: 2, name: '002_research_jobs', sql: init002 },
+];
 
 export function schemaVersion(db: Db): number {
   const t = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'").get();

@@ -1298,3 +1298,73 @@ Summary: Implemented T1.3 per the card. The Python worker speaks one JSON object
 Deviations from spec: none. The vitest include is tests/unit/**, so worker.test.ts lives at the card-specified src/main/research/worker.test.ts and is run via a direct vitest path for acceptance; it is typechecked under tsconfig.node.json src/main/**/*. Two test-design fixes logged: progress/duplicate tests emit on the correct child process, and rejection handlers are attached before stopping to avoid unhandled-rejection races.
 Open questions for Planner: none
 Next step: T1.4 Persist research job lifecycle (migrations/002_research_jobs.sql, src/main/research/jobs.ts + test, src/main/ipc/handlers/researchJobs.ts, src/shared/api.ts) per docs/07 T1.4, spec docs/09 sec 9.2/9.8. Note the repo's db layer lives under src/main/db — confirm the migration layout (001 exists?) before writing 002.
+
+### [T1.4] IN_PROGRESS - Persist research job lifecycle
+Timestamp: 2026-10-16T12:02:52Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - src/main/db/migrations/002_research_jobs.sql (planned, new)
+  - src/main/research/jobs.ts (planned, new)
+  - src/main/research/jobs.test.ts (planned, new)
+  - src/main/ipc/handlers/researchJobs.ts (planned, new)
+  - src/shared/api.ts (planned, edit)
+  - src/shared/ipc.ts (planned, edit)
+  - src/main/ipc/register.ts (planned, edit)
+  - src/main/index.ts (planned, edit - startup hook)
+  - src/shared/types.ts (planned, edit - Job type)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.3] DONE)
+  - docs/07-phases-and-tasks.md T1.4
+  - docs/09-research-system.md sec 9.2, 9.8
+Summary: Implementing T1.4 per the card: research_jobs table with queued/running/
+  paused/cancelled/interrupted/failed/completed states, timestamps, config hash,
+  progress, result path, typed error; jobs service; zod-validated allowlisted IPC
+  channels; startup hook marks running jobs interrupted. Acceptance: migration
+  preserves radar.db (additive 002), duplicate job IDs rejected, killed-app
+  recovery, allowlisted+zod IPC.
+Deviations from spec: none yet.
+Open questions for Planner: none
+Next step: Create migration + jobs service + types, then handlers + api/ipc wiring,
+  register + index.ts startup hook, run typecheck/lint/tests, log DONE, commit [T1.4].
+
+### [T1.4] DONE - Persist research job lifecycle
+Timestamp: 2026-10-16T12:08:17Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - src/main/db/migrations/002_research_jobs.sql (new; additive, preserves radar.db)
+  - src/main/research/jobs.ts (new; JobService: create/claim/progress/complete/fail/cancel/pause/resume/interrupt + markRunningJobsInterrupted)
+  - src/main/research/jobs.test.ts (new; 13 tests)
+  - src/main/ipc/handlers/researchJobs.ts (new; research:jobs:* allowlisted+zod handlers)
+  - src/main/db/migrate.ts (edit; register migration 002)
+  - src/main/app/runtime.ts (edit; construct JobService + startup recovery hook)
+  - src/main/ipc/register.ts (edit; register researchJobsHandlers)
+  - src/shared/ipc.ts (edit; job channel schemas)
+  - src/shared/api.ts (edit; Job type + ApiMap entries)
+  - src/shared/types.ts (edit; JobStatus/Job/CreateJobInput types)
+  - tests/unit/db.test.ts (edit; schema version 1->2 for new migration)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.3] DONE)
+  - docs/07-phases-and-tasks.md T1.4
+  - docs/09-research-system.md sec 9.2, 9.8
+Summary: Implemented T1.4 per the card. research_jobs table holds queued/running/
+  paused/cancelled/interrupted/failed/completed states with timestamps, config
+  sha256, progress, result path and typed error; job_id is UNIQUE (duplicates
+  rejected with VALIDATION); illegal state transitions are rejected. JobService
+  owns all transitions; markRunningJobsInterrupted() runs at app start so a job
+  left running when killed is recovered as interrupted. All job control flows
+  through zod-validated allowlisted IPC channels (research:jobs:list/get/create/
+  claim/progress/complete/fail/cancel/pause/resume/interrupt), wired into
+  buildHandlers and the createRuntime composition root. Verified: typecheck
+  (node + web tsconfigs), eslint, jobs service unit tests (13/13), full suite
+  159/159 green. Updated tests/unit/db.test.ts schema-version assertion 1->2
+  (expected consequence of additive migration 002).
+Deviations from spec: none.
+Open questions for Planner: none
+Next step: T1.5 Remove real-money workflow and archive existing records per
+  docs/07 T1.5 (wallet/journal removal, Legacy Archive read-only route).

@@ -13,6 +13,7 @@ import type { PipelineCtx } from '../pipeline/context';
 import { LaunchBatcher } from '../ipc/events';
 import { JudgeRunner } from '../judge/runner';
 import { JournalService } from '../journal/service';
+import { JobService } from '../research/jobs';
 import { OpenRouterClient } from '../ai/openrouter';
 import { addUsage } from '../db/queries/usage';
 import { refreshSolUsd } from '../wallet/solUsd';
@@ -53,7 +54,10 @@ export function createRuntime(a: { db: Db; secrets: SecretStore; os: OsHooks; em
     writeExport: (name, content) => writeTextFile(dirs.exports, name, content),
     writeDiagnostics: () => writeDiagnostics(db, dirs.diag, now(), { version: a.os.version, sources: monitor.status() }),
   };
-  const services: Services = { db, settings, secrets: a.secrets, journal, judge, gt, rpc, scheduler, monitor, ai, platform, now, emit: a.emit, state: { selected: null }, counters };
+  const services: Services = { db, settings, secrets: a.secrets, journal, judge, jobs: new JobService(db, now), gt, rpc, scheduler, monitor, ai, platform, now, emit: a.emit, state: { selected: null }, counters };
+  // Startup recovery: any research job left running when the app was killed is
+  // marked interrupted so it can be re-claimed or retried (docs/09 sec 9.2).
+  services.jobs.markRunningJobsInterrupted();
   let solTimer: ReturnType<typeof setInterval> | null = null;
   const refreshSol = (): void => { void refreshSolUsd(db, gt, settings.get('wallet.solUsdPool')); };
   return {

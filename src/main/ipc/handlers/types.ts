@@ -7,6 +7,7 @@ import type { ApiMap, EventMap } from '../../../shared/api';
 import type { SettingsStore } from '../../settings/store';
 import type { SecretStore } from '../../settings/secrets';
 import type { JournalService } from '../../journal/service';
+import type { JobService } from '../../research/jobs';
 import type { JudgeRunner } from '../../judge/runner';
 import type { GeckoTerminalClient } from '../../sources/geckoterminal';
 import type { RpcLike } from '../../pipeline/context';
@@ -29,6 +30,7 @@ export interface Platform {
 
 export interface Services {
   db: Db; settings: SettingsStore; secrets: SecretStore; journal: JournalService; judge: JudgeRunner;
+  jobs: JobService;
   gt: Pick<GeckoTerminalClient, 'poolOhlcv'>; rpc: RpcLike; scheduler: Scheduler; monitor: SourceMonitor; ai: OpenRouterClient;
   platform: Platform; now: () => number;
   emit: <E extends keyof EventMap>(channel: E, payload: EventMap[E]) => void;
