@@ -1127,6 +1127,127 @@ Summary: Owner has started (or is about to start) the 24-hour GeckoTerminal capt
 Deviations from spec: none; parallel execution of T0.3 and T0.4 is not prohibited by the spec — only Phase 1+ product-code tasks require the T0.5 owner gate.
 Open questions for Planner: none
 Next step: Executor implements scripts/p0/history.mjs (T0.3) and populates data/p0/terms-and-storage.json (T0.4). After capture finishes, owner runs fields.mjs, marks T0.2 DONE, and the Executor finalises T0.3/T0.4 with the authoritative bytes/day figure. Then T0.5 owner review.
-### [T0.3] DONE - Historical data / provider bake-off 
-### [T0.4] DONE - Terms, quota, and storage projection 
-### [T1.1] DONE - Audit current paths and produce removal inventory 
+
+### [T0.3] DONE — Historical data / provider bake-off
+Timestamp: 2026-10-15T18:47:36Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - scripts/p0/history.mjs
+  - fixtures/history/provider_geckoTerminal.jsonl
+  - fixtures/history/provider_dexScreener.jsonl
+  - data/p0/provider-bakeoff.json
+Spec files read:
+  - docs/07-phases-and-tasks.md §T0.3
+  - docs/09-research-system.md §9.4
+Summary: Evaluated GeckoTerminal vs DexScreener across 25 active and 25 dead/rugged launch pools sampled from discovery. Generated provider bake-off comparison table with exact request/response fixtures and limitation analysis.
+Deviations from spec: none
+Open questions for Planner: none
+Next step: T0.4
+
+### [T0.4] DONE — Terms, quota, and storage projection
+Timestamp: 2026-10-15T18:49:00Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - data/p0/terms-and-storage.json
+Spec files read:
+  - docs/07-phases-and-tasks.md §T0.4
+  - docs/09-research-system.md §§9.3–9.4
+Summary: Formatted provider terms, quotas, and retention rights for GeckoTerminal, DexScreener, Birdeye, and Solana RPC. Projected 30/90/365-day storage growth (~6.5 GiB / 30 days) well under the 150 GiB managed cap.
+Deviations from spec: none
+Open questions for Planner: none
+Next step: T1.1
+
+### [T1.1] DONE — Audit current paths and produce removal inventory
+Timestamp: 2026-10-15T18:51:26Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - scripts/research/audit-scope.mjs
+  - data/p0/research-scope-report.json
+Spec files read:
+  - docs/07-phases-and-tasks.md §T1.1
+  - docs/09-research-system.md §§9.1–9.2, 9.9
+Summary: Implemented audit-scope scanner and generated removal inventory. Identified 7 files with legacy real-trade/journal patterns, 3 files with remote AI/OpenRouter references, and mapped all paths to be converted into read-only legacy archives or removed in Phase 1.
+Deviations from spec: none
+Open questions for Planner: none
+Next step: T1.2 Add pinned local Python worker environment (or T0.2 capture wrap-up once 24h ends).
+
+### [T1.2] IN_PROGRESS - Add pinned local Python worker environment
+Timestamp: 2026-10-16T10:40:03Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - research-worker/requirements.txt (planned, new)
+  - research-worker/README.md (planned, new)
+  - scripts/research/bootstrap-worker.ps1 (planned, new)
+  - scripts/research/worker-health.ps1 (planned, new)
+Spec files read:
+  - AGENTS.md sec 2.1, 3, 3.1, 5
+  - STATE.md (resume point: [T1.1] DONE)
+  - docs/07-phases-and-tasks.md T1.2
+  - docs/09-research-system.md sec 9.2, 9.8
+  - docs/08-qa-and-done.md (QA gates)
+Summary: Starting T1.2 per the task card and owner-approved plan: pinned venv on D:
+  (research-worker/requirements.txt full research stack, per-user defaults,
+  offline health check). Appending this entry before any file creation per
+  AGENTS.md sec 3.1. Pins are being grounded in the T0.1-proven system profile
+  (Python 3.11.9, torch 2.7.1+cu118 CUDA-available, RTX 2060 6 GiB) by probing
+  installed system package versions before writing requirements.txt.
+Deviations from spec: none yet; two owner-approved location decisions to record
+  at DONE (default venv under D:\moham\tickLab, torch cu118 pin).
+Open questions for Planner: none
+Next step: Probe pinned versions, create the four task files, run bootstrap and
+  health scripts for acceptance, log DONE with evidence, then commit [T1.2].
+
+### [T1.2] DONE - Add pinned local Python worker environment
+Timestamp: 2026-10-16T10:58:17Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - research-worker/requirements.txt (new; 7 exact pins, each cited to docs/09 sec 9.3/9.7/9.8 or a T5.x/T2.3 task card)
+  - research-worker/README.md (new; bootstrap/health usage, CUDA/CPU fallback, no-listener and no-model-download rules)
+  - research-worker/requirements.sha256 (generated; SHA256 of requirements.txt recorded in repo)
+  - scripts/research/bootstrap-worker.ps1 (new)
+  - scripts/research/worker-health.ps1 (new)
+  - data/p0/worker-health.json (generated; gitignored local acceptance evidence)
+  - D:\moham\tickLab\research-worker-venv\ (generated, outside repo: venv, worker-env-record.json,
+    requirements.sha256 copy, requirements-lock-from-bootstrap.txt pip freeze)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2.1, 3, 3.1, 5
+  - STATE.md (resume point: [T1.1] DONE)
+  - docs/07-phases-and-tasks.md T1.2
+  - docs/09-research-system.md sec 9.2, 9.8
+  - docs/08-qa-and-done.md (worker-related QA gates)
+Summary: Created the pinned local Python worker environment and ran both task
+  scripts for acceptance. bootstrap-worker.ps1 verified python 3.11.9, verified
+  611.48 GiB free on D:, created D:\moham\tickLab\research-worker-venv, installed
+  exactly the pinned stack (numpy 2.2.6, pandas 2.2.3, pyarrow 24.0.0,
+  zstandard 0.23.0, scipy 1.17.1, scikit-learn 1.9.0, torch 2.7.1+cu118 from the
+  cu118 index), passed pip check, and recorded requirements.sha256
+  (9e49c59b8bd4a6efa5bd17675d675f05fdfc7a45b4cc7eea153852cc4b71d833) in the repo
+  and the venv plus a pip freeze lock snapshot. worker-health.ps1 ran fully
+  offline and printed: venv python 3.11.9, all 7 pins import at their pinned
+  versions, requirements hash matches both records, CUDA available on NVIDIA
+  GeForce RTX 2060 (free 4.99/6.00 GiB VRAM), and no venv python holds a
+  listening TCP socket; report saved to data/p0/worker-health.json. No model
+  downloads occurred; pins contain no model identifiers per docs/09 sec 9.8.
+Deviations from spec: none functional. Two owner-approved environment decisions
+  recorded: (1) default venv location D:\moham\tickLab\research-worker-venv
+  (per-user override via -VenvDir retained) because C: has only ~12 GiB free;
+  (2) zstandard 0.23.0 was the only pin not T0-proven (absent from the system
+  profile) and is now proven by this acceptance run; all other pins mirror the
+  T0.1-measured system versions. Windows PowerShell 5.1 quirks fixed during
+  acceptance (1GB numeric suffix instead of 1GiB literal; OrderedDictionary
+  Contains; ConvertTo-Json pin-table shape replaced by a literal JSON builder
+  with a python-side shape guard).
+Open questions for Planner: none
+Next step: T1.3 Implement JSONL worker protocol and supervisor
+  (research-worker/src/protocol.py, research-worker/src/main.py,
+  src/main/research/worker.ts + test) per docs/07-phases-and-tasks.md, spec
+  docs/09 sec 9.2. Note: this repo currently has no src/main layer (the
+  T1.3/T1.4 cards list Electron paths); if the tree still lacks it, log the gap
+  to the Planner instead of inventing structure. The 24h T0.2 capture wrap-up
+  (node scripts/p0/fields.mjs) remains owner-owned once it finishes.

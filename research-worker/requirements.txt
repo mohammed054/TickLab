@@ -1,0 +1,56 @@
+# research-worker/requirements.txt -- T1.2 pinned local Python worker environment
+#
+# Python target: 3.11.x (T0.1 measured 3.11.9 on this machine; the bootstrap
+# script refuses any other major.minor).
+#
+# Pin provenance: versions marked [T0] were verified installed and importable on
+# this machine under Python 3.11.9 per data/p0/system.json (captured
+# 2026-10-15) and the global torch build is the same one whose CUDA runtime was
+# measured available there. zstandard is not installed in the system profile
+# today and is therefore [pin] only; the bootstrap + offline health check below
+# prove it on first run.
+#
+# Why each direct dependency exists (docs/09-research-system.md):
+#   pyarrow, zstandard -> sec 9.3 normalized store: date-partitioned Parquet
+#                         written with Zstandard compression (built exactly in
+#                         task T2.3).
+#   numpy, pandas      -> sec 9.7 point-in-time feature/label builders and the
+#                         deterministic event-driven backtester (tasks T5.1-T5.4).
+#   scipy              -> required by scikit-learn and used by the tabular model
+#                         ladder; already importable in the T0 profile.
+#   scikit-learn       -> sec 9.8 model ladder step 2: interpretable tabular
+#                         models over point-in-time features.
+#   torch              -> sec 9.8 model ladder step 3: sequence models (Kronos
+#                         and friends) on OHLCV inputs.
+#
+# Model identifiers and model weights are deliberately NOT pinned here.
+# docs/09 sec 9.8: model candidates are not installed until their task card
+# pins them, and no model download happens at app startup or bootstrap.
+# Adding a model dependency later returns a new card, not a guess.
+#
+# Network note (docs/09 sec 9.2): the *worker* has no general network access
+# and binds no listening socket. This pin file is only read once by
+# bootstrap-worker.ps1, which is a one-time, owner-invoked setup step that is
+# allowed to reach package registries (PyPI + the PyTorch CUDA wheel index).
+# Everything after bootstrap runs offline.
+
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+numpy==2.2.6
+
+pandas==2.2.3
+
+pyarrow==24.0.0
+
+# [pin] absent from the T0.1 system profile; first proven by the T1.2
+# acceptance run. Used from task T2.3 onward for Parquet compression.
+zstandard==0.23.0
+
+scipy==1.17.1
+
+scikit-learn==1.9.0
+
+# [T0] Exact build measured working on this machine: T0.1 recorded
+# torch 2.7.1+cu118 with cudaAvailable=true (driver CUDA 13.3 UMD, RTX 2060).
+# On a host without an NVIDIA GPU the same wheels run on CPU; see README.md.
+torch==2.7.1+cu118
