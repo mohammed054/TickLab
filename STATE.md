@@ -1251,3 +1251,50 @@ Next step: T1.3 Implement JSONL worker protocol and supervisor
   T1.3/T1.4 cards list Electron paths); if the tree still lacks it, log the gap
   to the Planner instead of inventing structure. The 24h T0.2 capture wrap-up
   (node scripts/p0/fields.mjs) remains owner-owned once it finishes.
+
+### [T1.3] IN_PROGRESS - Implement JSONL worker protocol and supervisor
+Timestamp: 2026-10-16T11:34:06Z
+Agent: opencode (Executor)
+Status: IN_PROGRESS
+Files touched:
+  - research-worker/src/protocol.py (planned, new)
+  - research-worker/src/main.py (planned, new)
+  - src/main/research/worker.ts (planned, new)
+  - src/main/research/worker.test.ts (planned, new)
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.2] DONE)
+  - docs/07-phases-and-tasks.md T1.3
+  - docs/09-research-system.md sec 9.2
+  - docs/08-qa-and-done.md S9, S16, 8.5
+Summary: Implementing T1.3 per card: Python JSONL protocol module + worker main
+  (stdin commands, stdout protocol-only, stderr logs, 1 MiB bound, SIGTERM
+  handling), plus the Electron-main supervisor (spawn, in-flight IDs, duplicate
+  rejection, 1 MiB enforcement, graceful/forced stop) and its vitest suite.
+  Tests run via direct vitest path since vitest include is tests/unit/**; the
+  file is typechecked under tsconfig.node.json src/main/**/*.
+Deviations from spec: none yet.
+Open questions for Planner: none
+Next step: Create the four files, run typecheck/lint, run worker.test.ts,
+  smoke-test the real Python worker end-to-end, log DONE, commit [T1.3].
+
+### [T1.3] DONE - Implement JSONL worker protocol and supervisor
+Timestamp: 2026-10-16T12:00:25Z
+Agent: opencode (Executor)
+Status: DONE
+Files touched:
+  - research-worker/src/protocol.py (new; JSONL encode/decode, 1 MiB response bound, stdout=protocol-only, stderr=logs)
+  - research-worker/src/main.py (new; worker entry: stdin command loop, ping/echo/health/compute commands, typed errors incl. UNKNOWN_COMMAND/RESPONSE_TOO_LARGE/WORKER_CRASH, progress events, SIGTERM handling, crash-stays-alive)
+  - src/main/research/worker.ts (new; Electron-main supervisor: spawn, JSONL framing, in-flight IDs, duplicate-ID rejection, 1 MiB bound, SIGTERM graceful + SIGKILL forced stop, no-listener spawn args, main-process-only guard)
+  - src/main/research/worker.test.ts (new; 12 tests: success, unknown command, malformed JSON, mismatched ID, 1 MiB oversize, crash/interrupted, progress events, no TCP/HTTP socket, renderer-cannot-spawn, graceful + forced stop)
+  - STATE.md
+Spec files read:
+  - AGENTS.md sec 2, 3, 5
+  - STATE.md (resume point: [T1.2] DONE)
+  - docs/07-phases-and-tasks.md T1.3
+  - docs/09-research-system.md sec 9.2
+  - docs/08-qa-and-done.md S9, S16
+Summary: Implemented T1.3 per the card. The Python worker speaks one JSON object per line on stdin/stdout (requests {id,command,payload}, responses {id,ok,result|error}, progress {event:progress,...}); stdout is protocol-only, logs go to stderr, responses are bounded to 1 MiB, and crashes surface as typed WORKER_CRASH errors while the worker stays alive. The Electron-main supervisor spawns <venv python> research-worker/src/main.py with stdio pipes only (no TCP/HTTP arguments), owns request/response matching, rejects duplicate in-flight IDs and malformed/oversized output, and stops with SIGTERM then SIGKILL after a 10 s graceful window. spawn() asserts an Electron main process so the renderer can never spawn the worker. Verified: typecheck (tsconfig.node.json + web), eslint, the real Python worker end-to-end (ping / unknown command / compute with progress / SIGTERM), and all 12 supervisor unit tests pass; full suite 159/159 green.
+Deviations from spec: none. The vitest include is tests/unit/**, so worker.test.ts lives at the card-specified src/main/research/worker.test.ts and is run via a direct vitest path for acceptance; it is typechecked under tsconfig.node.json src/main/**/*. Two test-design fixes logged: progress/duplicate tests emit on the correct child process, and rejection handlers are attached before stopping to avoid unhandled-rejection races.
+Open questions for Planner: none
+Next step: T1.4 Persist research job lifecycle (migrations/002_research_jobs.sql, src/main/research/jobs.ts + test, src/main/ipc/handlers/researchJobs.ts, src/shared/api.ts) per docs/07 T1.4, spec docs/09 sec 9.2/9.8. Note the repo's db layer lives under src/main/db — confirm the migration layout (001 exists?) before writing 002.
