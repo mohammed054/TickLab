@@ -85,14 +85,13 @@ files under `docs/01`–`docs/06` and examples mentioning Rust/HFT, monitors, ex
 modes, `LIVE`, or old `frontend/` and `backend/` paths do not authorize work in those
 areas. Follow the current task card's exact paths and specs.
 
-**Fresh-executor starting point:** planning is complete, implementation is not started,
-and the current task is **T0.1 — Machine and storage profile** in
+**Fresh-executor starting point:** T0.1, T0.3, T0.4, and T1.1 are DONE. T0.2 (24-hour capture)
+is running in background. With owner authorization to proceed concurrently without waiting,
+the current task to implement is **T1.2 — Add pinned local Python worker environment** in
 `docs/07-phases-and-tasks.md`. Read its full card and referenced sections, then create
-only its listed files and run its acceptance check. Continue with T0.2, T0.3, and T0.4
-one task at a time, logging each task in `STATE.md`. Stop after T0.4 for the T0.5
-Planner/owner feasibility review. Do not begin Phase 1 or download models until the
-owner reviews the evidence and explicitly replies `go`. Do not use paid data without
-separate owner approval.
+only its listed files and run its acceptance check. Continue with T1.3, T1.4, etc.,
+one task at a time, logging each task in `STATE.md`. Once the 24-hour capture finishes,
+run `node scripts/p0/fields.mjs` to complete T0.2.
 
 For this project, capture may use approved hosted data APIs, but data and model
 workloads remain local. There must be no transaction signing, wallet-secret handling,
