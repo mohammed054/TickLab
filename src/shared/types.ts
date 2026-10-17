@@ -133,3 +133,29 @@ export interface Job {
   pid: number | null; attempts: number;
 }
 export interface CreateJobInput { jobId: string; command: string; payload: unknown; }
+
+// ===== Research file catalog (docs/07 T2.1, docs/09 sec 9.3 and 9.5) =====
+export type DataLayer = 'raw' | 'normalized';
+export type DataFileFormat = 'jsonl.gz' | 'parquet';
+/** Catalog row for one immutable data file. `path` is relative to <userData>/research/ and uses '/'. */
+export interface DataFile {
+  id: number; path: string; layer: DataLayer; sourceId: string | null; entity: string | null;
+  partitionKey: string; schemaVersion: string; format: DataFileFormat;
+  byteSize: number; rowCount: number; sha256: string;
+  timeStart: number; timeEnd: number; registeredAt: number;
+}
+export type RegisterDataFileInput = Omit<DataFile, 'id' | 'registeredAt'>;
+export interface SourceManifest {
+  id: number; sourceId: string; partitionKey: string; manifestSha256: string;
+  fileCount: number; totalBytes: number; createdAt: number;
+}
+export interface DatasetVersion {
+  id: number; versionId: string; fingerprint: string; entity: string;
+  normalizerVersion: string; schemaVersion: string;
+  fileCount: number; rowCount: number; totalBytes: number;
+  timeStart: number; timeEnd: number; createdAt: number;
+}
+export interface RegisterDatasetVersionInput {
+  entity: string; normalizerVersion: string; schemaVersion: string; filePaths: string[];
+}
+export interface RegisterSourceManifestInput { sourceId: string; partitionKey: string; filePaths: string[] }

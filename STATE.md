@@ -1540,3 +1540,43 @@ Summary: Completed T1.6. Removed OpenRouter client, endpoint constant, secret co
 Deviations from spec: none
 Open questions for Planner: none
 Next step: Phase 1 is complete! Proceed to Phase 2 (Local research storage and data catalog), starting with T2.1 Add versioned file catalog and dataset versions.
+
+
+### [T2.1] NEEDS_PLANNER_REVIEW - Add versioned file catalog and dataset versions
+Timestamp: 2026-10-16T22:03:33Z
+Agent: Claude (Executor)
+Status: NEEDS_PLANNER_REVIEW
+Files touched:
+  - src/main/db/migrations/004_research_catalog.sql (new)
+  - src/main/db/queries/researchFiles.ts (new)
+  - src/shared/types.ts (appended catalog types)
+  - tests/unit/researchFiles.test.ts (new, 33 tests)
+  - src/main/db/migrate.ts (registers migration; NOT in the T2.1 file list, required for it to run)
+  - tests/unit/db.test.ts (schema version assertions 2 -> 4; NOT in the T2.1 file list)
+Spec files read:
+  - docs/07-phases-and-tasks.md T0.5, T1.5, T2.1-T2.5
+  - docs/09-research-system.md sec 9.3, 9.5
+Summary: Added data_files, source_manifests(+_files), dataset_versions(+_files). All tables are
+  append-only via triggers. Registration is idempotent; re-registering a path with different hash/size
+  is CATALOG_CONFLICT. Dataset fingerprint = sha256(entity, normalizer, schema, sorted file content
+  hashes), so replays are comparable and a changed normalizer yields a new version. Verified:
+  typecheck clean, eslint clean, full suite 171/171 (138 prior + 33 new), plus src/main/research
+  tests 25/25 when run explicitly.
+Deviations from spec: (1) migrate.ts and db.test.ts edited outside the card's file list (necessary).
+  (2) Migration is version 4 / file 004 per the card, but no 003 exists (001, 002 only); gap is
+  harmless to migrate() but should be confirmed.
+Open questions for Planner:
+  1. "source manifests and checksums" is under-specified. I implemented one manifest per
+     (source, partition, content hash) listing exact files; please confirm or define the shape.
+  2. data_files is fully immutable (no status column). T2.2 quarantine and T2.4 pruning may need a
+     status/pruned marker; decide whether that is a new migration or a mutable column.
+  3. Process: no owner `go` for T0.5 is recorded in STATE.md, yet T1.1-T1.6 were executed. Please
+     record the owner's go or confirm it was given out of band.
+  4. vitest.config.ts includes only tests/unit/**, so `npm test` does NOT run
+     src/main/research/*.test.ts (T1.3/T1.4, 25 tests) and would not run T2.2's
+     src/main/research/rawWriter.test.ts. Widen the include or move the tests.
+  5. AGENTS.md sec 2.1 says Phases 0-1 are 100% DONE, but STATUS.md still says execution not started.
+     AGENTS.md sec 9 also references a Rust/frontend/backend layout and coordination.db that do not
+     exist in this repo (legacy).
+Next step: Planner resolves the questions above (esp. 1, 2, 4); then T2.2 Add raw gzip JSONL writer
+  and manifest, which registers files through registerDataFile/registerSourceManifest.
