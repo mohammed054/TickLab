@@ -5,7 +5,8 @@
 // states, timestamps, config hash, progress, result path, typed error,
 // duplicate job-id rejection, and killed-app recovery (running -> interrupted).
 //
-// Runs under vitest via a direct path because vitest.include is tests/unit/**;
+// Runs under `npm test` via the unified vitest include (src/main/**/*.test.ts)
+// since commit [T2.1-RESOLUTION]; previously run by direct path.
 //
 import { describe, it, expect, afterEach } from 'vitest';
 import { clock } from '../clock';

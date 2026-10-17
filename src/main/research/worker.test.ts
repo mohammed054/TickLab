@@ -5,7 +5,8 @@
 // oversized output, crash, graceful stop and forced stop; the worker binds no
 // TCP/HTTP socket; the renderer cannot spawn it.
 //
-// Runs under vitest via a direct path because vitest.include is tests/unit/**;
+// Runs under `npm test` via the unified vitest include (src/main/**/*.test.ts)
+// since commit [T2.1-RESOLUTION]; previously run by direct path.
 //
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'node:child_process';

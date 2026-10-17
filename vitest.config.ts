@@ -4,8 +4,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: { alias: { '@shared': resolve('src/shared') } },
   test: {
-    include: ['tests/unit/**/*.test.{ts,tsx}'],
+    include: ['tests/unit/**/*.test.{ts,tsx}', 'src/main/**/*.test.{ts,tsx}'],
     environment: 'node',
-    environmentMatchGlobs: [['tests/unit/**/*.dom.test.tsx', 'jsdom']],
+    environmentMatchGlobs: [
+      ['tests/unit/**/*.dom.test.tsx', 'jsdom'],
+      ['src/main/**/*.dom.test.tsx', 'jsdom'],
+    ],
   },
 });

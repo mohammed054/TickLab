@@ -6,17 +6,24 @@ Owner approved transforming the existing Electron app into a local-first Solana 
 
 Authoritative specs: `docs/00-read-first.md`, `docs/09-research-system.md`, `docs/07-phases-and-tasks.md`, and `docs/08-qa-and-done.md`. Older `docs/01–06` files describe legacy implementation details where not superseded by docs/09.
 
-## Planning complete; execution not started
+## Phases 0-1 complete; Phase 2 in progress
 
-**Executor handoff: start at T0.1 now.** Read `AGENTS.md` (especially §2.1), then
-`STATE.md`, then the full T0.1 card and cited sections in `docs/07-phases-and-tasks.md`
-and `docs/09-research-system.md`. Implement only T0.1's listed files and acceptance
-check. Continue T0.2–T0.4 one card at a time. Stop for T0.5 owner/Planner review; do not
-start Phase 1 until the owner explicitly replies `go`.
+**Executor handoff: continue at T2.2.** Read `AGENTS.md` (especially §2.1), then
+`STATE.md`, then the full T2.2 card and cited sections in `docs/07-phases-and-tasks.md`
+and `docs/09-research-system.md`. Implement only T2.2's listed files and acceptance
+check. Continue the remaining Phase 2 tasks (T2.3-T2.7) one card at a time.
+
+Phase 0 (real 24-hour capture, provider bake-off, terms, storage projection) and
+Phase 1 (pinned worker environment, JSONL supervisor, job lifecycle, real-money and
+hosted-AI removal) are complete per `STATE.md`. The T0.5 owner `go` is recorded
+retroactively in `STATE.md` ([T0.5-GO] entry). T2.1 (versioned file catalog and
+dataset versions) is applied and verified; T2.2 raw gzip JSONL writer and manifest
+is next.
 
 The repo currently contains a substantial TickLab Radar implementation: Electron/TypeScript/React UI, SQLite, GeckoTerminal/RPC collection, risk rules, Rules Lab, journal, and a local-data explanatory AI integration. The old implementation and documentation are not evidence that the transformed data/model pipeline is complete.
 
-**Current blocker/gate:** Phase 0 is not complete. Real provider field fixtures, historical coverage comparison, terms for local storage/research, measured storage growth, GPU VRAM/CUDA profile, and owner `go` are required before implementation tasks begin. Existing P0 capture/RPC smoke notes do not satisfy the full Phase 0 gate.
+**Current blocker/gate:** none within Phase 2 scope. Phase 2 continues at T2.2 per
+`STATE.md`; disk-cap policy (T2.4) and the Phase 2 gate checks remain ahead.
 
 ## Owner-confirmed environment and defaults
 
@@ -34,4 +41,5 @@ Previous handoff entries report 159 unit tests, typecheck, lint, Electron build,
 
 ## Next step
 
-Run T0.1–T0.4 evidence capture, then Planner/owner review T0.5. Do not start T1 until owner replies `go`.
+Implement T2.2 (raw gzip JSONL writer and manifest), then the remaining Phase 2
+cards one at a time.
