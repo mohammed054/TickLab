@@ -62,7 +62,7 @@ def _reader() -> None:
 
 threading.Thread(target=_reader, daemon=True).start()
 
-COMMANDS = frozenset({"ping", "echo", "compute", "health"})
+COMMANDS = frozenset({"ping", "echo", "compute", "health", "normalize"})
 
 
 def cmd_ping(payload: object) -> dict:
@@ -111,7 +111,31 @@ def cmd_compute(payload: object) -> dict:
     return result
 
 
+def cmd_normalize(payload: object) -> dict:
+    """Raw catalogued files -> normalized Parquet (docs/07 T2.3). Imported lazily so the
+    worker still starts if the storage stack is not importable; provider normalizers
+    register themselves in storage.catalog when their task cards land (T3.x)."""
+    if not isinstance(payload, dict):
+        raise WorkerError("VALIDATION", "normalize payload must be an object")
+    root, name = payload.get("root"), payload.get("normalizer")
+    if not isinstance(root, str) or not root or not os.path.isabs(root):
+        raise WorkerError("VALIDATION", "root must be an absolute path")
+    if not isinstance(name, str) or not name:
+        raise WorkerError("VALIDATION", "normalizer must be a non-empty string")
+    target = payload.get("targetBytes")
+    if target is not None and (not isinstance(target, int) or isinstance(target, bool) or target <= 0):
+        raise WorkerError("VALIDATION", "targetBytes must be a positive integer")
+    from storage.catalog import normalize_raw  # noqa: E402
+    from storage.parquet import DEFAULT_TARGET_BYTES, StorageError  # noqa: E402
+
+    try:
+        return normalize_raw(root, payload.get("inputs"), name, target if target is not None else DEFAULT_TARGET_BYTES)
+    except StorageError as exc:
+        raise WorkerError(exc.code, exc.message) from exc
+
+
 _COMMANDS = {
+    "normalize": cmd_normalize,
     "ping": cmd_ping,
     "echo": cmd_echo,
     "health": cmd_health,

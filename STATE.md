@@ -1614,3 +1614,78 @@ Summary: Owner instructed the applied T2.1 zip work to be implemented and pushed
 Deviations from spec: none
 Open questions for Planner: none
 Next step: Continue Phase 2 at T2.2 per [T2.1-RESOLUTION].
+
+
+### [T2.2] DONE - Add raw gzip JSONL writer and manifest
+Timestamp: 2026-10-16T22:13:33Z
+Agent: Claude (Executor)
+Status: DONE
+Files touched:
+  - src/main/research/rawWriter.ts (new)
+  - src/main/research/rawWriter.test.ts (new, 17 tests)
+  - src/main/research/manifest.ts (new)
+  - vitest.config.ts (include widened to src/main/research/**/*.test.ts; NOT in the card's file list)
+Spec files read:
+  - docs/07-phases-and-tasks.md T2.2
+  - docs/09-research-system.md sec 9.3
+Summary: RawWriter appends one envelope per line (source, endpointId, requestId, requestAt, responseAt,
+  httpStatus, bodySha256, schemaVersion, exact body) to raw/provider=<id>/date=YYYY-MM-DD/hour=HH/part-NNNN.jsonl.gz.partial
+  (UTC hour from responseAt). It rotates on hour change, schema-version change, or 64 MiB uncompressed,
+  then fsyncs, renames to .jsonl.gz, hashes and registers the file in the T2.1 catalog. Unknown envelope
+  fields (headers, authorization, api keys) are rejected, and endpointId/requestId must be plain ids, so
+  URLs with query-string keys cannot be recorded. recover() promotes fully valid .partial files,
+  registers finalized-but-uncatalogued files, and moves anything invalid to <root>/quarantine/ with a
+  reason sidecar (bytes preserved, nothing deleted). manifest.ts writes/registers per-partition manifests
+  (manifest-<hash12>.json + source_manifests row) and verifies files against the catalog
+  (missing / size_mismatch / hash_mismatch). Verified: 17 new tests (rotation, restart recovery,
+  quarantine, hash verification, secret exclusion, immutability) in temp dirs.
+Deviations from spec: (1) vitest.config.ts edited so `npm test` runs src/main/research tests (resolves
+  open question 4 from T2.1). (2) Each envelope is its own gzip member (valid concatenated gzip) so a
+  kill leaves a recoverable file; this compresses slightly worse than one stream per file. (3) Writer is
+  not yet wired into runtime.ts or settings (no card assigns that); no disk-cap logic (T2.4).
+Open questions for Planner: (a) recover() quarantines a whole damaged file rather than salvaging its
+  valid prefix, because salvage would modify raw data; confirm that is the intended policy.
+  (b) Should hour partitioning use responseAt (used here, = availableAt) or requestAt?
+Next step: T2.3 (done below), then T2.4 storage budget.
+
+### [T2.3] NEEDS_PLANNER_REVIEW - Add normalized Parquet writer/reader
+Timestamp: 2026-10-16T22:13:33Z
+Agent: Claude (Executor)
+Status: NEEDS_PLANNER_REVIEW
+Files touched:
+  - research-worker/src/storage/parquet.py (new)
+  - research-worker/src/storage/catalog.py (new)
+  - research-worker/tests/test_storage.py (new, 32 tests)
+  - src/main/research/datasets.ts (new)
+  - src/main/research/datasets.test.ts (new, 15 tests; NOT in the card's file list)
+  - research-worker/src/main.py (added `normalize` command; NOT in the card's file list)
+Spec files read:
+  - docs/07-phases-and-tasks.md T2.3
+  - docs/09-research-system.md sec 9.3, 9.4, 9.5
+  - research-worker/requirements.txt, src/main.py, src/protocol.py; src/main/research/worker.ts
+Summary: Schemas launch.v1, trade.v1, snapshot.v1 follow the docs/09 sec 9.5 entity tables. write_rows()
+  validates everything before touching disk (unknown schema, unknown/missing column, null in required
+  column, float/bool/overflow int64, NaN/inf, bad enum, duplicate key), sorts deterministically, partitions
+  by UTC date, writes Zstandard Parquet rotated below a 128 MiB target (footer-aware), and names files by
+  content hash so nothing is ever overwritten. read_table() refuses files whose embedded entity/schema
+  version or column layout is not exactly a registered schema. catalog.py verifies raw files (size, sha256,
+  per-envelope bodySha256, row count) before any output and drives registered, versioned Normalizers.
+  datasets.ts sends catalogued raw files to the worker, re-hashes every reported output file, then registers
+  files + an immutable dataset version in one transaction. Verified: pytest 32/32; vitest 228/228;
+  typecheck and eslint clean; plus a throwaway end-to-end run (TS RawWriter -> real Python worker over
+  JSONL -> catalog; replay returned the same version; unknown normalizer gave a typed error), since removed.
+Deviations from spec: (1) main.py and datasets.test.ts are outside the card's file list (needed to call
+  the worker / to test datasets.ts). (2) No provider normalizers: docs/build-spec/FIELDS.md still reads
+  "NOT VERIFIED/TODO", so provider fields cannot be mapped yet; they register via register_normalizer in T3.x.
+  (3) pytest is not in requirements.txt (pins are Planner-owned) and was run on Python 3.12 in a scratch
+  venv, not the pinned 3.11.
+Open questions for Planner (assumptions that affect data shape; please confirm or correct):
+  1. Column types: timestamps int64 epoch ms; amounts/prices float64 (nullable where docs/09 has '?').
+     Token raw amounts may exceed float64 precision; should amounts be decimal strings?
+  2. Snapshot: docs/09 says "volume/trade/buyer windows" and "reserves?" without names. I assumed windows
+     M1,M5,H1,H6,H24 x (volumeUsd, buys, sells, buyers, sellers, changePct) and reservesBase/reservesQuote,
+     all nullable. Define the real set.
+  3. Partition time column: eventAt for trade/snapshot, firstSeenAt for launch (Launch has no eventAt).
+  4. Add pytest to requirements.txt (with a new sha256) or choose another Python test runner.
+  5. FIELDS.md, P0-REPORT.md, P0-TERMS.md still say TODO although T0 is marked DONE; T0.5 owner go still unrecorded.
+Next step: Planner resolves the questions above; then T2.4 Enforce disk cap and cleanup policy.
