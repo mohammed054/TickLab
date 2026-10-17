@@ -102,19 +102,25 @@ export interface RecoveryReport {
   registered: string[];     // finalized files that were missing from the catalog
   quarantined: { path: string; reason: string; quarantinePath: string }[];
 }
-export interface RawWriterOptions { root: string; db: Db; now?: () => number; maxUncompressedBytes?: number }
+export interface RawWriterOptions {
+  root: string; db: Db; now?: () => number; maxUncompressedBytes?: number;
+  /** Optional storage gate (T2.4). When it denies, open files are finalized and the append is refused; nothing is dropped silently. */
+  writeGate?: () => { allowed: boolean; reason?: string };
+}
 
 export class RawWriter {
   private readonly root: string;
   private readonly db: Db;
   private readonly now: () => number;
   private readonly max: number;
+  private readonly gate?: () => { allowed: boolean; reason?: string };
   private readonly active = new Map<string, Active>();
   private readonly pendingManifests = new Map<string, { source: string; partitionKey: string }>();
 
   constructor(o: RawWriterOptions) {
     this.root = o.root; this.db = o.db; this.now = o.now ?? (() => clock.now());
     this.max = o.maxUncompressedBytes ?? RAW_MAX_UNCOMPRESSED_BYTES;
+    this.gate = o.writeGate;
   }
 
   /** Appends one envelope, rotating first if the hour, schema version, or size limit requires it. */
@@ -122,6 +128,14 @@ export class RawWriter {
     const v = validateEnvelope(input);
     if (!v.ok) return v;
     const e = v.value;
+    if (this.gate) {
+      const g = this.gate();
+      if (!g.allowed) { // safe stop: close what is open so no half-written file lingers, then refuse
+        const c = this.close();
+        if (!c.ok) return c;
+        return err('RAW_PAUSED_STORAGE', g.reason ?? 'raw writes are paused by the storage cap');
+      }
+    }
     const pk = partitionKeyFor(e.source, e.responseAt);
     const line = `${JSON.stringify({
       source: e.source, endpointId: e.endpointId, requestId: e.requestId, requestAt: e.requestAt,

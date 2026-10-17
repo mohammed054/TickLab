@@ -7,9 +7,10 @@ import { launchHandlers } from './handlers/launches';
 import { journalHandlers } from './handlers/journal';
 import { miscHandlers } from './handlers/misc';
 import { researchJobsHandlers } from './handlers/researchJobs';
+import { researchStorageHandlers } from './handlers/researchStorage';
 
 export function buildHandlers(s: Services): Handlers {
-  return { ...launchHandlers(s), ...journalHandlers(s), ...miscHandlers(s), ...researchJobsHandlers(s) };
+  return { ...launchHandlers(s), ...journalHandlers(s), ...miscHandlers(s), ...researchJobsHandlers(s), ...researchStorageHandlers(s) };
 }
 
 export type Dispatch = (channel: string, payload: unknown) => Promise<Result<unknown>>;

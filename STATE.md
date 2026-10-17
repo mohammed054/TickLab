@@ -1689,3 +1689,59 @@ Open questions for Planner (assumptions that affect data shape; please confirm o
   4. Add pytest to requirements.txt (with a new sha256) or choose another Python test runner.
   5. FIELDS.md, P0-REPORT.md, P0-TERMS.md still say TODO although T0 is marked DONE; T0.5 owner go still unrecorded.
 Next step: Planner resolves the questions above; then T2.4 Enforce disk cap and cleanup policy.
+
+
+### [T2.4] DONE - Enforce disk cap and cleanup policy
+Timestamp: 2026-10-17T19:23:58Z
+Agent: Claude (Executor)
+Status: DONE
+Files touched:
+  - src/main/research/storageBudget.ts (new)
+  - src/main/research/storageBudget.test.ts (new, 19 tests)
+  - src/main/research/storageCleanup.test.ts (new, 9 tests; split out for the 300-line lint cap)
+  - src/main/settings/defaults.ts (5 research.* keys)
+  - src/main/ipc/handlers/researchStorage.ts (new; the card's src/main/ipc/handlers/settings.ts does not exist, settings:* live in misc.ts)
+  Outside the card's file list, all required to wire it:
+  - src/main/settings/store.ts (zod schemas for the new keys; the schema map must cover every key)
+  - src/shared/ipc.ts, src/shared/api.ts, src/shared/types.ts (two read-only channels + StorageStatus/CleanupPreview types)
+  - src/main/ipc/handlers/types.ts, src/main/ipc/register.ts (Services.storage + handler registration)
+  - src/main/app/runtime.ts (builds StorageBudget with the real disk meter; refreshes at start and every 5 min; timer cleared in stop())
+  - src/main/research/rawWriter.ts (optional writeGate option)
+Spec files read:
+  - docs/07-phases-and-tasks.md T2.4, T2.5, Phase 2 gate
+  - docs/09-research-system.md sec 9.3
+Summary: Default cap 150 GiB (research.storageCapGiB), 50 GiB kept free outside (research.minFreeOutsideGiB).
+  States by percent of the effective cap: ok < 80; warning >= 80 (persistent warning text + time-to-cap
+  estimate from recent growth); deep_paused >= 90 (deep capture and model-artifact duplication blocked, raw
+  writes continue); raw_paused >= 95 (raw writes blocked, one `storage_cap` gap persisted in `gaps`
+  with source 'research', extended while paused and closed with resolved=1 on resume, adopted rather than
+  duplicated after a restart, critical alert event). Effective cap = min(cap, used + free - reserve), so the
+  cap is never read as drive capacity. RawWriter accepts writeGate; when denied it finalizes open files
+  (nothing half-written, nothing dropped silently) and returns RAW_PAUSED_STORAGE. allow() fails closed until
+  usage is first measured. Cleanup is PREVIEW ONLY: research.cleanup.enabled defaults to false and then
+  proposes nothing; when enabled it lists OLDEST raw files first, only files older than minRawAgeDays whose
+  manifest is retained (optionally re-hashed against disk), and never normalized data, runs/, or quarantine/.
+  The module has no delete/rename/write code, and a test fails if one is added. IPC: research:storage:status
+  and research:storage:cleanupPreview (read-only; no channel can delete research data).
+  Verified: vitest 256/256 (28 new), pytest 32/32, typecheck and eslint clean. Tests use a fake disk meter and
+  also run the real meter plus every state over a seeded temp dir and assert it is byte-identical afterwards.
+Deviations from spec: (1) files outside the card list (above). (2) The card's handlers/settings.ts was replaced
+  by handlers/researchStorage.ts. (3) No pruning executor exists; the card asks for policy, gap and preview
+  only, and docs/09 requires a separately configured job that verifies hashes and retains manifests.
+Assumptions to confirm (non-blocking): (a) 2-point hysteresis before leaving a state (HYSTERESIS_PCT), so
+  usage hovering at 95% does not flap or spawn many gaps. (b) Cleanup defaults: targetPercent 70 (settable
+  10-79, since >= 80 would immediately re-trigger the warning), minRawAgeDays 14. (c) The 50 GiB reserve is
+  enforced on the volume holding <userData>/research. (d) Raw-layer files are sorted by timeStart for "oldest first".
+Open questions for Planner:
+  1. At raw_paused should T2.3 normalization (derived writes from existing raw) also be blocked? docs/09 says
+     only "new raw writes"; datasets.ts is currently NOT gated.
+  2. The persistent 80% warning and the 95% alert are exposed via status/log only. There is no renderer event
+     channel or UI banner yet; which task owns that (Data Health UI, docs/09 item 6)?
+  3. Nothing constructs a RawWriter at runtime yet, so the gate is not attached anywhere. The Phase 3 capture
+     task must pass writeGate: storage.writeGate and check allow('deepCapture') / allow('modelArtifact').
+  4. The real meter walks the whole research tree every 5 minutes (async, apparent sizes, not disk blocks).
+     Fine now; at 150 GiB with many files consider tracking size from the catalog instead.
+  5. docs say radar.db but src/main/index.ts opens ticklab.db (docs/code naming drift).
+Next step: T2.5 Replay and migration safety (scripts/research/replay-raw.mjs, src/main/research/replay.ts):
+  replay raw fixtures into a new dataset version, with SQLite backup/restore verified before migration.
+  Phase 2 gate then needs the open questions from T2.1-T2.3 answered.

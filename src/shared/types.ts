@@ -159,3 +159,37 @@ export interface RegisterDatasetVersionInput {
   entity: string; normalizerVersion: string; schemaVersion: string; filePaths: string[];
 }
 export interface RegisterSourceManifestInput { sourceId: string; partitionKey: string; filePaths: string[] }
+
+// ===== Research storage budget (docs/07 T2.4, docs/09 sec 9.3) =====
+export type StorageState = 'ok' | 'warning' | 'deep_paused' | 'raw_paused';
+export type StorageAction = 'rawWrite' | 'deepCapture' | 'modelArtifact';
+export interface StorageStatus {
+  state: StorageState;
+  /** usedBytes / effectiveCapBytes * 100 (clamped to 1000 when no room is left). */
+  percent: number;
+  usedBytes: number; freeBytes: number;
+  /** Configured research allocation. */
+  capBytes: number;
+  /** Cap actually enforced: the lower of the allocation and what the volume can give while keeping the reserve free. */
+  effectiveCapBytes: number;
+  limitedBy: 'cap' | 'free_space';
+  reserveBytes: number;
+  /** Estimated ms until the effective cap is reached at the recent growth rate; null when unknown or not growing. */
+  etaMs: number | null;
+  allowed: Record<StorageAction, boolean>;
+  /** Persistent warning text while state is not 'ok'. */
+  warning: string | null;
+  measuredAt: number;
+  /** Open `storage_cap` gap while raw writes are paused. */
+  gapId: number | null;
+}
+export interface CleanupCandidate { path: string; byteSize: number; timeStart: number; timeEnd: number; sha256: string }
+export interface CleanupPreview {
+  /** False until the user explicitly enables cleanup in Settings; then no candidates are proposed. */
+  configured: boolean;
+  reason: string | null;
+  usedBytes: number; targetBytes: number; bytesToFree: number;
+  freedBytes: number; shortfallBytes: number;
+  candidates: CleanupCandidate[];
+  skipped: Record<string, number>;
+}

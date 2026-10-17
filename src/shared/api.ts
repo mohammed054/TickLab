@@ -4,7 +4,7 @@ import type { Schemas, EventChannel } from './ipc';
 import type {
   Result, LaunchRow, TokenDetail, Trade, HolderSnapshot, Candle, StoredJudgement, WatchRow, RiskState, DecisionRow,
   EquityPoint, LabResult, FrozenConfig, SourceStatus, Gap, ErrorRow, AlertRow, Account, DecisionStatus,
-  Job,
+  Job, StorageStatus, CleanupPreview,
 } from './types';
 
 type Req<C extends keyof typeof Schemas> = z.infer<(typeof Schemas)[C]>;
@@ -71,6 +71,8 @@ export interface ApiMap {
   'research:jobs:pause': { req: Req<'research:jobs:pause'>; res: void };
   'research:jobs:resume': { req: Req<'research:jobs:resume'>; res: void };
   'research:jobs:interrupt': { req: Req<'research:jobs:interrupt'>; res: void };
+  'research:storage:status': { req: Req<'research:storage:status'>; res: StorageStatus | null };
+  'research:storage:cleanupPreview': { req: Req<'research:storage:cleanupPreview'>; res: CleanupPreview };
 }
 
 export interface EventMap {

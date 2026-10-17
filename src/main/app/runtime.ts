@@ -14,6 +14,8 @@ import { LaunchBatcher } from '../ipc/events';
 import { JudgeRunner } from '../judge/runner';
 import { JournalService } from '../journal/service';
 import { JobService } from '../research/jobs';
+import { StorageBudget, createFsDiskMeter, storageConfigFromSettings } from '../research/storageBudget';
+import { log } from '../logger';
 import { addUsage } from '../db/queries/usage';
 import { buildHandlers, createDispatcher, type Dispatch } from '../ipc/register';
 import type { Services, Platform } from '../ipc/handlers/types';
@@ -51,7 +53,13 @@ export function createRuntime(a: { db: Db; secrets: SecretStore; os: OsHooks; em
     writeExport: (name, content) => writeTextFile(dirs.exports, name, content),
     writeDiagnostics: () => writeDiagnostics(db, dirs.diag, now(), { version: a.os.version, sources: monitor.status() }),
   };
-  const services: Services = { db, settings, secrets: a.secrets, journal, judge, jobs: new JobService(db, now), gt, rpc, scheduler, monitor, platform, now, emit: a.emit, state: { selected: null }, counters };
+  const researchRoot = join(a.os.dataDir, 'research');
+  const storage = new StorageBudget({
+    db, root: researchRoot, meter: createFsDiskMeter(researchRoot), getConfig: () => storageConfigFromSettings(settings), now,
+    onEvent: (e) => { if (e.type === 'alert') log[e.level === 'critical' ? 'error' : 'warn'](`storage: ${e.message}`); },
+  });
+  let storageTimer: ReturnType<typeof setInterval> | null = null;
+  const services: Services = { db, settings, secrets: a.secrets, journal, judge, jobs: new JobService(db, now), storage, gt, rpc, scheduler, monitor, platform, now, emit: a.emit, state: { selected: null }, counters };
   // Startup recovery: any research job left running when the app was killed is
   // marked interrupted so it can be re-claimed or retried (docs/09 sec 9.2).
   services.jobs.markRunningJobsInterrupted();
@@ -59,8 +67,14 @@ export function createRuntime(a: { db: Db; secrets: SecretStore; os: OsHooks; em
     services, settings, scheduler, dispatch: createDispatcher(buildHandlers(services)),
     async start() {
       void scheduler.startAll();
+      void storage.refresh();
+      storageTimer = setInterval(() => { void storage.refresh(); }, 5 * 60_000);
+      storageTimer.unref?.();
     },
-    async stop() { await scheduler.stopAll(); },
+    async stop() {
+      if (storageTimer) { clearInterval(storageTimer); storageTimer = null; }
+      await scheduler.stopAll();
+    },
     suspend: () => scheduler.suspend(),
     resume() { void scheduler.resume(); },
     backup() { backupDb(db, dirs.backups, now()); },

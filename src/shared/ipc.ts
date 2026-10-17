@@ -70,6 +70,8 @@ export const Schemas = {
   'research:jobs:pause': z.object({ jobId: z.string().min(1) }),
   'research:jobs:resume': z.object({ jobId: z.string().min(1) }),
   'research:jobs:interrupt': z.object({ jobId: z.string().min(1) }),
+  'research:storage:status': z.object({ refresh: z.boolean().optional() }),
+  'research:storage:cleanupPreview': z.object({ verifyHashes: z.boolean().optional() }),
   'journal:summary': z.object({ account: z.enum(['paper', 'real']) }),
   'journal:decisions': z.object({ account: z.enum(['paper', 'real']), status: z.enum(['open', 'closed', 'pending', 'cancelled']).optional(), tokenId: z.number().int().positive().optional() }),
   'journal:equity:list': z.object({ account: z.enum(['paper', 'real']) }),

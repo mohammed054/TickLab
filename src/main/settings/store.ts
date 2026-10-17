@@ -26,6 +26,10 @@ export const SETTING_SCHEMAS: Record<SettingKey, z.ZodTypeAny> = {
   'risk.maxDrawdownPct': z.number().gt(0).max(100), 'risk.maxLosingTradesPerDay': z.number().int().min(1).max(100),
   'risk.loosenCooldownHours': z.number().min(0).max(24 * 30),
   'wallet.address': z.string().min(32).max(44).nullable(), 'wallet.solUsdPool': z.string().min(32).max(44).nullable(),
+  'research.storageCapGiB': z.number().min(1).max(100_000), 'research.minFreeOutsideGiB': nn,
+  'research.cleanup.enabled': z.boolean(),
+  'research.cleanup.targetPercent': z.number().int().min(10).max(79),
+  'research.cleanup.minRawAgeDays': z.number().int().min(1).max(3650),
   'ui.feedMaxRows': z.number().int().min(100).max(50000),
   'window.feed': winBounds, 'window.detail': winBounds, 'app.firstRunDone': z.boolean(),
 };
